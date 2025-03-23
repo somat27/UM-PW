@@ -1,0 +1,100 @@
+<template>
+  <footer class="site-footer">
+    <div class="footer-links">
+      <h3 class="footer-heading">Links Uteis</h3>
+      <a href="/sobre-nos" class="footer-link">Sobre nós</a>
+      <a href="/help" class="footer-link">Ajuda</a>
+    </div>
+
+    <div class="footer-social">
+      <h3 class="footer-heading">Social</h3>
+      <a href="#" class="footer-link">Instagram</a>
+      <a href="#" class="footer-link">Twitter</a>
+      <a href="#" class="footer-link">Tik Tok</a>
+    </div>
+
+    <div class="footer-contact">
+      <h3 class="footer-heading">Contactos</h3>
+      <p class="contact-info">+351 912345678</p>
+      <p class="contact-info">geral@eyeseverywhere.pt</p>
+    </div>
+
+    <div class="footer-branding">
+      <img
+        src="https://cdn.builder.io/api/v1/image/assets/TEMP/12cdb61c2b96a6ec0b1752be2b759512b3b11795"
+        alt="Footer logo"
+        class="footer-logo"
+      />
+      <p class="copyright">C2025 All Rights Reseverd</p>
+    </div>
+  </footer>
+</template>
+
+<script>
+export default {
+  name: "AppFooter",
+};
+</script>
+
+<style scoped>
+.site-footer {
+  padding: 30px 72px;
+  display: flex;
+  justify-content: space-between;
+  color: #fff;
+  background-color: #a2a2a2;
+}
+
+@media (max-width: 640px) {
+  .site-footer {
+    flex-direction: column;
+    gap: 30px;
+    padding: 30px;
+  }
+}
+
+.footer-links,
+.footer-social,
+.footer-contact {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.footer-heading {
+  font-size: 36px;
+  margin: 0 0 11px 0;
+  font-weight: normal;
+}
+
+.footer-link,
+.contact-info {
+  font-size: 20px;
+  text-decoration: none;
+  color: #fff;
+  margin: 0;
+}
+
+.footer-branding {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 13px;
+}
+
+@media (max-width: 640px) {
+  .footer-branding {
+    align-items: center;
+  }
+}
+
+.footer-logo {
+  width: 323px;
+  height: 52px;
+}
+
+.copyright {
+  font-size: 20px;
+  margin: 0;
+}
+</style>
