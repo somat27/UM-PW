@@ -116,7 +116,7 @@ export default {
 
 .service-cards {
   display: flex;
-  padding-top: -1000px;
+  padding-top: 100px;
   gap: 50px;
   justify-content: center;
   flex-wrap: wrap;
