@@ -1,15 +1,14 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <AuditoriasPage/>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import AuditoriasPage from './components/AuditoriasPage.vue'
 
 export default {
   name: 'App',
   components: {
-    HelloWorld
+    AuditoriasPage
   }
 }
 </script>
@@ -21,6 +20,6 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin-top: 60px;
+  margin-top: 0%;
 }
 </style>
