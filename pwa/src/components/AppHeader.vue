@@ -20,36 +20,33 @@ export default {
 <style scoped>
 .app-header {
   display: flex;
-  height: 53px;
-  padding: 8px 0 3px 20px;
+  padding: 2% 0% 2% 0%;
   align-items: center;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.25);
-  box-shadow: 0 6px 2px -2px rgba(100, 100, 100, 0.25);
   background-color: rgba(240, 240, 240, 0.97);
 }
 
 .logo-container {
-  width: 10%;
+  width:15%;
   height: 100%;
-  border-radius: 15%;
-  border: 100% solid #00aced;
+  border-radius: 0%;
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-right: 10%;
-  background-color: #f5f8fa;
+  margin-left: 2.5%;
+  margin-right: 2.5%;
 }
 
 .icon-image {
-  width: 100%;
-  height: 100%;
+  width: 80%;
+  height: 80%;
 }
 
 .app-title {
+  text-align: center;
   color: #000;
   font-family: Arial, sans-serif;
-  font-size: 28.8px;
-  font-weight: 400;
-  margin: 0;
+  font-size: 150%;
+  margin-left: 2.5%;
+  align-self: flex-end;
 }
 </style>
