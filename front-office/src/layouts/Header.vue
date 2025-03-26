@@ -1,11 +1,7 @@
 <template>
   <header class="site-header" :class="{ scrolled: hasScrolled }">
     <router-link to="/" class="logo-container">
-      <img
-        src="https://cdn.builder.io/api/v1/image/assets/TEMP/d53a9511a1256cea3f418e8a092040afc0c5df77"
-        alt="Logo"
-        class="logo"
-      />
+      <img src="@/assets/logo.jpg" alt="Logo" class="logo" />
     </router-link>
     <nav class="navigation">
       <a href="#" class="nav-link">Ocorrências</a>
@@ -83,6 +79,11 @@ body {
 }
 
 .logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  margin-left: 60px;
   opacity: 0;
   transform: translateY(-10px);
   transition: opacity 0.5s ease, transform 0.5s ease;
@@ -94,9 +95,25 @@ body {
 }
 
 .logo {
-  height: 62px;
-  margin-left: 24px;
-  transition: transform 0.3s ease;
+  max-height: 100%; /* Limita a altura máxima ao container */
+  max-width: 150px; /* Limita a largura máxima */
+  width: auto; /* Mantém a proporção */
+  height: auto; /* Mantém a proporção */
+  object-fit: contain;
+  transition: all 0.3s ease;
+  transform: scale(1.5);
+}
+
+.site-header.scrolled .logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.site-header.scrolled .logo {
+  max-height: 100%; /* Garante que o logo se ajuste completamente */
+  max-width: 120px; /* Reduz um pouco o tamanho no estado de scroll */
 }
 
 .logo-container:hover .logo {
@@ -129,7 +146,7 @@ body {
   opacity: 0;
   transform: translateY(-10px);
   transition: transform 0.3s ease, opacity 0.5s ease, color 0.3s ease;
-  text-decoration: none; /* Removido o underline padrão */
+  text-decoration: none;
 }
 
 .nav-link.visible {
@@ -158,11 +175,6 @@ body {
 .nav-link:hover::after {
   transform: scaleX(1);
   transform-origin: bottom left;
-}
-
-/* Adicionar animação para quando o header estiver fixo durante o scroll */
-.site-header.scrolled .logo {
-  height: 50px;
 }
 
 @keyframes slideInFromTop {
