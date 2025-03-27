@@ -1,127 +1,159 @@
 <template>
-  <section class="body">
-    <div class="forms">
-      <div class="form-background">
-        <div class="form-container">
-          <h1 class="form-title">
-            <span class="title-text">Reportar uma Ocorrência</span>
-          </h1>
-          
-          <p class="form-description">
-            Ajude a melhorar a cidade! Preencha os dados abaixo para registrar o problema.
-          </p>
+  <section class="container mt-6" style="margin-top: 150px">
+    <div class="card shadow p-4">
+      <h1 class="text-center text-primary">Reportar uma Ocorrência</h1>
+      <p class="text-center text-muted">
+        Ajude a melhorar a cidade! Preencha os dados abaixo para registrar o
+        problema.
+      </p>
 
-          <div class="form-section">
-            <div class="category-section">
-              <label class="category-label">Categoria</label>
-              <select 
-                v-model="selectedCategory" 
-                class="category-select"
-              >
-                <option value="" disabled selected>Selecione uma categoria</option>
-                <option value="roads">Vias e Passeios</option>
-                <option value="lights">Iluminação Pública</option>
-                <option value="sinals">Sinalização em Falta</option>
-                <option value="other">Outros</option>
-              </select>
-            </div>
+      <div class="mb-3">
+        <label class="form-label">Categoria</label>
+        <select v-model="selectedCategory" class="form-select">
+          <option value="" disabled selected>Selecione uma categoria</option>
+          <option value="roads">Vias e Passeios</option>
+          <option value="lights">Iluminação Pública</option>
+          <option value="sinals">Sinalização em Falta</option>
+          <option value="other">Outros</option>
+        </select>
+      </div>
 
-            <div class="location-section">
-              <h2 class="location-title">Localização</h2>
-              <p class="location-description">
-                Selecione a localização do incidente (no mapa ou insira o endereço)
-              </p>
-            </div>
-
-            <div class="map-section">
-              <div id="map" class="map-image"></div>
-            </div>
-
-            <div class="input-section">
-              <div class="input-group">
-                <label>Endereço</label>
-                <input 
-                  v-model="address" 
-                  class="address-input" 
-                  placeholder="Digite o endereço do incidente"
-                />
-              </div>
-
-              <div class="input-group">
-                <label>Observações</label>
-                <textarea 
-                  v-model="observations" 
-                  class="observations-input" 
-                  placeholder="Descreva o problema (máximo 100 palavras)"
-                  maxlength="100"
-                ></textarea>
-              </div>
-            </div>
-
-            <div class="submit-section">
-              <button 
-                @click="submitForm" 
-                class="submit-button"
-                :disabled="!isFormValid"
-              >
-                <div class="submit-button-content">SUBMETER</div>
-              </button>
-            </div>
-          </div>
+      <div class="mb-3">
+        <h2 class="h5">Localização</h2>
+        <p class="text-muted">
+          Selecione a localização do incidente (no mapa ou insira o endereço)
+        </p>
+        <div class="map-container">
+          <div id="map" class="border rounded"></div>
         </div>
       </div>
+
+      <div class="mb-3">
+        <label class="form-label">Endereço</label>
+        <input
+          v-model="address"
+          class="form-control"
+          placeholder="Digite o endereço do incidente"
+        />
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Observações</label>
+        <textarea
+          v-model="observations"
+          class="form-control"
+          placeholder="Descreva o problema (máximo 100 palavras)"
+          maxlength="100"
+        ></textarea>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Anexos</label>
+        <input
+          type="file"
+          ref="fileInput"
+          class="form-control"
+          @change="handleFileUpload"
+          multiple
+        />
+        <div v-if="uploadedFiles.length" class="mt-2 text-muted">
+          Arquivos selecionados:
+          {{ uploadedFiles.map((file) => file.name).join(", ") }}
+        </div>
+      </div>
+
+      <button
+        @click="submitForm"
+        class="btn btn-primary w-100"
+        :disabled="!isFormValid"
+      >
+        <i class="bi bi-send-fill"></i> Submeter
+      </button>
     </div>
   </section>
 </template>
 
 <script>
-import L from 'leaflet'
-import 'leaflet/dist/leaflet.css'
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
 export default {
   name: "ReportForm",
   data() {
     return {
       map: null,
-      selectedCategory: '',
-      address: '',
-      observations: '',
+      selectedCategory: "",
+      address: "",
+      observations: "",
       uploadedFiles: [],
-      userLocation: null
-    }
+      userLocation: null,
+      customIconUrl: "/assets/map-marker.png", // Caminho do ícone nos assets
+    };
   },
   computed: {
     isFormValid() {
-      return this.selectedCategory && this.address
-    }
+      return this.selectedCategory && this.address;
+    },
   },
   mounted() {
-    this.initMap()
+    this.initMap();
   },
   methods: {
     initMap() {
-      // Coordenadas específicas com zoom menos próximo
-      const braga = [41.445750, -8.300961]
-      this.map = L.map('map').setView(braga, 10)
-      
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-      }).addTo(this.map)
+      if (typeof window !== "undefined" && document.getElementById("map")) {
+        const init = [41.44575, -8.300961];
+        this.map = L.map("map").setView(init, 13);
 
-      // Adicionar marcador na localização especificada
-      L.marker(braga).addTo(this.map)
-        .bindPopup("Braga, Portugal").openPopup()
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "© OpenStreetMap contributors",
+        }).addTo(this.map);
+
+        this.map.on("click", this.onMapClick);
+      }
+    },
+    onMapClick(e) {
+      const { lat, lng } = e.latlng;
+
+      // Remove marcadores antigos
+      this.map.eachLayer((layer) => {
+        if (layer instanceof L.Marker) {
+          this.map.removeLayer(layer);
+        }
+      });
+
+      // Criando um ícone personalizado do diretório "assets"
+      const customIcon = L.icon({
+        iconUrl: this.customIconUrl, // Caminho do ícone nos assets
+        iconSize: [40, 40], // Tamanho do ícone
+        iconAnchor: [20, 40], // Ponto de ancoragem
+        popupAnchor: [0, -40], // Onde aparece o popup
+      });
+
+      // Adicionando o marcador ao mapa
+      L.marker([lat, lng], { icon: customIcon }).addTo(this.map);
+      this.userLocation = { lat, lng };
+
+      // Obtendo endereço reverso
+      fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
+      )
+        .then((response) => response.json())
+        .then((data) => {
+          this.address =
+            data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+        })
+        .catch((error) => {
+          console.error("Erro na geocodificação:", error);
+          this.address = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+        });
     },
     handleFileUpload(event) {
-      this.uploadedFiles = Array.from(event.target.files)
-    },
-    triggerFileInput() {
-      this.$refs.fileInput.click()
+      this.uploadedFiles = Array.from(event.target.files);
     },
     submitForm() {
       if (!this.isFormValid) {
-        alert('Por favor, preencha todos os campos obrigatórios')
-        return
+        alert("Por favor, preencha todos os campos obrigatórios");
+        return;
       }
 
       const formData = {
@@ -129,13 +161,13 @@ export default {
         address: this.address,
         observations: this.observations,
         location: this.userLocation,
-        files: this.uploadedFiles
-      }
+        files: this.uploadedFiles,
+      };
 
-      console.log('Dados do formulário:', formData)
-    }
-  }
-}
+      console.log("Dados do formulário:", formData);
+    },
+  },
+};
 </script>
 
 <style scoped>
@@ -143,11 +175,12 @@ export default {
   background-color: rgba(255, 255, 255, 1);
   display: flex;
   width: 100%;
-  padding: 120px 80px 91px; /* Adicionado padding no topo para navbar fixa */
+  padding: 120px 80px 91px;
   flex-direction: column;
   align-items: center;
   font-family: Inter, -apple-system, Roboto, Helvetica, sans-serif;
 }
+
 .form-title {
   font-size: 2rem;
   color: #204c6d;
@@ -160,15 +193,6 @@ export default {
   color: #333;
   text-align: center;
   margin-bottom: 2rem;
-}
-
-.category-select {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid rgba(32, 76, 109, 0.3);
-  border-radius: 8px;
-  font-size: 1rem;
-  background-color: #f0f8ff;
 }
 
 .form-section {
@@ -197,6 +221,15 @@ export default {
   margin-bottom: 0.5rem;
 }
 
+.category-select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid rgba(32, 76, 109, 0.3);
+  border-radius: 8px;
+  font-size: 1rem;
+  background-color: #f0f8ff;
+}
+
 .category-select,
 .address-input,
 .observations-input {
@@ -212,23 +245,17 @@ export default {
   resize: vertical;
 }
 
-.map-image {
-  height: 400px;
-  width: 100%;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
 .upload-icon-container {
   display: flex;
   justify-content: center;
   margin-bottom: 1rem;
 }
 
-.upload-icon, .upload-button-icon {
+.upload-icon,
+.upload-button-icon {
   width: 48px;
   height: 48px;
-  fill: rgba(32, 76, 109, 1);
+  fill: white;
 }
 
 .upload-button {
@@ -274,6 +301,32 @@ export default {
 .submit-button:disabled {
   background-color: rgba(32, 76, 109, 0.5);
   cursor: not-allowed;
+}
+
+/* Ajuste do mapa para mais margem lateral */
+.map-container {
+  max-width: 90%; /* Garante que o mapa não fique muito largo */
+  margin: 0 auto; /* Centraliza o mapa horizontalmente */
+  padding: 20px; /* Adiciona um espaçamento interno */
+}
+
+#map {
+  width: 100%; /* Garante que o mapa ocupe toda a largura do contêiner */
+  height: 400px; /* Altura fixa */
+  border-radius: 12px; /* Bordas arredondadas */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra suave */
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .map-container {
+    max-width: 95%; /* Em telas menores, o mapa ocupa mais espaço */
+    padding: 10px; /* Reduz o espaçamento interno */
+  }
+
+  #map {
+    height: 300px; /* Reduz a altura do mapa em telas pequenas */
+  }
 }
 
 @media (max-width: 768px) {
