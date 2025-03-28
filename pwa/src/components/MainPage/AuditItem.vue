@@ -41,38 +41,34 @@ export default {
 
 <style scoped>
 .audit-item-container {
-  padding: 10px 20px;
+  padding: 10px 5%;
 }
 
 .audit-item {
-  width: 300px;
-  height: 50px;
   border-radius: 15px;
   display: flex;
-  margin: 0 auto;
+  justify-content: space-between;
+  align-items: center;
+  padding-right: 10px;
   background-color: #d9d9d9;
 }
 
 .audit-name {
-  width: 200px;
-  height: 50px;
+  width: 75%;
   color: #000;
-  font-family: Inter, sans-serif;
-  font-size: 16px;
-  font-weight: normal;
+  font-size: 100%;
   margin: 0;
   display: flex;
   align-items: center;
-  padding-left: 10px;
+  padding-left: 2%;
 }
 
 .audit-status {
-  width: 60px;
+  width: 75px;
   height: 25px;
   border-radius: 15px;
-  margin: 12.5px 20px;
-  font-family: Inter, sans-serif;
-  font-size: 10px;
+  margin: 12px 1%;
+  font-size: 65%;
   color: #000;
   display: flex;
   align-items: center;
@@ -90,10 +86,5 @@ export default {
 .status-incomplete {
   background-color: #f00;
 }
-
-@media (max-width: 640px) {
-  .audit-item {
-    width: 100%;
-  }
-}
 </style>
+

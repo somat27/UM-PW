@@ -7,7 +7,9 @@
         class="icon-image"
       />
     </div>
-    <h1 class="app-title">  EyesEveryWhere</h1>
+    <div class="texto-container">
+      <h1 class="app-title">  EyesEveryWhere</h1>
+    </div>
   </header>
 </template>
 
@@ -19,21 +21,26 @@ export default {
 
 <style scoped>
 .app-header {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
   display: flex;
-  padding: 2% 0% 2% 0%;
   align-items: center;
   background-color: rgba(240, 240, 240, 0.97);
+  z-index: 1000;
+}
+
+.texto-container {
+  width:max-width;
+  margin-left: 2%;
 }
 
 .logo-container {
-  width:15%;
-  height: 100%;
-  border-radius: 0%;
-  display: flex;
+  width:max-width;
   justify-content: center;
   align-items: center;
-  margin-left: 2.5%;
-  margin-right: 2.5%;
+  padding: 1% 1%;
 }
 
 .icon-image {
@@ -42,11 +49,7 @@ export default {
 }
 
 .app-title {
-  text-align: center;
   color: #000;
-  font-family: Arial, sans-serif;
-  font-size: 150%;
-  margin-left: 2.5%;
-  align-self: flex-end;
+  margin: 0;
 }
 </style>

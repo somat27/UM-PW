@@ -3,7 +3,8 @@
 </template>
 
 <script>
-import AuditoriasPage from './components/AuditoriasPage.vue'
+/*import AuditoriasPage from './components/MainPage/AuditoriasPage.vue'*/
+import AuditoriasPage from './components/DescricaoAuditoria/PaginaDetalhesPosAuditoria.vue'
 
 export default {
   name: 'App',

@@ -17,22 +17,23 @@ export default {
 
 <style scoped>
 .app-footer {
-  padding:  5% 0% 5% 0%;;
+  position: sticky;
+  bottom: 0;
+  width: 100%;
+  box-shadow: 0px -2px 5px rgba(0, 0, 0, 0.1);
   display: flex;
   justify-content: center;
   background-color: rgba(240, 240, 240, 0.97);
+  z-index: 1000;
 }
 
 .nav-button {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 10%;
-  height: 100%;
+  font-size: 150%;
   border: none;
+  margin: 0 1%;
 }
 
 .nav-button:hover {
-  background-color: rgba(0, 253, 13, 0.05);
+  color: #0095b6;
 }
 </style>

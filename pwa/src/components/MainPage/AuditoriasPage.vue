@@ -11,9 +11,9 @@
 </template>
 
 <script>
-import AppHeader from "./AppHeader.vue";
+import AppHeader from "../AppHeader.vue";
 import AuditList from "./AuditList.vue";
-import AppFooter from "./AppFooter.vue";
+import AppFooter from "../AppFooter.vue";
 
 export default {
   name: "AuditoriasPage",
@@ -27,15 +27,9 @@ export default {
 
 <style scoped>
 .auditorias-container {
+  padding-bottom: 0%;
   display: flex;
   flex-direction: column;
   background-color: #fff;
-}
-
-@media (max-width: 640px) {
-  .auditorias-container {
-    width: 100%;
-    height: 100vh;
-  }
 }
 </style>
