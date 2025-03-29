@@ -1,26 +1,23 @@
 <template>
-  <AuditoriasPage/>
+  <PaginaFundo/>
 </template>
 
 <script>
-/*import AuditoriasPage from './components/MainPage/AuditoriasPage.vue'*/
-import AuditoriasPage from './components/DescricaoAuditoria/PaginaDetalhesPosAuditoria.vue'
+/*DescricaoAuditoria/PaginaDetalhesPosAuditoria - MainPage/AuditoriasPage - BackGround*/
+import PaginaFundo from './components/Versao2/PaginaFundo.vue'
 
 export default {
   name: 'App',
   components: {
-    AuditoriasPage
+    PaginaFundo
   }
 }
 </script>
 
 <style>
 #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
   text-align: center;
-  color: #2c3e50;
+  color: #000000;
   margin-top: 0%;
 }
 </style>
