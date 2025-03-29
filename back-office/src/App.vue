@@ -1,18 +1,13 @@
 <template>
- 
-  <signUp/>
+  <div id="app">
+    <router-view />
+  </div>
 </template>
 
 <script>
-
-import signUp from './views/signUp.vue'
-
 export default {
-  name: 'App',
-  components: {
-    signUp
-  }
-}
+  name: "App",
+};
 </script>
 
 <style>
@@ -22,6 +17,6 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-
 }
 </style>
+

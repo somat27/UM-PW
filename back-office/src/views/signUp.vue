@@ -1,23 +1,70 @@
 <template>
-    <main class="signup-container">
-      <section class="signup-content">
-        <img
-          src="https://cdn.builder.io/api/v1/image/assets/TEMP/17649d8b23b25a41eb05d1c62ea11c4f63101c4f?placeholderIfAbsent=true&apiKey=98100b9ac2c544efa71903dc3e1eda07"
-          alt="Logo"
-          class="logo-image"
-        />
-        <button class="google-login-button">Log In with Google</button>
-        <p class="terms-text">
-          By Signing up to EyesEverywhere, means you agree to our Privacy Policy
-          and Terms of Service
-        </p>
-      </section>
-    </main>
-  </template>
+  <main class="signUp">
+    <section class="signup-content">
+      <img
+        src="https://cdn.builder.io/api/v1/image/assets/TEMP/17649d8b23b25a41eb05d1c62ea11c4f63101c4f?placeholderIfAbsent=true&apiKey=98100b9ac2c544efa71903dc3e1eda07"
+        alt="Logo"
+        class="logo-image"
+      />
+      <button 
+        class="google-login-button"
+        @click="handleGoogleLogin"
+      >
+        Log In with Google
+      </button>
+      <p class="terms-text">
+        By Signing up to EyesEverywhere, means you agree to our Privacy Policy
+        and Terms of Service
+      </p>
+    </section>
+  </main>
+</template>
+
+<script>
+import { signInWithPopup } from 'firebase/auth';
+import { auth, googleProvider } from '../firebase';
+import { useRouter } from 'vue-router';
+import { ref } from 'vue';
+
+export default {
+  name: "signUp",
+  setup() {
+    const router = useRouter();
+    const user = ref(null);
+
+    const handleGoogleLogin = async () => {
+      try {
+        const result = await signInWithPopup(auth, googleProvider);
+        
+        user.value = result.user;
+        
+       
+        localStorage.setItem('user', JSON.stringify({
+          displayName: result.user.displayName,
+          email: result.user.email,
+          photoURL: result.user.photoURL
+        }));
+
+        
+        router.push({ name: 'auditorias' });
+      } catch (error) {
+        console.error("Google Sign-In Error", error);
+        
+        alert('Failed to log in with Google');
+      }
+    };
+
+    return {
+      handleGoogleLogin
+    };
+  }
+};
+</script>
   
   <style scoped>
-  .signup-container {
+  .signUp{
     background-color: rgba(32, 76, 109, 1);
+
     display: flex;
     padding: 197px 80px 405px;
     flex-direction: column;
@@ -39,11 +86,11 @@
   }
   
   .signup-content {
-    display: flex;
-    width: 448px;
-    max-width: 100%;
-    flex-direction: column;
-    align-items: center;
+      display: flex;
+      width: 448px;
+      max-width: 100%;
+      flex-direction: column;
+      align-items: center;
   }
   
   .logo-image {
@@ -95,10 +142,4 @@
     }
   }
   </style>
-  
-  <script>
-  export default {
-    name: "SignUpTemplate",
-  };
-  </script>
   
