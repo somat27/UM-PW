@@ -15,9 +15,9 @@
 
 
 <script>
-export default {
-  name: "AppCabecalho",
-};
+  export default {
+    name: "AppCabecalho",
+  };
 </script>
 
 

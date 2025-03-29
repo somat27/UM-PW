@@ -14,7 +14,7 @@
         </div>
 
         <div class="campo-filtro">
-            <button class="filtro">
+            <button class="filtro" @click="popupfiltro = !popupfiltro">
                 <span>
                     <i class="bi bi-funnel"></i>
                 </span>
@@ -23,16 +23,37 @@
                     <i class="bi bi-chevron-down"></i>
                 </span>
             </button>
-            <div class="filtro-conteudo">
-                <label><input type="checkbox" value="Eletricista"> Eletricista</label>
-                <label><input type="checkbox" value="Encanador"> Encanador</label>
-                <label><input type="checkbox" value="Pedreiro"> Pedreiro</label>
-                <label><input type="checkbox" value="Pintor"> Pintor</label>
+            <div class="filtro-conteudo" v-if="popupfiltro">
+                <label><input type="radio" name="radio" value="Concluido" v-model="valorRadio" @click="toggleSelection('Concluido')" /> Concluido</label>
+                <label><input type="radio" name="radio" value="Incompleto" v-model="valorRadio" @click="toggleSelection('Incompleto')" /> Incompleto</label>
+                <label><input type="radio" name="radio" value="Pendente" v-model="valorRadio" @click="toggleSelection('Pendente')" /> Pendente</label>
             </div>
         </div>
     </div>
 
     <div class="campo-auditoria">
+
+        <button class="auditoria">
+
+            <div class="auditoria-cabecalho">
+                <h1>Inspeção Instalações Elétricas</h1>
+                <h2>Pendente</h2>
+            </div>
+
+            <div class="campo-paragrafo">
+                <div class="paragrafo">
+                    <i class="bi bi-geo-alt"></i>
+                    <h3>Edificio Central, Porto</h3>
+                </div>
+                <div class="paragrafo">
+                    <i class="bi bi-clock"></i>
+                    <h3>02/06/2023</h3>
+                </div>
+            </div>
+
+        </button>
+
+
         <button class="auditoria">
 
             <div class="auditoria-cabecalho">
@@ -52,73 +73,11 @@
             </div>
 
         </button>
+
+
     </div>
 
-    <div class="campo-auditoria">
-        <button class="auditoria">
-
-            <div class="auditoria-cabecalho">
-                <h1>Inspeção Instalações Elétricas</h1>
-                <h2>Pendente</h2>
-            </div>
-
-            <div class="campo-paragrafo">
-                <div class="paragrafo">
-                    <i class="bi bi-clock"></i>
-                    <h3>Edificio Central, Porto</h3>
-                </div>
-                <div class="paragrafo">
-                    <i class="bi bi-geo-alt"></i>
-                    <h3>02/06/2023</h3>
-                </div>
-            </div>
-
-        </button>
-    </div>
-
-    <div class="campo-auditoria">
-        <button class="auditoria">
-
-            <div class="auditoria-cabecalho">
-                <h1>Inspeção Instalações Elétricas</h1>
-                <h2>Pendente</h2>
-            </div>
-
-            <div class="campo-paragrafo">
-                <div class="paragrafo">
-                    <i class="bi bi-clock"></i>
-                    <h3>Edificio Central, Porto</h3>
-                </div>
-                <div class="paragrafo">
-                    <i class="bi bi-geo-alt"></i>
-                    <h3>02/06/2023</h3>
-                </div>
-            </div>
-
-        </button>
-    </div>
-
-    <div class="campo-auditoria">
-        <button class="auditoria">
-
-            <div class="auditoria-cabecalho">
-                <h1>Inspeção Instalações Elétricas</h1>
-                <h2>Pendente</h2>
-            </div>
-
-            <div class="campo-paragrafo">
-                <div class="paragrafo">
-                    <i class="bi bi-clock"></i>
-                    <h3>Edificio Central, Porto</h3>
-                </div>
-                <div class="paragrafo">
-                    <i class="bi bi-geo-alt"></i>
-                    <h3>02/06/2023</h3>
-                </div>
-            </div>
-
-        </button>
-    </div>
+    
 </template>
 
 
@@ -127,13 +86,23 @@
         name: 'PaginaInicial',
         data() {
             return {
+                valorRadio: null,
+                popupfiltro: false,
                 searchQuery: '',
-            };
+            }; 
         },
         methods: {
             onSearch() {
                 
-            }
+            },
+            toggleSelection(value) {
+                if (this.valorRadio === value) {
+                    this.valorRadio = null;
+                } else {
+                    this.valorRadio = value;
+                }
+                this.popupfiltro = false;
+            },
         }
     };
 </script>
@@ -230,6 +199,8 @@
 
         height: 20vh;
         width: 90%;
+
+        margin-bottom: 2vh;
     }
 
     h1 {
