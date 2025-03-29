@@ -9,7 +9,7 @@ export default {
   name: "App",
   watch: {
     $route(to) {
-      if (to.path === '/peritos') {
+      if (to.path === '/dashboards/peritos') {
         document.body.style.overflow = 'auto'; 
       } else {
         document.body.style.overflow = 'hidden';
@@ -17,7 +17,7 @@ export default {
     }
   },
   mounted() {
-    if (this.$route.path === '/peritos') {
+    if (this.$route.path === '/dashboards/peritos') {
       document.body.style.overflow = 'auto'; 
     } else {
       document.body.style.overflow = 'hidden'; 

@@ -73,9 +73,15 @@
   />
   <span class="user-name">{{ userName }}</span>
     </div>
-    <button @click="logOut" class="log-out-button">
-            <span class="logout-icon"></span> ⏻ Log Out
-          </button>
+    <button @click="logOut" class="logout-button">
+      <span class="logout-text">LOG OUT ⏻</span>
+      <div class="lock-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+      </div>
+    </button>
   </nav>
 </template>
 
@@ -134,7 +140,7 @@ const isDashboardActive = computed(() => {
   font-weight: bold;
 }
 .nav-item-active .nav-text {
-  color: white !important; /* Garante que o texto fica visível */
+  color: white !important; 
   font-weight: bold;
 }
 
@@ -147,28 +153,31 @@ const isDashboardActive = computed(() => {
   width: 2px;
   background-color: #1890ff;
 }
-.log-out-button {
+.logout-button {
   display: flex;
   align-items: center;
-  justify-content: center;
-  background-color: white; 
-  color: red;
+  justify-content: space-between;
+  background-color: #3498db; 
+  color: white;
   border: none;
-  border-radius: 1px;
-  padding: 1px 1px;
-  margin-top: 1px;
+  border-radius: 50px;
+  padding: 10px 20px;
+  margin: 15px auto;
+  width: 49%;
+  font-size: 12px;
+  font-weight: bold;
   cursor: pointer;
-  font-size: 16px;
-  font-family: inherit;
+  transition: background-color 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-.log-out-button .logout-icon {
-  margin-right: 26px; 
-  font-size: 20px;
+.logout-button:hover {
+  background-color: #e74c3c; 
 }
 
-.log-out-button:hover {
-  background-color: darkred; /* Efeito de hover */
+.logout-text {
+  margin-right: 10px;
+  letter-spacing: 1px;
 }
 .navigation-list {
   width: 100%;
