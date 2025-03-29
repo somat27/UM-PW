@@ -1,47 +1,58 @@
 <template>
-  <div class="dashboard-container" :space="23">
-    <div class="dashboard-layout">
-      <aside class="sidebar-column">
-        <nav class="sidebar-nav">
-          <div class="sidebar-background">
-            <img
-              src="https://cdn.builder.io/api/v1/image/assets/TEMP/9cae2c5a44e739bfd2edc79e5215ab61eb4c5ee8?placeholderIfAbsent=true&apiKey=98100b9ac2c544efa71903dc3e1eda07"
-              alt="Logo"
-              class="logo"
-            />
-           
-            <NavigationList />
-          </div>
-        </nav>
-      </aside>
+    <div class="dashboard-container" :space="23">
+      <div class="dashboard-layout">
+        <aside class="sidebar-column">
+          <nav class="sidebar-nav">
+            <div class="sidebar-background">
+              <img
+                src="https://cdn.builder.io/api/v1/image/assets/TEMP/9cae2c5a44e739bfd2edc79e5215ab61eb4c5ee8?placeholderIfAbsent=true&apiKey=98100b9ac2c544efa71903dc3e1eda07"
+                alt="Logo"
+                class="logo"
+              />
+              
+              <NavigationList />
+            </div>
+          </nav>
+        </aside>
   
         <main class="main-content">
-       
-
           <div class="content-wrapper">
             <nav class="navigation-tabs">
-    <router-link 
-      to="/auditorias" 
-      class="tab-link" 
-      :class="{ active: activeTab === 'auditorias' }"
-    >
-      Auditorias por região
-    </router-link>
-    
-    <router-link 
-      to="/ocorrencias" 
-      class="tab-link" 
-      :class="{ active: activeTab === 'ocorrencias' }"
-    >
-      Ocorrências resolvidas
-    </router-link>
+              <router-link 
+                to="/dashboards/auditorias" 
+                class="tab-link" 
+                :class="{ active: activeTab === 'auditorias' }"
+              >
+                Auditorias por região
+              </router-link>
+              
+              <router-link 
+                to="/dashboards/ocorrencias" 
+                class="tab-link" 
+                :class="{ active: activeTab === 'ocorrencias' }"
+              >
+                Ocorrências resolvidas
+              </router-link>
 
-    <a href="#" class="tab-link">Peritos mobilizados e no aguardo</a>
-    <a href="#" class="tab-link">Materiais expedidos</a>
+              <router-link 
+                to="/dashboards/peritos" 
+                class="tab-link" 
+                :class="{ active: activeTab === 'peritos' }"
+              >
+              Peritos mobilizados e no aguardo
+              </router-link>
+              <router-link 
+                  to="/dashboards/materiais" 
+                  class="tab-link" 
+                  :class="{ active: activeTab === 'materiais' }"
+                >
+                Materiais expedidos
+              </router-link>
             </nav>
-
-            <StatisticsGrid />
   
+            <StatisticsGrid2 />
+  
+
             <div class="search-section">
               <div class="search-item">
                 <img
@@ -52,86 +63,92 @@
               </div>
               <div class="search-form">
                 <div class="search-input">
-                  <div class="search-container">Pesquisar Localidade...</div>
+                  <input 
+                    type="text" 
+                    class="search-container" 
+                    placeholder="Pesquisar Localidade..." 
+                  />
+                  <img
+                    src="https://cdn.builder.io/api/v1/image/assets/TEMP/e2adb638175328e468397894582b9de35e2a0581?placeholderIfAbsent=true&apiKey=98100b9ac2c544efa71903dc3e1eda07"
+                    alt="Search"
+                    class="search-button"
+                  />
                 </div>
-                <img
-                  src="https://cdn.builder.io/api/v1/image/assets/TEMP/e2adb638175328e468397894582b9de35e2a0581?placeholderIfAbsent=true&apiKey=98100b9ac2c544efa71903dc3e1eda07"
-                  alt="Search"
-                  class="search-button"
-                />
               </div>
+
             </div>
-  
         
           <div id="chart">
-            <apexchart type="bar" height="350" :options="chartOptions" :series="series"></apexchart>
-          </div>
+            <apexchart type="area" height="350" :options="chartOptions" :series="series"></apexchart>   
+           </div>
           </div>
         </main>
       </div>
     </div>
   </template>
-<script>
-import NavigationList from "../components/NavigationList.vue";
-import StatisticsGrid from "../components/StatisticsGrid.vue";
+  
+  <script>
+import { ref } from "vue";
+import NavigationList from "@/components/NavigationList.vue";
+import StatisticsGrid2 from "@/components/StatisticsGridOcorrencia.vue";
 import VueApexCharts from 'vue3-apexcharts';
-import { ref } from 'vue';
 
 export default {
-  name: "DashboardAuditorias",
+  name: "DashboardOcorrencias",
   components: {
     NavigationList,
-    StatisticsGrid,
-    apexchart: VueApexCharts, 
+    StatisticsGrid2,
+    apexchart: VueApexCharts,
   },
   setup() {
-    const activeTab = ref('auditorias');
+    const activeTab = ref("ocorrencias");
 
+ 
 
     return {
    
       activeTab,
-     
-      series: [{
-        data: [21, 22, 10, 28, 16, 21, 13, 30]
-      }],
+      series: [
+        {
+          name: "series1",
+          data: [31, 40, 28, 51, 42, 109, 100],
+        },
+        {
+          name: "series2",
+          data: [11, 32, 45, 32, 34, 52, 41],
+        },
+      ],
       chartOptions: {
         chart: {
           height: 350,
-          type: 'bar',
-        },
-        plotOptions: {
-          bar: {
-            columnWidth: '45%',
-            distributed: true,
-          }
+          type: "area",
         },
         dataLabels: {
-          enabled: false
+          enabled: false,
         },
-        legend: {
-          show: false
+        stroke: {
+          curve: "smooth",
         },
         xaxis: {
+          type: "datetime",
           categories: [
-            ['John', 'Doe'],
-            ['Joe', 'Smith'],
-            ['Jake', 'Williams'],
-            'Amber',
-            ['Peter', 'Brown'],
-            ['Mary', 'Evans'],
-            ['David', 'Wilson'],
-            ['Lily', 'Roberts'], 
+            "2018-09-19T00:00:00.000Z",
+            "2018-09-19T01:30:00.000Z",
+            "2018-09-19T02:30:00.000Z",
+            "2018-09-19T03:30:00.000Z",
+            "2018-09-19T04:30:00.000Z",
+            "2018-09-19T05:30:00.000Z",
+            "2018-09-19T06:30:00.000Z",
           ],
-          labels: {
-            style: {
-              fontSize: '12px'
-            }
-          }
-        }
-      }
+        },
+        tooltip: {
+          x: {
+            format: "dd/MM/yy HH:mm",
+          },
+        },
+      },
     };
-  }
+  },
 };
 </script>
 
@@ -286,13 +303,15 @@ export default {
   }
   
   .search-button {
+    transform: rotate(3.141592653589793rad);
     aspect-ratio: 1;
     object-fit: contain;
-    width: 12px;
+    width: 18px;
     position: absolute;
-    right: 11px;
-    bottom: 11px;
+    right: 160px;
+    bottom: 14px;
     height: 12px;
+
   }
   
   .map-visualization {
@@ -304,7 +323,6 @@ export default {
   @media (max-width: 991px) {
     .dashboard-container {
       padding-bottom: 100px;
-      
     }
   
     .dashboard-layout {
@@ -352,22 +370,5 @@ export default {
       max-width: 100%;
     }
   }
-  .user-profile {
-  display: flex;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.user-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  margin-right: 10px;
-}
-
-.user-name {
-  font-size: 16px;
-  font-weight: bold;
-}
   </style>
   

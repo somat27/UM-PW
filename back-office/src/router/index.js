@@ -1,8 +1,12 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router';
 
-import signUp from '@/views/signUp.vue'
-import DashboardAuditorias from '@/views/DashboardAuditorias.vue'
-import DashboardOcorrencia from '@/views/DashboardOcorrencia.vue'
+import signUp from '@/views/signUp.vue';
+import DashboardLayout from '@/views/dashboards/DashboardLayout.vue'; // Novo layout para agrupar as dashboards
+import DashboardAuditorias from '@/views/dashboards/DashboardAuditorias.vue';
+import DashboardOcorrencia from '@/views/dashboards/DashboardOcorrencia.vue';
+import DashboardPeritos from '@/views/dashboards/DashboardPeritos.vue';
+import DashboardMateriais from '@/views/dashboards/DashboardMateriais.vue';
+import GestaoAuditorias from '@/views/GestaoAuditorias.vue';
 
 const routes = [
   {
@@ -11,53 +15,41 @@ const routes = [
     component: signUp
   },
   { 
-    path: '/auditorias', 
-    name: 'auditorias',
-    component: DashboardAuditorias 
+    path: '/dashboards',
+    component: DashboardLayout, 
+    children: [
+      { 
+        path: 'auditorias', 
+        name: 'auditorias',
+        component: DashboardAuditorias 
+      },
+      { 
+        path: 'ocorrencias', 
+        name: 'ocorrencias', 
+        component: DashboardOcorrencia 
+      },
+      { 
+        path: 'peritos', 
+        name: 'peritos', 
+        component: DashboardPeritos 
+      },
+      { 
+        path: 'materiais', 
+        name: 'materiais', 
+        component: DashboardMateriais 
+      }
+    ]
   },
   { 
-    path: '/ocorrencias', 
-    name: 'ocorrencias', 
-    component: DashboardOcorrencia 
+    path: '/GestaoAuditorias', 
+    name: 'GestaoAuditorias', 
+    component: GestaoAuditorias 
   }
 ];
-
 
 const router = createRouter({
   history: createWebHistory(),
   routes
-})
-
-export default router
-
-
-
-/*import { createRouter, createWebHistory } from "vue-router";
-import MainPage from "@/views/MainPage.vue";
-import AboutUS from "@/views/AboutUS.vue";
-import Help from "@/views/Help.vue";
-
-const routes = [
-  {
-    path: "/",
-    name: "Home",
-    component: MainPage,
-  },
-  {
-    path: "/sobre-nos",
-    name: "AboutUS",
-    component: AboutUS,
-  },
-  {
-    path: "/help",
-    name: "Help",
-    component: Help,
-  },
-];
-
-const router = createRouter({
-  history: createWebHistory(),
-  routes,
 });
 
-export default router;*/
+export default router;

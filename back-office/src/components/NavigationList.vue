@@ -1,24 +1,31 @@
 <template>
   <nav class="navigation-list">
-    <a href="#" class="nav-item nav-item-active">
+    <router-link to="/dashboards/auditorias" 
+    class="nav-item" 
+    :class="{ 'nav-item-active': isDashboardActive }"
+    >
+
       <img
         src="https://cdn.builder.io/api/v1/image/assets/TEMP/bd9d82f1effb8381bb1929299adeb4fb409cd704?placeholderIfAbsent=true&apiKey=98100b9ac2c544efa71903dc3e1eda07"
         alt="Dashboard"
         class="nav-icon"
       />
       <span class="nav-text">Dashboard</span>
-    </a>
+    </router-link>
 
     <h2 class="nav-section-title">Pages</h2>
 
-    <a href="#" class="nav-item">
+    <router-link to="/GestaoAuditorias" 
+    class="nav-item"
+
+    >
       <img
         src="https://cdn.builder.io/api/v1/image/assets/TEMP/b414ddc8a44a7865af46891e60f33ca4a0160885?placeholderIfAbsent=true&apiKey=98100b9ac2c544efa71903dc3e1eda07"
         alt="Auditorias"
         class="nav-icon"
       />
       <span class="nav-text">Gestão de Auditorias</span>
-    </a>
+    </router-link>
 
     <a href="#" class="nav-item">
       <img
@@ -66,11 +73,17 @@
   />
   <span class="user-name">{{ userName }}</span>
     </div>
+    <button @click="logOut" class="log-out-button">
+            <span class="logout-icon"></span> ⏻ Log Out
+          </button>
   </nav>
 </template>
 
 <script>
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, computed} from 'vue';
+import { useRouter} from 'vue-router'; 
+import { useRoute } from "vue-router";
+
 export default {
   name: 'NavigationList',
   setup() {
@@ -78,7 +91,13 @@ export default {
 
     const userName = ref('');
     const userPhoto = ref('');
+   
+    const router = useRouter(); 
 
+   
+    const logOut = () => {
+      router.push('/'); 
+    };
     onMounted(() => {
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
@@ -87,15 +106,70 @@ export default {
         userPhoto.value = user.photoURL || 'default-avatar.png';
       }
     });
+    const route = useRoute();
+
+const isDashboardActive = computed(() => {
+  return route.path.startsWith("/dashboards/");
+});
+
     return {
       userName,
       userPhoto,
+      logOut,
+      isDashboardActive,
     }
   }
 }
 </script>
 
 <style scoped>
+.nav-item.router-link-active {
+  background-color: #1890ff;
+  color: white;
+  font-weight: bold;
+}
+.nav-item-active {
+  background-color: #1890ff;
+  color: white;
+  font-weight: bold;
+}
+.nav-item-active .nav-text {
+  color: white !important; /* Garante que o texto fica visível */
+  font-weight: bold;
+}
+
+.nav-item-active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: #1890ff;
+}
+.log-out-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: white; 
+  color: red;
+  border: none;
+  border-radius: 1px;
+  padding: 1px 1px;
+  margin-top: 1px;
+  cursor: pointer;
+  font-size: 16px;
+  font-family: inherit;
+}
+
+.log-out-button .logout-icon {
+  margin-right: 26px; 
+  font-size: 20px;
+}
+
+.log-out-button:hover {
+  background-color: darkred; /* Efeito de hover */
+}
 .navigation-list {
   width: 100%;
   font-family: 'Public Sans', -apple-system, Roboto, Helvetica, sans-serif;
@@ -134,6 +208,9 @@ export default {
   width: 18px;
   aspect-ratio: 0.9;
   object-fit: contain;
+  filter: grayscale(100%) brightness(0) invert(0); /* Preto e branco */
+
+
 }
 
 .nav-text {

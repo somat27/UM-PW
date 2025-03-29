@@ -64,7 +64,7 @@ export default {
   <style scoped>
   .signUp{
     background-color: rgba(32, 76, 109, 1);
-
+  
     display: flex;
     padding: 197px 80px 405px;
     flex-direction: column;
