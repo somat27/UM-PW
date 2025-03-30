@@ -4,7 +4,7 @@
 
 <script>
 /*DescricaoAuditoria/PaginaDetalhesPosAuditoria - MainPage/AuditoriasPage - BackGround*/
-import PaginaFundo from './components/Versao2/PaginaFundo.vue'
+import PaginaFundo from './components/Versao2/PaginaLogin/PaginaLogin.vue'
 
 export default {
   name: 'App',
