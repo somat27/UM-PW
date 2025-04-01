@@ -1,69 +1,85 @@
 <template>
-    <button class="campo-dashboard">
-        <i class="bi bi-arrow-left"></i>
-        <p>Voltar para Dashboard</p>
-    </button>
+    <div>
+        <AppCabecalho />
+        <button class="campo-dashboard" @click="goToPaginaIncial">
+            <i class="bi bi-arrow-left"></i>
+            <p>Voltar para Dashboard</p>
+        </button>
 
-    <div class="campo-auditoria">
-        <div class="auditoria">
+        <div class="campo-auditoria">
+            <div class="auditoria">
 
-            <div class="auditoria-cabecalho">
-                <h1>Inspeção Instalações Elétricas</h1>
-                <h2>Pendente</h2>
-            </div>
+                <div class="auditoria-cabecalho">
+                    <h1>Inspeção Instalações Elétricas</h1>
+                    <h2>Pendente</h2>
+                </div>
 
-            <div class="campo-paragrafo">
-                <div class="paragrafo">
-                    <i class="bi bi-geo-alt"></i>
-                    <div class="local-hora">
-                        <h2>Edificio Central, Porto</h2>
-                        <h3>Avenida Central, 123, 1000-001 Lisboa</h3>
+                <div class="campo-paragrafo">
+                    <div class="paragrafo">
+                        <i class="bi bi-geo-alt"></i>
+                        <div class="local-hora">
+                            <h2>Edificio Central, Porto</h2>
+                            <h3>Avenida Central, 123, 1000-001 Lisboa</h3>
+                        </div>
+                    </div>
+                    <div class="paragrafo">
+                        <i class="bi bi-clock"></i>
+                        <div class="local-hora">
+                            <h2>09:00 - 12:00</h2>
+                            <h3>02/06/2023</h3>
+                        </div>
                     </div>
                 </div>
-                <div class="paragrafo">
-                    <i class="bi bi-clock"></i>
-                    <div class="local-hora">
-                        <h2>09:00 - 12:00</h2>
-                        <h3>02/06/2023</h3>
+
+                <div class="campo-descricao">
+                    <h1>Descrição</h1>
+                    <h3>Verificação de rotina dos sistemas conforme procedimento padrão.</h3>
+                </div>
+
+                <div class="campo-equipa-equipamento">
+                    <div class="equipa-equipamento">
+                        <i class="bi bi-people"></i>
+                        <h2>Equipa</h2>
+                    </div>
+
+                    <div class="equipa-equipamento">
+                        <i class="bi bi-file-earmark-text"></i>
+                        <h2>Equipamento</h2>
                     </div>
                 </div>
-            </div>
 
-            <div class="campo-descricao">
-                <h1>Descrição</h1>
-                <h3>Verificação de rotina dos sistemas conforme procedimento padrão.</h3>
-            </div>
-
-            <div class="campo-equipa-equipamento">
-                <div class="equipa-equipamento">
-                    <i class="bi bi-people"></i>
-                    <h2>Equipa</h2>
+                <div class="imagem">
+                    <img src="@/assets/logo.png">
+                    <button class="botao-imagem">Ver no mapa</button>
                 </div>
 
-                <div class="equipa-equipamento">
-                    <i class="bi bi-file-earmark-text"></i>
-                    <h2>Equipamento</h2>
-                </div>
+                <button class="iniciar-auditoria" @click="goToPaginaRegistar">
+                    <i class="bi bi-play-circle"></i>
+                    <h2>Iniciar Auditoria</h2>
+                </button>
+
             </div>
-
-            <div class="imagem">
-                <img src="@/assets/logo.png">
-                <button class="botao-imagem">Ver no mapa</button>
-            </div>
-
-            <button class="iniciar-auditoria">
-                <i class="bi bi-play-circle"></i>
-                <h2>Iniciar Auditoria</h2>
-            </button>
-
         </div>
     </div>
 </template>
 
 
 <script>
+
+    import AppCabecalho from '../AppCabecalho.vue';
     export default {
         name: "PaginaDetalhe",
+        components: {
+                AppCabecalho,
+            },
+        methods: {
+            goToPaginaIncial() {
+                this.$router.push("/PaginaInicial");
+            },
+            goToPaginaRegistar() {
+                this.$router.push("/PaginaRegistar");
+            },
+        },
     };
 </script>
 
@@ -186,11 +202,13 @@
     }
 
     .iniciar-auditoria {
-        margin: 3vh auto;
         display: flex;
+        align-items: center;
         justify-content: center;
+        
         gap: 2vw;
-        padding: 1vh 1vw;
+        padding: 1vh;
+        margin: 3vh;
         width: 75vw;
 
 

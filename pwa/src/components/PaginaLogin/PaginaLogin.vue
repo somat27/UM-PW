@@ -1,4 +1,5 @@
 <template>
+
     <div class="fundo">
         <div class="campo-imagem">
             <i class="bi bi-eye"></i>
@@ -36,7 +37,8 @@
             </div>
         </div>
 
-        <button class="botao-entrar">
+        
+        <button class="botao-entrar" @click="goToPaginaIncial">
             <i class="bi bi-box-arrow-in-right"></i>
             <span>Entrar</span>
         </button>
@@ -61,12 +63,15 @@
             onSearch() {
                 
             },
+            goToPaginaIncial() {
+                this.$router.push("/PaginaInicial");
+            },
         },
     };
 </script>
 
 
-<style>
+<style scoped>
     .fundo {
         display: flex;
         flex-direction: column;

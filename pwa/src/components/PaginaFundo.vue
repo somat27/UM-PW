@@ -10,7 +10,7 @@
 
 <script>
     import AppCabecalho from './AppCabecalho.vue';
-    import PaginaInicial from './PaginaDetalhe/PaginaDetalhe.vue';
+    import PaginaInicial from './PaginaInicial/PaginaInicial.vue';
 
     export default {
         name: "PaginaFundo",

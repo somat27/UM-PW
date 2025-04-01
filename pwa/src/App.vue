@@ -1,16 +1,14 @@
 <template>
-  <PaginaFundo/>
+  <div id="app">
+    <router-view/>
+  </div>
 </template>
 
 <script>
-/*DescricaoAuditoria/PaginaDetalhesPosAuditoria - MainPage/AuditoriasPage - BackGround*/
-import PaginaFundo from './components/Versao2/PaginaLogin/PaginaLogin.vue'
+/*PaginaInicial - PaginaDetalhe*/
 
 export default {
   name: 'App',
-  components: {
-    PaginaFundo
-  }
 }
 </script>
 
@@ -19,5 +17,10 @@ export default {
   text-align: center;
   color: #000000;
   margin-top: 0%;
+}
+
+.app {
+  width: 100%;
+  min-height: 100vh;
 }
 </style>
