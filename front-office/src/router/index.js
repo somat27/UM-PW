@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import MainPage from "@/views/MainPage.vue";
 import AboutUS from "@/views/AboutUS.vue";
 import Help from "@/views/Help.vue";
-import Report from "@/views/Report.vue"
+import Report from "@/views/Report.vue";
 
 const routes = [
   {
@@ -25,7 +25,6 @@ const routes = [
     name: "Report",
     component: Report,
   },
-
 ];
 
 const router = createRouter({
