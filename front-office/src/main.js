@@ -7,5 +7,7 @@ import "bootstrap/dist/js/bootstrap.bundle.min.js";
 
 const app = createApp(App);
 
+app.config.devtools = true;
+
 app.use(router); // Usa o Vue Router
 app.mount("#app");

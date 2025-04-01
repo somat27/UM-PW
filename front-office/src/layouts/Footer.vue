@@ -49,7 +49,7 @@ export default {
 
 <style scoped>
 .site-footer {
-  padding: 30px 72px;
+  padding: 1% 1% 1% 8%;
   display: flex;
   justify-content: space-between;
   color: #fff;
@@ -68,15 +68,16 @@ export default {
 .footer-links,
 .footer-social,
 .footer-contact {
+  font-family: 'Open Sans', sans-serif;
   display: flex;
   flex-direction: column;
   gap: 11px;
 }
 
 .footer-heading {
-  font-size: 36px;
+  font-size: 160%;
   margin: 0 0 11px 0;
-  font-weight: normal;
+  font-weight: bold;
   position: relative;
 }
 
@@ -97,7 +98,8 @@ export default {
 
 .footer-link,
 .contact-info {
-  font-size: 20px;
+  
+  font-size: 80%;
   text-decoration: none;
   color: #fff;
   margin: 0;
@@ -151,7 +153,8 @@ export default {
 }
 
 .copyright {
-  font-size: 20px;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 80%;
   margin: 0;
   opacity: 0.8;
   transition: opacity 0.3s ease;
