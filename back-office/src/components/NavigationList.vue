@@ -246,13 +246,19 @@ const isDashboardActive = computed(() => {
 
 .user-avatar {
   width: 24px;
-  aspect-ratio: 1;
-  object-fit: contain;
+  height: 24px;
+  object-fit: cover;
   border-radius: 12px;
+  display: block;
+  background-color: #f0f0f0; 
 }
 
 .user-name {
   line-height: 21px;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 @media (max-width: 991px) {
