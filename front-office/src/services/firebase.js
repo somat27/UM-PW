@@ -8,12 +8,7 @@ import {
   updateDoc,
   serverTimestamp,
 } from "firebase/firestore";
-import {
-  getStorage,
-  ref as storageRef,
-  uploadBytes,
-  getDownloadURL,
-} from "firebase/storage";
+import axios from "axios";
 
 // Configuração do Firebase
 const firebaseConfig = {
@@ -27,13 +22,37 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-
-// Inicializa e obtém serviços
-
 const db = getFirestore(app);
-const storage = getStorage(app);
 
-// Função para submeter ocorrência ao Firebase
+// 🔹 Função para fazer upload de arquivos para o Imgur
+export async function uploadToImgur(files) {
+  const clientId = '7b650653626ba33'; // Substitua pelo seu Client ID do Imgur
+  const uploadedUrls = [];
+
+  for (const file of files) {
+    const formData = new FormData();
+    formData.append("image", file);
+
+    try {
+      const response = await axios.post("https://api.imgur.com/3/upload", formData, {
+        headers: {
+          Authorization: `Client-ID ${clientId}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      if (response.data.success) {
+        uploadedUrls.push(response.data.data.link);
+      }
+    } catch (error) {
+      console.error("Erro ao fazer upload para o Imgur:", error);
+    }
+  }
+
+  return uploadedUrls;
+}
+
+// 🔹 Função para submeter ocorrência ao Firebase
 export async function submitOcorrencia(formData) {
   try {
     // Prepara os dados para o Firebase
@@ -41,7 +60,7 @@ export async function submitOcorrencia(formData) {
       dataSubmissao: serverTimestamp(),
       descricao: formData.observations || "",
       endereco: formData.address || "",
-      imagemVideo: "", // Será atualizado após o upload de arquivos
+      imagemVideo: "", // Será atualizado após o upload
       status: "Pendente",
       tipoOcorrencia: formData.selectedCategory || "",
       coordenadas: formData.userLocation
@@ -56,55 +75,23 @@ export async function submitOcorrencia(formData) {
     const docRef = await addDoc(collection(db, "ocorrencias"), ocorrenciaData);
     console.log("Ocorrência registrada com ID:", docRef.id);
 
-    // Se houver arquivos, faz o upload
+    // Se houver arquivos, faz o upload para o Imgur
     if (formData.files && formData.files.length > 0) {
-      const fileUrls = await uploadFiles(docRef.id, formData.files);
+      const fileUrls = await uploadToImgur(formData.files);
 
-      // Atualiza o documento com os URLs dos arquivos
-      await updateDoc(doc(db, "ocorrencias", docRef.id), {
-        imagemVideo: fileUrls.join(","),
-      });
+      if (fileUrls.length > 0) {
+        // Atualiza o documento com os URLs das imagens
+        await updateDoc(doc(db, "ocorrencias", docRef.id), {
+          imagemVideo: fileUrls.join(","), // Salva os links das imagens no Firestore
+        });
+      }
     }
 
-    return {
-      success: true,
-      id: docRef.id,
-    };
+    return { success: true, id: docRef.id };
   } catch (error) {
     console.error("Erro ao registrar ocorrência:", error);
-    return {
-      success: false,
-      error: error.message,
-    };
+    return { success: false, error: error.message };
   }
 }
 
-// Função para fazer upload de arquivos
-async function uploadFiles(ocorrenciaId, files) {
-  const uploadPromises = [];
-  const fileUrls = [];
-
-  for (let i = 0; i < files.length; i++) {
-    const file = files[i];
-    const fileReference = storageRef(
-      storage,
-      `ocorrencias/${ocorrenciaId}/${file.name}`
-    );
-
-    const uploadPromise = uploadBytes(fileReference, file)
-      .then((snapshot) => getDownloadURL(snapshot.ref))
-      .then((downloadURL) => {
-        fileUrls.push(downloadURL);
-        return downloadURL;
-      });
-
-    uploadPromises.push(uploadPromise);
-  }
-
-  await Promise.all(uploadPromises);
-  return fileUrls;
-}
-
-export default {
-  submitOcorrencia,
-};
+export default { submitOcorrencia, uploadToImgur };
