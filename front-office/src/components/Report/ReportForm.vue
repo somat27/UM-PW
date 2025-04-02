@@ -79,10 +79,16 @@ import "leaflet/dist/leaflet.css";
 
 export default {
   name: "ReportForm",
+  props: {
+    defaultCategory: {
+      type: String,
+      default: "",
+    },
+  },
   data() {
     return {
       map: null,
-      selectedCategory: "",
+      selectedCategory: this.defaultCategory,
       address: "",
       observations: "",
       uploadedFiles: [],

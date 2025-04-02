@@ -24,6 +24,7 @@ const routes = [
     path: "/report",
     name: "Report",
     component: Report,
+    props: (route) => ({ defaultCategory: route.query.category || "" }),
   },
 
 ];

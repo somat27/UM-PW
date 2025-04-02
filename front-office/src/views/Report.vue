@@ -1,7 +1,7 @@
 <template>
   <main class="report-map">
     <Header />
-    <ReportForm />
+    <ReportForm :defaultCategory="defaultCategory" />
     <Footer />
   </main>
 </template>
@@ -17,6 +17,12 @@ export default {
     Header,
     ReportForm,
     Footer,
+  },
+  props: {
+    defaultCategory: {
+      type: String,
+      default: "",
+    },
   },
 };
 </script>

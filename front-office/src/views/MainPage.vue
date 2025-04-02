@@ -3,12 +3,13 @@
     <AppHeader />
     <HeroSection />
     <section class="service-cards">
+      <!-- Service Card de Vias Danificadas -->
       <ServiceCard
         title="Vias Danificadas? Avise-nos!!"
         description="Reporte buracos, fissuras ou danos em estradas e passeios para reparação rápida."
         :imageSrc="cardRoad"
         imageAlt="Roads icon"
-        buttonText="Reportar"
+        :onClick="() => goToReportPage('roads')"
       />
       <ServiceCard
         title="Luz Apagada? Ilumine a Cidade!"
@@ -70,13 +71,13 @@ import ServiceCard from "@/components/PaginaInicial/ServiceCard.vue";
 import StatCard from "@/components/PaginaInicial/StatCard.vue";
 import AppFooter from "@/layouts/Footer.vue";
 
-//imagens dos Report CARDS
+// imagens dos Report CARDS
 import cardRoad from "@/assets/PaginaInicial/cardReport/cardRoads.jpg";
 import cardPlaca from "@/assets/PaginaInicial/cardReport/cardPlaca.jpg";
 import cardLights from "@/assets/PaginaInicial/cardReport/cardLights.jpg";
 import cardObras from "@/assets/PaginaInicial/cardReport/cardObras.jpg";
 
-//imagens para os STATCS CARDS
+// imagens para os STATCS CARDS
 import cardAuditoria from "@/assets/PaginaInicial/cardEstatistica/auditoria.jpg";
 import cardOcorrencia from "@/assets/PaginaInicial/cardEstatistica/ocorrencia.jpg";
 import cardTempo from "@/assets/PaginaInicial/cardEstatistica/tempo.jpg";
@@ -102,6 +103,14 @@ export default {
       cardTempo,
       cardSatisfacao,
     };
+  },
+  methods: {
+    goToReportPage(category) {
+    this.$router.push({ 
+      name: 'Report', 
+      query: { category } 
+    });
+    }
   },
 };
 </script>
