@@ -17,6 +17,7 @@
         :imageSrc="cardPlaca"
         imageAlt="Light icon"
         buttonText="Reportar"
+        :onClick="() => goToReportPage('lights')"
       />
       <ServiceCard
         title="Sinalização em falta? Resolva já!"
@@ -24,6 +25,7 @@
         :imageSrc="cardLights"
         imageAlt="Signs icon"
         buttonText="Reportar"
+        :onClick="() => goToReportPage('sinals')"
       />
       <ServiceCard
         title="Obras e Intervenções Urbanas"
