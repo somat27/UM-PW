@@ -228,8 +228,6 @@
     .campo-imagens {
         border-radius: 15px;
         margin: 3vh;
-        
-        height: 20vh;
 
         background-color: rgba(197, 196, 196, 0.247);
     }

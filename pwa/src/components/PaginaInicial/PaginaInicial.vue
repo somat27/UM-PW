@@ -12,7 +12,7 @@
         </div>
         <div class="campo-auditorias-filtro">
             <div class="total-auditorias">
-                <p>x auditorias</p>
+                <p>{{ auditoriasVisiveis.length }} auditorias</p>
             </div>
 
             <div class="campo-filtro">
@@ -35,7 +35,7 @@
 
         <div class="campo-auditoria">
 
-            <button class="auditoria" v-for="audit in listaAuditorias" :key="audit.id" @click="goToPaginaDetalhe(audit)">
+            <button class="auditoria" v-for="audit in auditoriasVisiveis" :key="audit.id" @click="goToPaginaDetalhe(audit)">
 
                 <div class="auditoria-cabecalho">
                     <h1>{{audit.nome}}</h1>
@@ -90,6 +90,20 @@
                         estado: "Concluido",
                         local: "Castelo Guimarães, Cidade do berço",
                         data: "02/04/2025"
+                    },
+                    {
+                        id: "2",
+                        nome: "Poste eletrico no chao da rua",
+                        estado: "Incompleto",
+                        local: "Castelo Guimarães, Cidade do berço",
+                        data: "02/04/2025"
+                    },
+                    {
+                        id: "2",
+                        nome: "Poste eletrico no chao da rua",
+                        estado: "Concluido",
+                        local: "Castelo Guimarães, Cidade do berço",
+                        data: "02/04/2025"
                     }
                 ],
             }; 
@@ -99,6 +113,15 @@
             if (json) {
                 this.listaAuditorias = JSON.parse(json);
             }
+        },
+        computed: {
+            auditoriasVisiveis() {
+                return this.listaAuditorias.filter(auditoria => {
+                    const nomeMatch = auditoria.nome.toLowerCase().includes(this.searchQuery.toLowerCase());
+                    const estadoMatch = this.valorRadio ? auditoria.estado === this.valorRadio : true;
+                    return nomeMatch && estadoMatch;
+            });
+    }
         },
         methods: {
             onSearch() {

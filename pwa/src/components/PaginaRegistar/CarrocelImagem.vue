@@ -1,5 +1,5 @@
 <template>
-    <div class="carrossel">
+    <div class="carrossel" v-if="imagens.length != 0">
         <button @click="imagemAnterior" class="botao-carrossel" id="esquerda"><i class="bi bi-chevron-compact-left"></i></button>
         <img :src="imagens[imagemAtual]" alt="Imagem" class="imagem-carrossel" />
         <button @click="imagemSeguinte" class="botao-carrossel" id="direita"><i class="bi bi-chevron-compact-right"></i></button>
