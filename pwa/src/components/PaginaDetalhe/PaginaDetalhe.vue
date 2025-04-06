@@ -10,15 +10,15 @@
             <div class="auditoria">
 
                 <div class="auditoria-cabecalho">
-                    <h1>Inspeção Instalações Elétricas</h1>
-                    <h2>Pendente</h2>
+                    <h1>{{ auditoria.nome }}</h1>
+                    <h2>{{ auditoria.estado }}</h2>
                 </div>
 
                 <div class="campo-paragrafo">
                     <div class="paragrafo">
                         <i class="bi bi-geo-alt"></i>
                         <div class="local-hora">
-                            <h2>Edificio Central, Porto</h2>
+                            <h2>{{ auditoria.local }}</h2>
                             <h3>Avenida Central, 123, 1000-001 Lisboa</h3>
                         </div>
                     </div>
@@ -26,7 +26,7 @@
                         <i class="bi bi-clock"></i>
                         <div class="local-hora">
                             <h2>09:00 - 12:00</h2>
-                            <h3>02/06/2023</h3>
+                            <h3>{{ auditoria.data }}</h3>
                         </div>
                     </div>
                 </div>
@@ -65,21 +65,33 @@
 
 
 <script>
+import AppCabecalho from '../AppCabecalho.vue';
 
-    import AppCabecalho from '../AppCabecalho.vue';
-    export default {
-        name: "PaginaDetalhe",
-        components: {
-                AppCabecalho,
-            },
-        methods: {
-            goToPaginaIncial() {
-                this.$router.push("/PaginaInicial");
-            },
-            goToPaginaRegistar() {
-                this.$router.push("/PaginaRegistar");
-            },
+export default {
+    name: "PaginaDetalhe",
+    components: {
+        AppCabecalho,
+    },
+    props: {
+        auditoria: {
+        type: Object,
+        default: () => ({
+            id: "",
+            nome: "Inspeção Instalações Elétricas",
+            estado: "Pendente",
+            local: "Edificio Central, Porto",
+            data: "02/06/2023"
+        })
+        }
+    },
+    methods: {
+        goToPaginaIncial() {
+        this.$router.push("/PaginaInicial");
         },
+        goToPaginaRegistar() {
+        this.$router.push("/PaginaRegistar");
+        },
+    },
     };
 </script>
 

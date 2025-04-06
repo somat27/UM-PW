@@ -20,7 +20,6 @@
                 type="text"
                 v-model="searchQuery"
                 placeholder="seu@email.com"
-                @input="onSearch"
             />
         </div>
 
@@ -31,7 +30,6 @@
                     type="text"
                     v-model="searchQuery"
                     placeholder="********"
-                    @input="onSearch"
                 />
                 <i class="bi bi-eye icon"></i>
             </div>

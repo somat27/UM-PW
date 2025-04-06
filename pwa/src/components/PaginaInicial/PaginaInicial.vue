@@ -35,26 +35,27 @@
 
         <div class="campo-auditoria">
 
-            <button class="auditoria" @click="goToPaginaDetalhe">
+            <button class="auditoria" v-for="audit in listaAuditorias" :key="audit.id" @click="goToPaginaDetalhe(audit)">
 
                 <div class="auditoria-cabecalho">
-                    <h1>Inspeção Instalações Elétricas</h1>
-                    <h2>Pendente</h2>
+                    <h1>{{audit.nome}}</h1>
+                    <h2>{{audit.estado}}</h2>
                 </div>
 
                 <div class="campo-paragrafo">
                     <div class="paragrafo">
                         <i class="bi bi-geo-alt"></i>
-                        <h3>Edificio Central, Porto</h3>
+                        <h3>{{audit.local}}</h3>
                     </div>
                     <div class="paragrafo">
                         <i class="bi bi-clock"></i>
-                        <h3>02/06/2023</h3>
+                        <h3>{{audit.data}}</h3>
                     </div>
                 </div>
 
             </button>
 
+            
         </div>
     </div>
     
@@ -74,7 +75,30 @@
                 valorRadio: null,
                 popupfiltro: false,
                 searchQuery: '',
+
+                listaAuditorias: [
+                    {
+                        id: "1",
+                        nome: "Inspeção Instalações Elétricas",
+                        estado: "Pendente",
+                        local: "Edificio Central, Porto",
+                        data: "02/06/2023"
+                    },
+                    {
+                        id: "2",
+                        nome: "Poste eletrico no chao da rua",
+                        estado: "Concluido",
+                        local: "Castelo Guimarães, Cidade do berço",
+                        data: "02/04/2025"
+                    }
+                ],
             }; 
+        },
+        created() {
+            const json = localStorage.getItem("listaAuditorias");
+            if (json) {
+                this.listaAuditorias = JSON.parse(json);
+            }
         },
         methods: {
             onSearch() {
@@ -88,9 +112,14 @@
                 }
                 this.popupfiltro = false;
             },
-            goToPaginaDetalhe() {
-                this.$router.push("/PaginaDetalhe");
-            },
+            goToPaginaDetalhe(audit) {
+                this.$router.push({
+                    path: "/PaginaDetalhe",
+                    query: {
+                        auditoria: JSON.stringify(audit)
+                    }
+                });
+            }
         }
     };
 </script>
