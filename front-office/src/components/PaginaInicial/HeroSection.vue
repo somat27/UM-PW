@@ -37,7 +37,7 @@
           class="button-light"
           :style="{ left: buttonLightX + 'px', top: buttonLightY + 'px' }"
         ></div>
-        <button class="cta-button">
+        <button class="cta-button" @click="goToReportPage">
           <span class="button-text">Reportar Incidente</span>
           <span class="button-icon">
             <svg
@@ -167,6 +167,9 @@ export default {
         }px)`;
       }
     },
+    goToReportPage() {
+      this.$router.push("/report");
+    },
   },
 };
 </script>
@@ -194,14 +197,13 @@ export default {
   background-image: url("@/assets/PaginaInicial/HeroImage.jpg");
   background-size: cover;
   background-position: center;
-  opacity: 0.7; /* Ajuste este valor entre 0 e 1 conforme necessário */
+  opacity: 0.7;
   z-index: 1;
 }
 
 .hero-content {
-  /* ... outros estilos ... */
   position: relative;
-  z-index: 4; /* Certifique-se que este valor é maior que o z-index do pseudo-elemento */
+  z-index: 4;
 }
 
 /* Máscara de revelação */
@@ -240,7 +242,6 @@ export default {
   animation: titleReveal 1.5s ease-out forwards;
 }
 
-/* Animação de revelação do título */
 @keyframes titleReveal {
   0% {
     opacity: 0;

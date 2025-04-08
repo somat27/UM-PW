@@ -3,12 +3,13 @@
     <AppHeader />
     <HeroSection />
     <section class="service-cards">
+      <!-- Service Card de Vias Danificadas -->
       <ServiceCard
         title="Vias Danificadas? Avise-nos!!"
         description="Reporte buracos, fissuras ou danos em estradas e passeios para reparação rápida."
         :imageSrc="cardRoad"
         imageAlt="Roads icon"
-        buttonText="Reportar"
+        :onClick="() => goToReportPage('roads')"
       />
       <ServiceCard
         title="Luz Apagada? Ilumine a Cidade!"
@@ -16,6 +17,7 @@
         :imageSrc="cardPlaca"
         imageAlt="Light icon"
         buttonText="Reportar"
+        :onClick="() => goToReportPage('lights')"
       />
       <ServiceCard
         title="Sinalização em falta? Resolva já!"
@@ -23,6 +25,7 @@
         :imageSrc="cardLights"
         imageAlt="Signs icon"
         buttonText="Reportar"
+        :onClick="() => goToReportPage('sinals')"
       />
       <ServiceCard
         title="Obras e Intervenções Urbanas"
@@ -70,13 +73,13 @@ import ServiceCard from "@/components/PaginaInicial/ServiceCard.vue";
 import StatCard from "@/components/PaginaInicial/StatCard.vue";
 import AppFooter from "@/layouts/Footer.vue";
 
-//imagens dos Report CARDS
+// imagens dos Report CARDS
 import cardRoad from "@/assets/PaginaInicial/cardReport/cardRoads.jpg";
 import cardPlaca from "@/assets/PaginaInicial/cardReport/cardPlaca.jpg";
 import cardLights from "@/assets/PaginaInicial/cardReport/cardLights.jpg";
 import cardObras from "@/assets/PaginaInicial/cardReport/cardObras.jpg";
 
-//imagens para os STATCS CARDS
+// imagens para os STATCS CARDS
 import cardAuditoria from "@/assets/PaginaInicial/cardEstatistica/auditoria.jpg";
 import cardOcorrencia from "@/assets/PaginaInicial/cardEstatistica/ocorrencia.jpg";
 import cardTempo from "@/assets/PaginaInicial/cardEstatistica/tempo.jpg";
@@ -103,6 +106,19 @@ export default {
       cardSatisfacao,
     };
   },
+  methods: {
+    goToReportPage(category) {
+      this.$router.push({
+        name: "Report",
+        query: { category },
+      });
+
+      // Asegura que o scroll vai para o topo após a navegação
+      this.$nextTick(() => {
+        window.scrollTo(0, 0);
+      });
+    },
+  },
 };
 </script>
 
@@ -116,7 +132,7 @@ export default {
 
 .service-cards {
   display: flex;
-  padding-top: -1000px;
+  padding-top: 100px;
   gap: 50px;
   justify-content: center;
   flex-wrap: wrap;
