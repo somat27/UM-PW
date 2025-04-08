@@ -108,11 +108,16 @@ export default {
   },
   methods: {
     goToReportPage(category) {
-    this.$router.push({ 
-      name: 'Report', 
-      query: { category } 
-    });
-    }
+      this.$router.push({
+        name: "Report",
+        query: { category },
+      });
+
+      // Asegura que o scroll vai para o topo após a navegação
+      this.$nextTick(() => {
+        window.scrollTo(0, 0);
+      });
+    },
   },
 };
 </script>

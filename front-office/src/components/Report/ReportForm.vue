@@ -33,12 +33,31 @@
 
       <div class="mb-3 fade-in-delay-3">
         <label class="form-label">Endereço</label>
-        <input
-          v-model="address"
-          class="form-control hover-effect"
-          placeholder="Digite o endereço do incidente"
-          :class="{ filled: address }"
-        />
+        <div class="input-group">
+          <input
+            v-model="address"
+            class="form-control hover-effect"
+            placeholder="Digite o endereço do incidente"
+            :class="{ filled: address }"
+            @keyup.enter="searchAddress"
+          />
+          <button
+            class="btn btn-outline-primary"
+            @click="searchAddress"
+            :disabled="!address"
+          >
+            <i class="bi bi-search"></i>
+          </button>
+        </div>
+        <small class="text-muted" v-if="isSearching">
+          <i class="bi bi-hourglass-split"></i> Buscando endereço...
+        </small>
+        <small class="text-success" v-if="lastSearchSuccess">
+          <i class="bi bi-geo-alt-fill"></i> Endereço localizado no mapa!
+        </small>
+        <small class="text-danger" v-if="searchError">
+          <i class="bi bi-exclamation-triangle"></i> {{ searchError }}
+        </small>
       </div>
 
       <div class="mb-3 fade-in-delay-4">
@@ -47,7 +66,7 @@
           v-model="observations"
           class="form-control hover-effect"
           placeholder="Descreva o problema (máximo 100 palavras)"
-          maxlength="100"
+          maxlength="500"
           :class="{ filled: observations }"
         ></textarea>
         <small
@@ -98,8 +117,6 @@
 </template>
 
 <script>
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
 import { submitOcorrencia } from "@/services/firebase";
 
 export default {
@@ -113,105 +130,232 @@ export default {
   data() {
     return {
       map: null,
+      geocoder: null,
       selectedCategory: this.defaultCategory,
       address: "",
       observations: "",
       uploadedFiles: [],
       userLocation: null,
-      customIconUrl: "https://imgur.com/orBDSWx",
       mapInitialized: false,
       isSubmitting: false,
+      isSearching: false,
+      lastSearchSuccess: false,
+      searchError: null,
+      google: null,
     };
   },
   computed: {
     isFormValid() {
-      return this.selectedCategory && this.address;
+      return this.selectedCategory && this.address && this.userLocation;
+    },
+    googleMapsApiUrl() {
+      console.log("aqui:   " + process.env.VUE_APP_API_KEY);
+      // Removida a biblioteca marker, utilizando apenas places
+      return `https://maps.googleapis.com/maps/api/js?key=${process.env.VUE_APP_API_KEY}&libraries=places&callback=initGoogleCallback`;
     },
   },
   mounted() {
+    // Add a global callback for Google Maps
+    window.initGoogleCallback = this.initMapAfterLoad;
+
     // efeito suave
     setTimeout(() => {
-      this.initMap();
+      this.loadGoogleMapsAPI();
     }, 300);
   },
   methods: {
+    loadGoogleMapsAPI() {
+      if (typeof window !== "undefined" && !window.google) {
+        const script = document.createElement("script");
+        script.src = this.googleMapsApiUrl;
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+      } else if (window.google && !this.mapInitialized) {
+        this.initMapAfterLoad();
+      }
+    },
+    initMapAfterLoad() {
+      // Store the google object locally
+      if (window.google) {
+        this.google = window.google;
+        this.initMap();
+      }
+    },
     initMap() {
       if (
         typeof window !== "undefined" &&
         document.getElementById("map") &&
-        !this.mapInitialized
+        !this.mapInitialized &&
+        this.google
       ) {
-        const init = [41.44575, -8.300961];
-        this.map = L.map("map", {
-          zoomAnimation: true,
-          fadeAnimation: true,
-          markerZoomAnimation: true,
-        }).setView(init, 13);
+        // Coordenadas iniciais
+        const cord_inicial = { lat: 41.442726, lng: -8.291696 };
 
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          attribution: "© OpenStreetMap contributors",
-        }).addTo(this.map);
-
-        this.map.on("click", this.onMapClick);
-
-        // Adiciona animação de zoom quando o mapa é carregado
-        this.map.once("load", () => {
-          setTimeout(() => {
-            this.map.setZoom(14, {
-              animate: true,
-              duration: 1,
-            });
-          }, 500);
+        this.map = new this.google.maps.Map(document.getElementById("map"), {
+          center: cord_inicial,
+          zoom: 13,
+          mapTypeControl: true,
+          streetViewControl: false,
+          fullscreenControl: true,
+          zoomControl: true,
         });
+
+        // Inicializar o geocoder
+        this.geocoder = new this.google.maps.Geocoder();
+
+        // Adicionar evento de clique no mapa
+        this.map.addListener("click", (e) => {
+          this.onMapClick(e);
+        });
+
+        // Efeito de zoom quando o mapa é carregado
+        setTimeout(() => {
+          this.map.setZoom(14);
+        }, 500);
 
         this.mapInitialized = true;
       }
     },
     onMapClick(e) {
-      const { lat, lng } = e.latlng;
+      const lat = e.latLng.lat();
+      const lng = e.latLng.lng();
+      this.updateMapMarker(lat, lng);
+      // Quando o usuário clica no mapa, atualizar o campo de endereço
+      this.reverseGeocode(lat, lng);
+    },
+    // Método para buscar endereço quando o usuário digita e pressiona enter ou clica no botão
+    async searchAddress() {
+      if (!this.address) return;
 
-      // Remove marcadores antigos
-      this.map.eachLayer((layer) => {
-        if (layer instanceof L.Marker) {
-          this.map.removeLayer(layer);
+      this.isSearching = true;
+      this.lastSearchSuccess = false;
+      this.searchError = null;
+
+      try {
+        // Buscar coordenadas com base no endereço
+        const result = await this.geocodeAddress(this.address);
+
+        if (result) {
+          // Atualiza o marcador no mapa com as coordenadas encontradas
+          this.updateMapMarker(result.lat, result.lng);
+          this.lastSearchSuccess = true;
+
+          // Adiciona efeito de pulso ao campo para indicar sucesso
+          const addressInput = document.querySelector(
+            'input[v-model="address"]'
+          );
+          if (addressInput) {
+            addressInput.classList.add("success-input");
+            setTimeout(() => {
+              addressInput.classList.remove("success-input");
+            }, 1500);
+          }
+        } else {
+          this.searchError =
+            "Endereço não encontrado, tente ser mais específico";
         }
-      });
+      } catch (error) {
+        console.error("Erro ao buscar endereço:", error);
+        this.searchError = "Erro ao buscar o endereço. Tente novamente.";
+      } finally {
+        this.isSearching = false;
+      }
+    },
+    // Método para converter endereço em coordenadas (geocodificação)
+    async geocodeAddress(address) {
+      return new Promise((resolve) => {
+        if (!this.geocoder) {
+          resolve(null);
+          return;
+        }
 
-      // Criando um ícone personalizado do diretório "assets"
-      const customIcon = L.icon({
-        iconUrl: this.customIconUrl, // Caminho do ícone nos assets
-        iconSize: [40, 40], // Tamanho do ícone
-        iconAnchor: [20, 40], // Ponto de ancoragem
-        popupAnchor: [0, -40], // Onde aparece o popup
-        className: "marker-bounce", // Adiciona classe para animação
-      });
+        // Adicionar 'Portugal' ao final da pesquisa para melhorar a precisão
+        const searchQuery = `${address}, Portugal`;
 
-      // Adicionando o marcador ao mapa com animação
-      const marker = L.marker([lat, lng], {
-        icon: customIcon,
-        opacity: 0,
-      }).addTo(this.map);
-
-      // Anima a opacidade do marcador
-      setTimeout(() => {
-        marker.setOpacity(1);
-      }, 100);
-
-      this.userLocation = { lat, lng };
-
-      // Obtendo endereço reverso
-      fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
-      )
-        .then((response) => response.json())
-        .then((data) => {
-          this.address =
-            data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-        })
-        .catch((error) => {
-          console.error("Erro na geocodificação:", error);
-          this.address = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+        this.geocoder.geocode({ address: searchQuery }, (results, status) => {
+          if (status === "OK" && results && results.length > 0) {
+            const location = results[0].geometry.location;
+            resolve({
+              lat: location.lat(),
+              lng: location.lng(),
+              displayName: results[0].formatted_address,
+            });
+          } else {
+            resolve(null);
+          }
         });
+      });
+    },
+    // Método para obter endereço a partir de coordenadas (geocodificação reversa)
+    async reverseGeocode(lat, lng) {
+      try {
+        if (!this.geocoder) return;
+
+        this.isSearching = true;
+
+        const latlng = { lat, lng };
+
+        this.geocoder.geocode({ location: latlng }, (results, status) => {
+          if (status === "OK" && results && results.length > 0) {
+            this.address = results[0].formatted_address;
+            this.lastSearchSuccess = true;
+          } else {
+            this.address = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+          }
+          this.isSearching = false;
+        });
+      } catch (error) {
+        console.error("Erro na geocodificação reversa:", error);
+        this.address = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+        this.isSearching = false;
+      }
+    },
+    // Método unificado para atualizar o marcador no mapa (agora usando marcadores padrão)
+    updateMapMarker(lat, lng) {
+      if (!this.google || !this.map) return;
+
+      // Remover marcador antigo se existir
+      if (this.marker) {
+        this.marker.setMap(null);
+        this.marker = null; // Importante: definir como null após a remoção
+      }
+
+      try {
+        // Criar configuração para o marcador padrão
+        const markerOptions = {
+          position: { lat, lng },
+          map: this.map,
+          title: "Localização selecionada",
+        };
+
+        // Adicionar ícone personalizado se estiver definido
+        if (process.env.VUE_APP_MARKER_ICON) {
+          markerOptions.icon = {
+            url: process.env.VUE_APP_MARKER_ICON,
+            scaledSize: new this.google.maps.Size(40, 40),
+            origin: new this.google.maps.Point(0, 0),
+            anchor: new this.google.maps.Point(20, 40),
+          };
+        }
+
+        // Criar o marcador padrão
+        this.marker = new this.google.maps.Marker(markerOptions);
+
+        // Centralizar o mapa na nova localização
+        this.map.setCenter({ lat, lng });
+        this.map.setZoom(16);
+
+        // Atualizar a localização do usuário no estado
+        this.userLocation = { lat, lng };
+
+        console.log("Novo marcador padrão criado em:", lat, lng);
+      } catch (error) {
+        console.error("Erro ao criar marcador:", error);
+        alert(
+          "Erro ao criar o marcador. Verifique o console para mais detalhes."
+        );
+      }
     },
     handleFileUpload(event) {
       this.uploadedFiles = Array.from(event.target.files);
@@ -238,6 +382,7 @@ export default {
         userLocation: this.userLocation,
         files: this.uploadedFiles,
       };
+      console.log(formData.files);
 
       try {
         // Chama o serviço Firebase para submeter a ocorrência
@@ -291,6 +436,8 @@ export default {
       this.observations = "";
       this.uploadedFiles = [];
       this.userLocation = null;
+      this.lastSearchSuccess = false;
+      this.searchError = null;
 
       // Reset do botão
       const button = document.querySelector(".submit-button");
@@ -298,14 +445,24 @@ export default {
       button.innerHTML = '<i class="bi bi-send-fill"></i> Submeter';
 
       // Limpa os marcadores do mapa
-      if (this.map) {
-        this.map.eachLayer((layer) => {
-          if (layer instanceof L.Marker) {
-            this.map.removeLayer(layer);
-          }
-        });
+      if (this.marker) {
+        this.marker.setMap(null);
+        this.marker = null; // Importante limpar a referência ao remover
       }
     },
+  },
+  // Clean up when component is destroyed
+  beforeUnmount() {
+    // Remove the global callback
+    if (window.initGoogleCallback) {
+      delete window.initGoogleCallback;
+    }
+
+    // Clean up marker and map
+    if (this.marker) {
+      this.marker.setMap(null);
+      this.marker = null;
+    }
   },
 };
 </script>
@@ -450,9 +607,27 @@ export default {
   transform: scale(1.05);
 }
 
-/* Animação do marcador do mapa */
-.marker-bounce {
-  animation: bounce 0.6s ease-out;
+.error-submit {
+  background-color: #dc3545 !important;
+}
+
+/* Novo estilo para indicar sucesso na busca de endereço */
+.success-input {
+  border-color: #28a745 !important;
+  box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25) !important;
+  animation: successPulse 1s;
+}
+
+@keyframes successPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(40, 167, 69, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+  }
 }
 
 /* Animação de validação */
@@ -512,23 +687,6 @@ export default {
   }
 }
 
-@keyframes bounce {
-  0% {
-    transform: translateY(-30px);
-    opacity: 0;
-  }
-  60% {
-    transform: translateY(5px);
-    opacity: 1;
-  }
-  80% {
-    transform: translateY(-3px);
-  }
-  100% {
-    transform: translateY(0);
-  }
-}
-
 @keyframes shake {
   10%,
   90% {
@@ -559,130 +717,6 @@ export default {
 .fade-leave-to {
   opacity: 0;
   transform: translateY(-10px);
-}
-
-.form-title {
-  font-size: 2rem;
-  color: #204c6d;
-  text-align: center;
-  margin-bottom: 1.5rem;
-}
-
-.form-description {
-  font-size: 1.2rem;
-  color: #333;
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.form-section {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  width: 100%;
-}
-
-.category-section,
-.location-section,
-.map-section,
-.input-section,
-.attachments-section,
-.submit-section {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  width: 100%;
-}
-
-.category-label,
-.input-section label {
-  color: rgba(32, 76, 109, 1);
-  font-size: 1.1rem;
-  margin-bottom: 0.5rem;
-}
-
-.category-select {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid rgba(32, 76, 109, 0.3);
-  border-radius: 8px;
-  font-size: 1rem;
-  background-color: #f0f8ff;
-}
-
-.category-select,
-.address-input,
-.observations-input {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid rgba(32, 76, 109, 0.3);
-  border-radius: 8px;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-}
-
-.observations-input {
-  min-height: 120px;
-  resize: vertical;
-}
-
-.upload-icon-container {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 1rem;
-}
-
-.upload-icon,
-.upload-button-icon {
-  width: 48px;
-  height: 48px;
-  fill: white;
-}
-
-.upload-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 12px 24px;
-  background-color: rgba(32, 76, 109, 1);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.3s, transform 0.3s;
-}
-
-.upload-button:hover {
-  background-color: rgba(32, 76, 109, 0.9);
-  transform: translateY(-2px);
-}
-
-.file-input {
-  display: none;
-}
-
-.file-list {
-  margin-top: 1rem;
-  font-size: 0.9rem;
-  color: rgba(32, 76, 109, 0.7);
-}
-
-.submit-button {
-  width: 100%;
-  padding: 15px;
-  background-color: rgba(32, 76, 109, 1);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 1.1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.submit-button:disabled {
-  background-color: rgba(32, 76, 109, 0.5);
-  cursor: not-allowed;
 }
 
 /* Ajuste do mapa para mais margem lateral */

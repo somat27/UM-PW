@@ -4,11 +4,10 @@ import {
   getFirestore,
   collection,
   addDoc,
-  doc,
   updateDoc,
+  doc,
   serverTimestamp,
 } from "firebase/firestore";
-import axios from "axios";
 
 // Configuração do Firebase
 const firebaseConfig = {
@@ -24,33 +23,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// 🔹 Função para fazer upload de arquivos para o Imgur
-export async function uploadToImgur(files) {
-  const clientId = '7b650653626ba33'; // Substitua pelo seu Client ID do Imgur
-  const uploadedUrls = [];
-
-  for (const file of files) {
-    const formData = new FormData();
-    formData.append("image", file);
-
-    try {
-      const response = await axios.post("https://api.imgur.com/3/upload", formData, {
-        headers: {
-          Authorization: `Client-ID ${clientId}`,
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
-      if (response.data.success) {
-        uploadedUrls.push(response.data.data.link);
-      }
-    } catch (error) {
-      console.error("Erro ao fazer upload para o Imgur:", error);
-    }
-  }
-
-  return uploadedUrls;
-}
+const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/do5hfydb2/upload";
+const UPLOAD_PRESET = "EyesEveryWhere";
 
 // 🔹 Função para submeter ocorrência ao Firebase
 export async function submitOcorrencia(formData) {
@@ -60,7 +34,7 @@ export async function submitOcorrencia(formData) {
       dataSubmissao: serverTimestamp(),
       descricao: formData.observations || "",
       endereco: formData.address || "",
-      imagemVideo: "", // Será atualizado após o upload
+      imagemVideo: [], // Agora será um array de URLs
       status: "Pendente",
       tipoOcorrencia: formData.selectedCategory || "",
       coordenadas: formData.userLocation
@@ -71,20 +45,24 @@ export async function submitOcorrencia(formData) {
         : { latitude: 0, longitude: 0 },
     };
 
-    // Adiciona o documento à coleção 'ocorrencias'
+    // Adiciona o documento à coleção 'ocorrencias' e obtém o ID
     const docRef = await addDoc(collection(db, "ocorrencias"), ocorrenciaData);
     console.log("Ocorrência registrada com ID:", docRef.id);
 
-    // Se houver arquivos, faz o upload para o Imgur
+    // 🔹 Se houver arquivos, faz o upload para o Cloudinary
     if (formData.files && formData.files.length > 0) {
-      const fileUrls = await uploadToImgur(formData.files);
+      const uploadPromises = formData.files.map((file) =>
+        uploadToCloudinary(file)
+      ); // Faz upload de todas as imagens
 
-      if (fileUrls.length > 0) {
-        // Atualiza o documento com os URLs das imagens
-        await updateDoc(doc(db, "ocorrencias", docRef.id), {
-          imagemVideo: fileUrls.join(","), // Salva os links das imagens no Firestore
-        });
-      }
+      const fileUrls = await Promise.all(uploadPromises); // Aguarda todos os uploads serem concluídos
+
+      // 🔹 Atualiza o Firestore com o array de URLs das imagens
+      await updateDoc(doc(db, "ocorrencias", docRef.id), {
+        imagemVideo: fileUrls.filter((url) => url !== null), // Filtra URLs inválidas
+      });
+
+      console.log("Imagens salvas no Firestore:", fileUrls);
     }
 
     return { success: true, id: docRef.id };
@@ -94,4 +72,28 @@ export async function submitOcorrencia(formData) {
   }
 }
 
-export default { submitOcorrencia, uploadToImgur };
+// 🔹 Função para upload de imagens para o Cloudinary
+async function uploadToCloudinary(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", UPLOAD_PRESET);
+
+  try {
+    const response = await fetch(CLOUDINARY_URL, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Erro no upload: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.secure_url; // Retorna a URL do arquivo no Cloudinary
+  } catch (error) {
+    console.error("Erro ao enviar para Cloudinary:", error);
+    return null;
+  }
+}
+
+export { uploadToCloudinary };
