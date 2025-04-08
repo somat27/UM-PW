@@ -1,6 +1,6 @@
 <template>
     <div>
-        <AppCabecalho />
+        <AppCabecalho/>
         <div class="campo-pesquisa">
             <i class="bi bi-search icon"></i>
             <input
@@ -75,6 +75,7 @@
                 valorRadio: null,
                 popupfiltro: false,
                 searchQuery: '',
+                uid: null,
 
                 listaAuditorias: [
                     {
@@ -123,6 +124,9 @@
             });
     }
         },
+        mounted() {
+            this.uid = this.$route.params.uid;
+        },
         methods: {
             onSearch() {
                 
@@ -138,6 +142,7 @@
             goToPaginaDetalhe(audit) {
                 this.$router.push({
                     path: "/PaginaDetalhe",
+                    params: { id: audit.id },
                     query: {
                         auditoria: JSON.stringify(audit)
                     }

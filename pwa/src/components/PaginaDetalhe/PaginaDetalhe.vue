@@ -1,6 +1,6 @@
 <template>
     <div>
-        <AppCabecalho />
+        <AppCabecalho titulo="Detalhe"/>
         <button class="campo-dashboard" @click="goToPaginaIncial">
             <i class="bi bi-arrow-left"></i>
             <p>Voltar para Dashboard</p>

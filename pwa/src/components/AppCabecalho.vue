@@ -1,23 +1,59 @@
 <template>
   <header class="cabecalho">
-    <h1 class="texto">Dashboard</h1>
+    <h1 class="texto">{{ titulo }}</h1>
     <div class="icons">
-      <i class="bi bi-bell"></i>
-      <div class="perfil">
-        <i class="bi bi-person-circle"></i>
-        <div class="seta">
-          <i class="bi bi-chevron-down"></i>
+      <button class="botao" @click="notificacao = !notificacao, detalhePerfil = false">
+        <i class="bi bi-bell"></i>
+      </button>
+      <button class="botao" @click="detalhePerfil = !detalhePerfil, notificacao = false">
+        <div class="perfil">
+          <i class="bi bi-person-circle"></i>
+          <div class="seta">
+            <i class="bi bi-chevron-down"></i>
+          </div>
         </div>
-      </div>
+    </button>
     </div>
   </header>
+  <div>
+    <div v-if="notificacao" class="popup" id="popupNotificacao">
+      <h2>NOTIFICACAO</h2>
+    </div>
+    <div v-if="detalhePerfil" class="popup" id="popupPerfil">
+      <button class="botao" @click="goToVerPerfil"><h2>Ver Perfil</h2></button>
+      <button class="botao" @click="logout"><h2>Log Out</h2></button>
+    </div>
+  </div>
 </template>
 
 
 <script>
+  import { signOut } from "firebase/auth";
+  import { auth } from "@/firebase/firebase.js";
   export default {
     name: "AppCabecalho",
-  };
+    data() {
+      return {
+        notificacao: false,
+        detalhePerfil: false,
+      };
+    },
+    props: {
+      titulo: {
+        type: String,
+        default: 'EyesEverywhere'
+      }
+    },
+    methods: {
+      goToVerPerfil() {
+        this.$router.push("/Perfil");
+      },
+      logout() {
+        signOut(auth);
+        this.$router.push("/");
+      },
+    },
+  }
 </script>
 
 
@@ -57,5 +93,38 @@
 
   .seta {
     font-size: 2vh;
+  }
+
+  .botao {
+    border: none;
+    background-color: transparent;
+  }
+
+  .popup {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    padding: 1vh;
+    right: 0;
+    text-align: left;
+
+    background-color: #fff;
+    border: 1px solid #cccccccc;
+
+    z-index: 100;
+  }
+
+  #popupNotificacao {
+    width: 40vw;
+    margin-right: 4.25vh;
+  }
+
+  #popupPerfil {
+    margin-right: 2vh;
+  }
+
+  h2 {
+    font-size: 16px;
+    color: #888;
   }
 </style>
