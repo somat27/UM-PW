@@ -17,10 +17,9 @@
         <div class="campo-pesquisa">
             <h2>Email</h2>
             <input
-                type="text"
-                v-model="searchQuery"
+                type="email"
+                v-model="email"
                 placeholder="seu@email.com"
-                @input="onSearch"
             />
         </div>
 
@@ -28,22 +27,23 @@
             <h2>Senha</h2>
             <div class="campo-senha">
                 <input
-                    type="text"
-                    v-model="searchQuery"
+                    :type="mostrarSenha ? 'text' : 'password'"
+                    v-model="password"
                     placeholder="********"
-                    @input="onSearch"
                 />
-                <i class="bi bi-eye icon"></i>
+                <i class="bi icon" :class="mostrarSenha ? 'bi-eye-slash' : 'bi-eye'" @click="mostrarSenha = !mostrarSenha"></i>
             </div>
         </div>
 
         
-        <button class="botao-entrar" @click="goToPaginaIncial">
+        <button class="botao-entrar" @click="login">
             <i class="bi bi-box-arrow-in-right"></i>
             <span>Entrar</span>
         </button>
 
+
         <div>
+            <button @click="signInWithGoogle" class="botao-google"><h3>Sign In With Google</h3></button>
             <h3>Credenciais para teste:</h3>
             <h3>demo@eyeseverywhere.com / demo123</h3>
         </div>
@@ -52,11 +52,15 @@
 
 
 <script>
+    import { auth } from "@/firebase/firebase.js";
+    import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
     export default {
         name: 'PaginaLogin',
         data() {
             return {
-                searchQuery: '',
+                email: '',
+                password: '',
+                mostrarSenha: false,
             }; 
         },
         methods: {
@@ -66,6 +70,30 @@
             goToPaginaIncial() {
                 this.$router.push("/PaginaInicial");
             },
+            signInWithGoogle() {
+                const provider = new GoogleAuthProvider();
+                signInWithPopup(auth, provider)
+                    .then((result) => {
+                        const user = result.user;
+                        const uid = user.uid;
+                        this.$router.push({ name: "PaginaInicial", params: { uid }});
+                    })
+                    .catch((error) => {
+                        console.error("Erro ao autenticar com Google:", error);
+                    });
+            },
+            login() {
+                signInWithEmailAndPassword(auth, this.email, this.password)
+                    .then((userCredential) => {
+                    const user = userCredential.user;
+                    console.log("Usuário logado:", user.email);
+                    this.$router.push("/PaginaInicial");
+                    })
+                    .catch((error) => {
+                    console.error("Erro no login:", error.message);
+                    alert("Erro ao fazer login. Verifique seu email e senha.");
+                    });
+                },
         },
     };
 </script>
@@ -160,5 +188,11 @@
         padding: 1vh;
         border-radius: 15px;
         font-size: 16px;
+    }
+
+    .botao-google {
+        border: none;
+        background-color: transparent;
+        margin-bottom: 1vh;
     }
 </style>
