@@ -1,6 +1,6 @@
 <template>
     <div>
-        <AppCabecalho />
+        <AppCabecalho/>
         <div class="campo-pesquisa">
             <i class="bi bi-search icon"></i>
             <input
@@ -12,7 +12,7 @@
         </div>
         <div class="campo-auditorias-filtro">
             <div class="total-auditorias">
-                <p>x auditorias</p>
+                <p>{{ auditoriasVisiveis.length }} auditorias</p>
             </div>
 
             <div class="campo-filtro">
@@ -35,26 +35,27 @@
 
         <div class="campo-auditoria">
 
-            <button class="auditoria" @click="goToPaginaDetalhe">
+            <button class="auditoria" v-for="audit in auditoriasVisiveis" :key="audit.id" @click="goToPaginaDetalhe(audit)">
 
                 <div class="auditoria-cabecalho">
-                    <h1>Inspeção Instalações Elétricas</h1>
-                    <h2>Pendente</h2>
+                    <h1>{{audit.nome}}</h1>
+                    <h2>{{audit.estado}}</h2>
                 </div>
 
                 <div class="campo-paragrafo">
                     <div class="paragrafo">
                         <i class="bi bi-geo-alt"></i>
-                        <h3>Edificio Central, Porto</h3>
+                        <h3>{{audit.local}}</h3>
                     </div>
                     <div class="paragrafo">
                         <i class="bi bi-clock"></i>
-                        <h3>02/06/2023</h3>
+                        <h3>{{audit.data}}</h3>
                     </div>
                 </div>
 
             </button>
 
+            
         </div>
     </div>
     
@@ -74,7 +75,57 @@
                 valorRadio: null,
                 popupfiltro: false,
                 searchQuery: '',
+                uid: null,
+
+                listaAuditorias: [
+                    {
+                        id: "1",
+                        nome: "Inspeção Instalações Elétricas",
+                        estado: "Pendente",
+                        local: "Edificio Central, Porto",
+                        data: "02/06/2023"
+                    },
+                    {
+                        id: "2",
+                        nome: "Poste eletrico no chao da rua",
+                        estado: "Concluido",
+                        local: "Castelo Guimarães, Cidade do berço",
+                        data: "02/04/2025"
+                    },
+                    {
+                        id: "2",
+                        nome: "Poste eletrico no chao da rua",
+                        estado: "Incompleto",
+                        local: "Castelo Guimarães, Cidade do berço",
+                        data: "02/04/2025"
+                    },
+                    {
+                        id: "2",
+                        nome: "Poste eletrico no chao da rua",
+                        estado: "Concluido",
+                        local: "Castelo Guimarães, Cidade do berço",
+                        data: "02/04/2025"
+                    }
+                ],
             }; 
+        },
+        created() {
+            const json = localStorage.getItem("listaAuditorias");
+            if (json) {
+                this.listaAuditorias = JSON.parse(json);
+            }
+        },
+        computed: {
+            auditoriasVisiveis() {
+                return this.listaAuditorias.filter(auditoria => {
+                    const nomeMatch = auditoria.nome.toLowerCase().includes(this.searchQuery.toLowerCase());
+                    const estadoMatch = this.valorRadio ? auditoria.estado === this.valorRadio : true;
+                    return nomeMatch && estadoMatch;
+            });
+    }
+        },
+        mounted() {
+            this.uid = this.$route.params.uid;
         },
         methods: {
             onSearch() {
@@ -88,9 +139,15 @@
                 }
                 this.popupfiltro = false;
             },
-            goToPaginaDetalhe() {
-                this.$router.push("/PaginaDetalhe");
-            },
+            goToPaginaDetalhe(audit) {
+                this.$router.push({
+                    path: "/PaginaDetalhe",
+                    params: { id: audit.id },
+                    query: {
+                        auditoria: JSON.stringify(audit)
+                    }
+                });
+            }
         }
     };
 </script>
