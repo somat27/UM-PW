@@ -1,8 +1,9 @@
 <template>
     <div class="carrossel" v-if="imagens.length != 0">
-        <button @click="imagemAnterior" class="botao-carrossel" id="esquerda"><i class="bi bi-chevron-compact-left"></i></button>
-        <img :src="imagens[imagemAtual]" alt="Imagem" class="imagem-carrossel" />
-        <button @click="imagemSeguinte" class="botao-carrossel" id="direita"><i class="bi bi-chevron-compact-right"></i></button>
+        <button @click="imagemAnterior" class="botao-carrossel" :class="{ 'botao-video': imagens[imagemAtual].tipo.startsWith('video/') }" id="esquerda"><i class="bi bi-chevron-compact-left"></i></button>
+        <img v-if="imagens[imagemAtual].tipo.startsWith('image/')" :src="imagens[imagemAtual].url" alt="Imagem" class="imagem-carrossel" />
+        <video v-else-if="imagens[imagemAtual].tipo.startsWith('video/')" :src="imagens[imagemAtual].url" controls class="imagem-carrossel"></video>
+        <button @click="imagemSeguinte" class="botao-carrossel" :class="{ 'botao-video': imagens[imagemAtual].tipo.startsWith('video/') }" id="direita"><i class="bi bi-chevron-compact-right"></i></button>
     </div>
 </template>
 
@@ -55,6 +56,7 @@
         height: 20vh;
         font-size: 28px;
         background-color: rgba(197, 196, 196, 0.089);
+        z-index: 50;
     }
 
     #esquerda {
@@ -63,5 +65,9 @@
 
     #direita {
         right: 10vw;
+    }
+
+    .botao-video {
+        height: 5vh;
     }
 </style>

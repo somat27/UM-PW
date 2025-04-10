@@ -16,7 +16,7 @@
                 <div class="fotografia">
                     <div class="icon-texto">
                         <i class="bi bi-camera icon"></i>
-                        <h2>Fotografias</h2>
+                        <h2>Fotografias | Video</h2>
                     </div>
                     <div class="botao-upload">
                     <i class="bi bi-box-arrow-up"></i>
@@ -25,7 +25,7 @@
                         type="file"
                         class="adiciona-imagem" 
                         @change="carregarImagem" 
-                        accept="image/*"
+                        accept="image/*,video/*"
                     />
                     </div>
                 </div>
@@ -40,10 +40,15 @@
                 </div>
 
                 <div class="campo-audio">
-                    <div class="campo-circulo">
-                        <i class="bi bi-mic"></i>
+                    <div class="campo-circulo" @touchstart.prevent="iniciarGravacao" @touchend.prevent="pararGravacao">     <!-- @mousedown="iniciarGravacao" @mouseup="pararGravacao" -->
+                        <i class="bi bi-mic" :class="{ 'audio-gravar': isGravando }"></i>
                     </div>
                 </div>
+
+                <div v-for="(audio, index) in audios" :key="index" class="audio-gravado">
+                    <audio :src="audio" controls></audio>
+                </div>
+
 
                 <div class="icon-texto">
                     <h2>Observações</h2>
@@ -112,8 +117,11 @@
                 horafim: new Date().toLocaleTimeString(),
                 observacao: "",
                 imagens: [],
-                imagem: null,
                 popup: false,
+                mediaRecorder: null,
+                chunks: [],
+                isGravando: false,
+                audios: []
             };
         },
         methods: {
@@ -123,13 +131,57 @@
             carregarImagem(event) {
                 const file = event.target.files[0];
                 if (file) {
-                    this.imagem = URL.createObjectURL(file);
-                    this.imagens.push(this.imagem)
+                    const url = URL.createObjectURL(file);
+                    const tipo = file.type;
+
+                    this.imagens.push({
+                        url: url,
+                        tipo: tipo
+                    });
                 }
             },
             atualizaHoraFinal() {
                 this.horafim = new Date().toLocaleTimeString();
             },
+            async iniciarGravacao() {
+                try {
+                    // Ativa o estado de gravação
+                    this.isGravando = true;
+
+                    // Solicita acesso ao microfone
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+                    this.mediaRecorder = new MediaRecorder(stream);
+                    this.chunks = [];
+
+                    this.mediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) {
+                        this.chunks.push(e.data);
+                    }
+                    };
+
+                    this.mediaRecorder.onstop = () => {
+                    const blob = new Blob(this.chunks, { type: 'audio/webm' });
+                    const url = URL.createObjectURL(blob);
+
+                    this.audios.push(url);
+
+                    // Finaliza o estado de gravação
+                    this.isGravando = false;
+                    };
+
+                    this.mediaRecorder.start();
+                } catch (error) {
+                    console.error('Erro ao iniciar gravação:', error);
+                    this.isGravando = false;
+                }
+                },
+
+            pararGravacao() {
+                if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+                    this.mediaRecorder.stop();
+                }
+            }
         },
         mounted() {
             this.intervalId = setInterval(this.atualizaHoraFinal, 1000);
@@ -374,5 +426,16 @@
         padding: 1vh;
         font-size: 16px;
         border: 1px solid #ccc;
+    }
+
+    .audio-gravar {
+        color: red;
+        animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.2); }
+        100% { transform: scale(1); }
     }
 </style>
