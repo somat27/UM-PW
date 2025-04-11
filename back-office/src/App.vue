@@ -1,40 +1,45 @@
 <template>
-  <div :class="{ 'nav-open': $sidebar.showSidebar }">
-    <notifications></notifications>
-    <router-view></router-view>
+  <div id="app">
+    <router-view />
   </div>
 </template>
 
 <script>
-export default {};
+export default {
+  name: "App",
+  watch: {
+    $route(to) {
+      if (to.path === '/dashboards/peritos') {
+        document.body.style.overflow = 'auto'; 
+      } else {
+        document.body.style.overflow = 'hidden';
+      }
+    }
+  },
+  mounted() {
+    if (this.$route.path === '/dashboards/peritos') {
+      document.body.style.overflow = 'auto'; 
+    } else {
+      document.body.style.overflow = 'hidden'; 
+    }
+  }
+};
 </script>
 
-<style lang="scss">
-.vue-notifyjs.notifications {
-  .alert {
-    z-index: 10000;
-  }
-  .list-move {
-    transition: transform 0.3s, opacity 0.4s;
-  }
-  .list-item {
-    display: inline-block;
-    margin-right: 10px;
-  }
-  .list-enter-active {
-    transition: transform 0.2s ease-in, opacity 0.4s ease-in;
-  }
-  .list-leave-active {
-    transition: transform 1s ease-out, opacity 0.4s ease-out;
-  }
-
-  .list-enter {
-    opacity: 0;
-    transform: scale(1.1);
-  }
-  .list-leave-to {
-    opacity: 0;
-    transform: scale(1.2, 0.7);
-  }
+<style>
+#app {
+  font-family: Avenir, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-align: center;
+  color: #2c3e50;
+}
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background-color: rgba(32, 76, 109, 1); 
+  overflow: hidden; 
 }
 </style>
+
