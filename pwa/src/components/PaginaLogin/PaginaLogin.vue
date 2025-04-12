@@ -73,10 +73,10 @@
             signInWithGoogle() {
                 const provider = new GoogleAuthProvider();
                 signInWithPopup(auth, provider)
-                    .then((result) => {
-                        const user = result.user;
-                        const uid = user.uid;
-                        this.$router.push({ name: "PaginaInicial", params: { uid }});
+                    .then((/*result*/) => {
+                        //const user = result.user;
+                        //const uid = user.uid;
+                        this.$router.push({ name: "PaginaInicial"/*, params: { uid }*/});
                     })
                     .catch((error) => {
                         console.error("Erro ao autenticar com Google:", error);

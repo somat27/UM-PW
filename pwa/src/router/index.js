@@ -19,20 +19,16 @@ const routes = [
         meta: { requiresAuth: true },
     },
     {
-        //path: "/pagina-detalhe/:id",
-        path: "/PaginaDetalhe",
+        path: "/PaginaDetalhe/:id",
         name: "PaginaDetalhe",
         component: PaginaDetalhe,
         meta: { requiresAuth: true },
-        props: (route) => ({
-          auditoria: route.query.auditoria ? JSON.parse(route.query.auditoria) : null
-        })
-      },
+    },
     {
-        path: "/PaginaRegistar",
+        path: "/PaginaRegistar/:id",
         name: "PaginaRegistar",
         component: PaginaRegistar,
-        meta: { requiresAuth: true },
+        //meta: { requiresAuth: true },
     },
     {
         path: "/Perfil",
