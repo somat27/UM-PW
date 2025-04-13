@@ -4,7 +4,10 @@
     style="margin-top: 150px; margin-bottom: 50px"
   >
     <div class="card shadow p-4 slide-up">
-      <h1 class="text-center text-primary pulse">Reportar uma Ocorrência</h1>
+      <h1 class="text-center pulse" style="color: #204c6d; font-weight: bold">
+        Reportar uma Ocorrência
+      </h1>
+
       <p class="text-center text-muted fade-in-delay">
         Ajude a melhorar a cidade! Preencha os dados abaixo para registrar o
         problema.
@@ -87,6 +90,7 @@
             ref="fileInput"
             class="form-control hover-effect file-input"
             @change="handleFileUpload"
+            accept="image/*,video/*"
             multiple
             id="file-upload"
           />
@@ -149,7 +153,6 @@ export default {
       return this.selectedCategory && this.address && this.userLocation;
     },
     googleMapsApiUrl() {
-      console.log("aqui:   " + process.env.VUE_APP_API_KEY);
       // Removida a biblioteca marker, utilizando apenas places
       return `https://maps.googleapis.com/maps/api/js?key=${process.env.VUE_APP_API_KEY}&libraries=places&callback=initGoogleCallback`;
     },
@@ -358,7 +361,26 @@ export default {
       }
     },
     handleFileUpload(event) {
-      this.uploadedFiles = Array.from(event.target.files);
+      const newFiles = Array.from(event.target.files);
+
+      // Filtrar apenas imagens e vídeos
+      const validTypes = ["image/", "video/"];
+      const filteredFiles = newFiles.filter((file) =>
+        validTypes.some((type) => file.type.startsWith(type))
+      );
+
+      // Adicionar arquivos sem duplicar
+      filteredFiles.forEach((file) => {
+        const alreadyExists = this.uploadedFiles.some(
+          (f) => f.name === file.name && f.size === file.size
+        );
+        if (!alreadyExists) {
+          this.uploadedFiles.push(file);
+        }
+      });
+
+      // Limpar o input para permitir reescolher o mesmo arquivo
+      event.target.value = "";
     },
     async submitForm() {
       if (!this.isFormValid) {

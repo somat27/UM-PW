@@ -3,6 +3,8 @@ import MainPage from "@/views/MainPage.vue";
 import AboutUS from "@/views/AboutUS.vue";
 import Help from "@/views/Help.vue";
 import Report from "@/views/Report.vue";
+import Ocorrencias from "@/views/Ocurrence.vue";
+import Mapa from "@/views/Map.vue";
 
 const routes = [
   {
@@ -25,6 +27,16 @@ const routes = [
     name: "Report",
     component: Report,
     props: (route) => ({ defaultCategory: route.query.category || "" }),
+  },
+  {
+    path: "/ocorrencias",
+    name: "Ocorrencias",
+    component: Ocorrencias,
+  },
+  {
+    path: "/mapa",
+    name: "Mapa",
+    component: Mapa,
   },
 ];
 

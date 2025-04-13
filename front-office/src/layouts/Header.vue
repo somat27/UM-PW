@@ -4,8 +4,8 @@
       <img src="@/assets/logo.jpg" alt="Logo" class="logo" />
     </router-link>
     <nav class="navigation">
-      <a href="#" class="nav-link">Ocorrências</a>
-      <a href="#" class="nav-link">Mapa</a>
+      <router-link to="/ocorrencias" class="nav-link">Ocorrências</router-link>
+      <router-link to="/mapa" class="nav-link">Mapa</router-link>
     </nav>
   </header>
 </template>

@@ -6,6 +6,7 @@ import {
   addDoc,
   updateDoc,
   doc,
+  getDocs,
   serverTimestamp,
 } from "firebase/firestore";
 
@@ -34,7 +35,7 @@ export async function submitOcorrencia(formData) {
       dataSubmissao: serverTimestamp(),
       descricao: formData.observations || "",
       endereco: formData.address || "",
-      imagemVideo: [], // Agora será um array de URLs
+      imagemVideo: [],
       status: "Pendente",
       tipoOcorrencia: formData.selectedCategory || "",
       coordenadas: formData.userLocation
@@ -49,7 +50,7 @@ export async function submitOcorrencia(formData) {
     const docRef = await addDoc(collection(db, "ocorrencias"), ocorrenciaData);
     console.log("Ocorrência registrada com ID:", docRef.id);
 
-    // 🔹 Se houver arquivos, faz o upload para o Cloudinary
+    // Se houver arquivos, faz o upload para o Cloudinary
     if (formData.files && formData.files.length > 0) {
       const uploadPromises = formData.files.map((file) =>
         uploadToCloudinary(file)
@@ -57,7 +58,7 @@ export async function submitOcorrencia(formData) {
 
       const fileUrls = await Promise.all(uploadPromises); // Aguarda todos os uploads serem concluídos
 
-      // 🔹 Atualiza o Firestore com o array de URLs das imagens
+      // Atualiza o Firestore com o array de URLs das imagens
       await updateDoc(doc(db, "ocorrencias", docRef.id), {
         imagemVideo: fileUrls.filter((url) => url !== null), // Filtra URLs inválidas
       });
@@ -72,7 +73,7 @@ export async function submitOcorrencia(formData) {
   }
 }
 
-// 🔹 Função para upload de imagens para o Cloudinary
+// Função para upload de imagens para o Cloudinary
 async function uploadToCloudinary(file) {
   const formData = new FormData();
   formData.append("file", file);
@@ -93,6 +94,29 @@ async function uploadToCloudinary(file) {
   } catch (error) {
     console.error("Erro ao enviar para Cloudinary:", error);
     return null;
+  }
+}
+
+export async function getOcorrencias() {
+  try {
+    const querySnapshot = await getDocs(collection(db, "ocorrencias"));
+    const ocorrencias = [];
+
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      if (data.dataSubmissao) {
+        data.dataSubmissao = data.dataSubmissao.toDate();
+      }
+      ocorrencias.push({
+        id: doc.id,
+        ...data,
+      });
+    });
+
+    return ocorrencias;
+  } catch (error) {
+    console.error("Erro ao buscar ocorrências:", error);
+    return [];
   }
 }
 
