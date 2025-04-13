@@ -107,8 +107,8 @@
                     this.auditoria = {
                     id: docSnap.id,
                     nome: data.nome || '',
-                    estado: data.status || '',
-                    local: data.origem || '',
+                    estado: data.estado || '',
+                    local: data.local || '',
                     data: dataFormatada,
                     descricao: data.descricao || '',
                     //peritos: data.peritos || [],

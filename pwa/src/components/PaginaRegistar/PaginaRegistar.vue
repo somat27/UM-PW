@@ -45,7 +45,7 @@
                     </div>
                 </div>
 
-                <div v-for="(audio, index) in audios" :key="index" class="audio-gravado">
+                <div v-for="(audio, index) in this.auditoria.audios" :key="index" class="audio-gravado">
                     <audio :src="audio" controls></audio>
                 </div>
 
@@ -100,7 +100,7 @@
 
 <script>
     import { doc, getDoc, setDoc } from "firebase/firestore";
-    import { db } from "@/firebase/firebase";
+    import { db, uploadToCloudinary} from "@/firebase/firebase";
     import AppCabecalho from '../AppCabecalho.vue';
     import PopUpTrabalhadores from './PopUpTrabalhadores.vue';
     import CarrocelImagem from './CarrocelImagem.vue';
@@ -123,7 +123,6 @@
                 mediaRecorder: null,
                 chunks: [],
                 isGravando: false,
-                audios: [],
 
                 auditoria: {},
             };
@@ -132,10 +131,10 @@
             goToPaginaIncial() {
                 this.$router.push("/PaginaInicial");
             },
-            carregarImagem(event) {
+            async carregarImagem(event) {
                 const file = event.target.files[0];
                 if (file) {
-                    const url = URL.createObjectURL(file);
+                    const url = await uploadToCloudinary(file);
                     const tipo = file.type;
 
                     this.auditoria.imagemVideo.push({
@@ -161,11 +160,12 @@
                     }
                     };
 
-                    this.mediaRecorder.onstop = () => {
+                    this.mediaRecorder.onstop = async () => {
                     const blob = new Blob(this.chunks, { type: 'audio/webm' });
-                    const url = URL.createObjectURL(blob);
+                    const file = new File([blob], "gravacao.webm", { type: "audio/webm" });
+                    const url = await uploadToCloudinary(file);
 
-                    this.audios.push(url);
+                    this.auditoria.audios.push(url);
 
                     // Finaliza o estado de gravação
                     this.isGravando = false;
@@ -228,7 +228,7 @@
                     descricao: data.descricao || '',
                     peritos: data.peritos || [],
                     imagemVideo: data.imagemVideo || [],
-                    audio: data.audio || [],
+                    audios: data.audios || [],
                     coordenadas: data.coordenadas || {},
                     dataInicio: data.dataInicio || null,
                     dataFim: data.dataFim || null,

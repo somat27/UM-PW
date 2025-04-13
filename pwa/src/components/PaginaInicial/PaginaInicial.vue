@@ -39,13 +39,13 @@
 
                 <div class="auditoria-cabecalho">
                     <h1>{{audit.nome}}</h1>
-                    <h2>{{audit.status}}</h2>
+                    <h2>{{audit.estado}}</h2>
                 </div>
 
                 <div class="campo-paragrafo">
                     <div class="paragrafo">
                         <i class="bi bi-geo-alt"></i>
-                        <h3>{{audit.origem}}</h3>
+                        <h3>{{audit.local}}</h3>
                     </div>
                     <div class="paragrafo">
                         <i class="bi bi-clock"></i>
@@ -92,7 +92,7 @@
             auditoriasVisiveis() {
                 return this.listaAuditorias.filter(auditoria => {
                     const nomeMatch = auditoria.nome.toLowerCase().includes(this.searchQuery.toLowerCase());
-                    const statusMatch = this.valorRadio ? auditoria.status === this.valorRadio : true;
+                    const statusMatch = this.valorRadio ? auditoria.estado === this.valorRadio : true;
                     return nomeMatch && statusMatch;
                 });
             }
