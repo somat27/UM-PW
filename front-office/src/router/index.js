@@ -5,6 +5,7 @@ import Help from "@/views/Help.vue";
 import Report from "@/views/Report.vue";
 import Ocorrencias from "@/views/Ocurrence.vue";
 import Mapa from "@/views/Map.vue";
+import Social from "@/views/Social.vue"
 
 const routes = [
   {
@@ -37,6 +38,11 @@ const routes = [
     path: "/mapa",
     name: "Mapa",
     component: Mapa,
+  },
+  {
+    path: "/social",
+    name: "Social",
+    component: Social,
   },
 ];
 

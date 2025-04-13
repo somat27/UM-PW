@@ -8,9 +8,9 @@
 
     <div class="footer-social animate-fade-in">
       <h3 class="footer-heading">Social</h3>
-      <a href="#" class="footer-link">Instagram</a>
-      <a href="#" class="footer-link">Twitter</a>
-      <a href="#" class="footer-link">Tik Tok</a>
+      <a href="/social" class="footer-link">Instagram</a>
+      <a href="/social" class="footer-link">Twitter</a>
+      <a href="/social" class="footer-link">Tik Tok</a>
     </div>
 
     <div class="footer-contact animate-fade-in">
