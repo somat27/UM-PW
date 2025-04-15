@@ -30,7 +30,7 @@
                     </div>
                 </div>
 
-                <div class="campo-imagens">
+                <div class="campo-imagens" v-if="auditoria?.imagemVideo?.length > 1">
                     <CarrocelImagem :imagens="auditoria.imagemVideo" />
                 </div>
 
@@ -113,11 +113,9 @@
         },
         data() {
             return {
-                profissionalEscolhido: [],
                 dataAtual: new Date().toLocaleDateString(),
                 horainicio: new Date().toLocaleTimeString(),
                 horafim: new Date().toLocaleTimeString(),
-                imagens: [],
 
                 popup: false,
                 mediaRecorder: null,
@@ -221,10 +219,9 @@
                     const data = docSnap.data();
 
                     this.auditoria = {
-                    id: docSnap.id,
                     nome: data.nome || '',
-                    estado: data.status || '',
-                    local: data.origem || '',
+                    estado: data.estado || '',
+                    local: data.local || '',
                     descricao: data.descricao || '',
                     peritos: data.peritos || [],
                     imagemVideo: data.imagemVideo || [],
