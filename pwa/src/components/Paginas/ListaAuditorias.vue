@@ -15,7 +15,7 @@
     <div class="flex-linha margem centro item-ponta">
         <h2>{{ auditoriasVisiveis.length }} auditorias</h2>
 
-        <div id="popUp">
+        <div id="popUpCaixa">
             <button class="flex-linha centro" id="filtro" @click="filtroEstado = !filtroEstado">
                 <i class="bi bi-funnel"></i>
                 <h2>Filtrar</h2>
@@ -28,10 +28,10 @@
         
     </div>
 
-    <button class="flex-coluna margem" id="auditoria" v-for="audit in auditoriasVisiveis" :key="audit.id" @click="goToPaginaDetalhe(audit)">
+    <button class="flex-coluna margem painel" id="auditoria" v-for="audit in auditoriasVisiveis" :key="audit.id" @click="goToPaginaDetalhe(audit)">
         <div class="flex-linha centro item-ponta">
             <h1>{{ audit.nome }}</h1>
-            <h2>{{ audit.estado }}</h2>
+            <h2 :class="corEstado(audit.estado)" id="estado">{{ audit.estado }}</h2>
         </div>
 
         <div class="flex-coluna">
@@ -75,10 +75,23 @@
             },
             goToPaginaDetalhe(audit) {
                 this.$router.push({
-                    name: "PaginaDetalhe",
+                    name: "InfoAuditoria",
                     params: { id: audit.id },
                 });
+            },
+            corEstado(valor) {
+                switch(valor) {
+                    case "Concluido":
+                        return "fundo-verde";
+                    case "Pendente":
+                        return "fundo-amarelo";
+                    case "Incompleto":
+                        return "fundo-vermelho";
+                    default:
+                        return "";
+                }
             }
+
         },
         computed: {
             auditoriasVisiveis() {
@@ -99,7 +112,7 @@
         align-items: center;
 
         padding: 1vh 1vw;
-        gap: 1vw;
+        gap: 2.5vw;
 
         background-color: #fff;
         
@@ -111,7 +124,7 @@
         flex: 1;
     }
 
-    #popUp {
+    #popUpCaixa {
         position: relative; 
         display: inline-block;
     }
@@ -130,14 +143,15 @@
     #auditoria {
         width: 90vw;
         height: 20vh;
+    }
 
-        padding: 2.5vh 2.5vh;
-        gap: 2.5vw;
+    #estado {
+        padding: 1.5vh 1.5vh;
 
-        background-color: #fff;
+        color: #F8FAFC;
 
         border: 1px solid #e6eaf0;
         border-radius: 15px;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     }
 </style>

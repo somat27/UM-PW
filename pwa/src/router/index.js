@@ -6,6 +6,7 @@ import PaginaRegistar from "@/components/PaginaRegistar/PaginaRegistar.vue";
 import { auth } from "@/firebase/firebase.js";
 import VerPerfil from "@/components/VerPerfil.vue";
 import ListaAuditorias from "@/components/Paginas/ListaAuditorias.vue";
+import InfoAuditoria from "@/components/Paginas/InfoAuditoria.vue";
 
 const routes = [
     {
@@ -44,7 +45,13 @@ const routes = [
       path: "/ListaAuditorias",
       name: "ListaAuditorias",
       component: ListaAuditorias,
-  },
+    },
+
+    {
+      path: "/InfoAuditoria/:id",
+      name: "InfoAuditoria",
+      component: InfoAuditoria,
+    },
 ];
 
 const router = createRouter({

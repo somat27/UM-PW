@@ -21,7 +21,7 @@
         },
         data() {
             return {
-                estado: ["Concluido", "Incompleto", "Pendente"],
+                estado: ["Concluido", "Pendente", "Incompleto"],
                 selecionado: this.filtroValor,
             }
         },
@@ -40,7 +40,7 @@
 </script>
 
 
-<style>
+<style scoped>
     #popup {
         position: absolute;
         width: 100%;
