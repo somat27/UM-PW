@@ -1,0 +1,48 @@
+body {
+    background-color: #F8FAFC;
+}
+
+h1 {
+    text-align: left;
+    font-size: 20px;
+    color: #1e1e1e;
+}
+
+h2 {
+    text-align: left;
+    font-size: 16px;
+}
+
+h3 {
+    text-align: left;
+    font-size: 12px;
+    color: #6c757d;
+}
+
+.flex-coluna {
+    display: flex;
+    flex-direction: column;
+}
+
+.flex-linha {
+    display: flex;
+    flex-direction: row;
+}
+
+.margem {
+    margin: 2.5vh 5vw;
+}
+
+.transparente {
+    border: transparent;
+    background-color: transparent;
+}
+
+.centro {
+    justify-content: center;
+    align-items: center;
+}
+
+.item-ponta {
+    justify-content: space-between;
+}

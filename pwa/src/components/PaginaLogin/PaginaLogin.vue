@@ -53,7 +53,7 @@
 
 <script>
     import { auth } from "@/firebase/firebase.js";
-    import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+    import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
     export default {
         name: 'PaginaLogin',
         data() {
@@ -66,9 +66,6 @@
         methods: {
             onSearch() {
                 
-            },
-            goToPaginaIncial() {
-                this.$router.push("/PaginaInicial");
             },
             signInWithGoogle() {
                 const provider = new GoogleAuthProvider();
@@ -83,16 +80,7 @@
                     });
             },
             login() {
-                signInWithEmailAndPassword(auth, this.email, this.password)
-                    .then((userCredential) => {
-                    const user = userCredential.user;
-                    console.log("Usuário logado:", user.email);
-                    this.$router.push("/PaginaInicial");
-                    })
-                    .catch((error) => {
-                    console.error("Erro no login:", error.message);
-                    alert("Erro ao fazer login. Verifique seu email e senha.");
-                    });
+                this.$router.push("/ListaAuditorias");
                 },
         },
     };
