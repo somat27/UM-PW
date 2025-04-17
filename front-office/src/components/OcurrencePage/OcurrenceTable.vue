@@ -40,101 +40,106 @@
     </div>
 
     <!-- Tabela de ocorrências -->
-    <div class="occurrences-table">
-      <div class="table-header">
-        <div class="header-cell">Data</div>
-        <div class="header-cell">Localização</div>
-        <div class="header-cell">Tipo de Ocorrência</div>
-        <div class="header-cell">Estado</div>
-      </div>
+    <div class="occurrences-table-wrapper">
+      <div class="occurrences-table">
+        <div class="table-header">
+          <div class="header-cell">Data</div>
+          <div class="header-cell location-cell">Localização</div>
+          <div class="header-cell type-cell">Tipo</div>
+          <div class="header-cell status-cell">Estado</div>
+        </div>
 
-      <div v-if="loading" class="loading-container">
-        <div class="loader"></div>
-        <p>Carregando ocorrências...</p>
-      </div>
+        <div v-if="loading" class="loading-container">
+          <div class="loader"></div>
+          <p>Carregando ocorrências...</p>
+        </div>
 
-      <div v-else-if="ocorrenciasFiltradas.length === 0" class="empty-message">
-        <p>Nenhuma ocorrência encontrada.</p>
-      </div>
+        <div
+          v-else-if="ocorrenciasFiltradas.length === 0"
+          class="empty-message"
+        >
+          <p>Nenhuma ocorrência encontrada.</p>
+        </div>
 
-      <template v-else>
-        <transition-group name="list" tag="div">
-          <div
-            v-for="ocorrencia in ocorrenciasFiltradas"
-            :key="ocorrencia.id"
-            class="row-container"
-          >
+        <template v-else>
+          <transition-group name="list" tag="div">
             <div
-              class="table-row"
-              :class="{ active: selectedOcorrenciaId === ocorrencia.id }"
-              @click="toggleDetails(ocorrencia.id)"
+              v-for="ocorrencia in ocorrenciasFiltradas"
+              :key="ocorrencia.id"
+              class="row-container"
             >
-              <div class="table-cell">
-                {{ formatarData(ocorrencia.dataSubmissao) }}
-              </div>
-              <div class="table-cell">
-                {{ ocorrencia.endereco || "Endereço não disponível" }}
-              </div>
-              <div class="table-cell">
-                {{ mapearTipoOcorrencia(ocorrencia.tipoOcorrencia) }}
-              </div>
-              <div class="table-cell">
-                <StatusBadge :status="mapearStatus(ocorrencia.status)" />
-              </div>
-            </div>
-
-            <!-- Dropdown com detalhes da ocorrência -->
-            <transition name="slide">
               <div
-                v-if="selectedOcorrenciaId === ocorrencia.id"
-                class="details-dropdown"
+                class="table-row"
+                :class="{ active: selectedOcorrenciaId === ocorrencia.id }"
+                @click="toggleDetails(ocorrencia.id)"
               >
-                <div class="details-content">
-                  <!-- Seção de descrição com estilo melhorado -->
-                  <div class="details-section">
-                    <h4>Descrição</h4>
-                    <div class="description-box">
-                      <p>
-                        {{
-                          ocorrencia.descricao || "Sem descrição disponível."
-                        }}
-                      </p>
-                    </div>
-                  </div>
-
-                  <!-- Exibição de imagens melhorada -->
-                  <div
-                    v-if="
-                      ocorrencia.imagemVideo &&
-                      ocorrencia.imagemVideo.length > 0
-                    "
-                    class="details-section images-section"
-                  >
-                    <h4>Imagens</h4>
-                    <transition-group
-                      name="gallery"
-                      tag="div"
-                      class="images-grid"
-                    >
-                      <div
-                        v-for="(imagem, index) in ocorrencia.imagemVideo"
-                        :key="index"
-                        class="image-item"
-                      >
-                        <img
-                          :src="imagem"
-                          alt="Imagem da ocorrência"
-                          @click="ampliarImagem(imagem)"
-                        />
-                      </div>
-                    </transition-group>
-                  </div>
+                <div class="table-cell">
+                  {{ formatarData(ocorrencia.dataSubmissao) }}
+                </div>
+                <div class="table-cell location-cell">
+                  {{ ocorrencia.endereco || "Endereço não disponível" }}
+                </div>
+                <div class="table-cell type-cell">
+                  {{ mapearTipoOcorrencia(ocorrencia.tipoOcorrencia) }}
+                </div>
+                <div class="table-cell status-cell">
+                  <StatusBadge :status="mapearStatus(ocorrencia.status)" />
                 </div>
               </div>
-            </transition>
-          </div>
-        </transition-group>
-      </template>
+
+              <!-- Dropdown com detalhes da ocorrência -->
+              <transition name="slide">
+                <div
+                  v-if="selectedOcorrenciaId === ocorrencia.id"
+                  class="details-dropdown"
+                >
+                  <div class="details-content">
+                    <!-- Seção de descrição com estilo melhorado -->
+                    <div class="details-section">
+                      <h4>Descrição</h4>
+                      <div class="description-box">
+                        <p>
+                          {{
+                            ocorrencia.descricao || "Sem descrição disponível."
+                          }}
+                        </p>
+                      </div>
+                    </div>
+
+                    <!-- Exibição de imagens melhorada -->
+                    <div
+                      v-if="
+                        ocorrencia.imagemVideo &&
+                        ocorrencia.imagemVideo.length > 0
+                      "
+                      class="details-section images-section"
+                    >
+                      <h4>Imagens</h4>
+                      <transition-group
+                        name="gallery"
+                        tag="div"
+                        class="images-grid"
+                      >
+                        <div
+                          v-for="(imagem, index) in ocorrencia.imagemVideo"
+                          :key="index"
+                          class="image-item"
+                        >
+                          <img
+                            :src="imagem"
+                            alt="Imagem da ocorrência"
+                            @click="ampliarImagem(imagem)"
+                          />
+                        </div>
+                      </transition-group>
+                    </div>
+                  </div>
+                </div>
+              </transition>
+            </div>
+          </transition-group>
+        </template>
+      </div>
     </div>
   </div>
 </template>
@@ -289,6 +294,7 @@ export default {
   display: flex;
   flex-direction: column;
   min-width: 200px;
+  flex: 1;
 }
 
 .filter-group label {
@@ -302,6 +308,7 @@ export default {
   border-radius: 4px;
   background-color: white;
   transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  width: 100%;
 }
 
 .filter-select:focus {
@@ -320,6 +327,7 @@ export default {
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  min-height: 38px;
 }
 
 .filter-button:hover {
@@ -368,37 +376,23 @@ export default {
 }
 
 /* Estilos para a tabela */
+.occurrences-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch; /* Para melhor rolagem em iOS */
+}
+
 .occurrences-table {
   width: 100%;
+  min-width: 500px; /* Garante largura mínima em dispositivos pequenos */
   border-collapse: collapse;
   animation: slideInUp 0.5s ease-out;
-}
-
-@media (max-width: 991px) {
-  .occurrences-table {
-    overflow-x: auto;
-  }
-
-  .filters-row {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .filter-group {
-    width: 100%;
-  }
-}
-
-@media (max-width: 640px) {
-  .occurrences-table {
-    font-size: 14px;
-  }
 }
 
 .table-header {
   display: flex;
   color: #fff;
-  padding: 15px 0;
+  padding: 12px 0;
   background-color: #204c6d;
   border-radius: 5px 5px 0 0;
   position: sticky;
@@ -421,7 +415,7 @@ export default {
 .table-row {
   display: flex;
   border-bottom: 1px solid #ddd;
-  padding: 15px 0;
+  padding: 12px 0;
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
@@ -440,10 +434,27 @@ export default {
 .table-cell {
   flex: 1;
   padding: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Ajustes específicos para colunas em dispositivos móveis */
+.location-cell {
+  flex: 1.5;
+}
+
+.type-cell {
+  flex: 1;
+}
+
+.status-cell {
+  flex: 0.8;
+  min-width: 90px;
 }
 
 .loading-container {
-  padding: 40px;
+  padding: 30px;
   text-align: center;
   width: 100%;
   display: flex;
@@ -484,7 +495,7 @@ export default {
 }
 
 .empty-message {
-  padding: 30px;
+  padding: 25px;
   text-align: center;
   width: 100%;
   color: #666;
@@ -502,11 +513,11 @@ export default {
 }
 
 .details-content {
-  padding: 20px;
+  padding: 15px;
 }
 
 .details-section {
-  margin-bottom: 20px;
+  margin-bottom: 15px;
   animation: fadeIn 0.5s ease-in-out;
 }
 
@@ -516,7 +527,7 @@ export default {
 
 .details-section h4 {
   margin-top: 0;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   color: #204c6d;
   font-size: 16px;
   font-weight: 600;
@@ -561,18 +572,18 @@ export default {
 
 /* Estilos para a seção de imagens */
 .images-section {
-  margin-top: 20px;
+  margin-top: 15px;
 }
 
 .images-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 15px;
+  gap: 10px;
 }
 
 .image-item {
-  width: 120px;
-  height: 120px;
+  width: 100px;
+  height: 100px;
   overflow: hidden;
   border-radius: 6px;
   cursor: pointer;
@@ -652,6 +663,89 @@ export default {
   to {
     transform: translateY(0);
     opacity: 1;
+  }
+}
+
+/* Media queries para responsividade */
+@media (max-width: 768px) {
+  .filters-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .filter-group {
+    width: 100%;
+    min-width: 100%;
+  }
+
+  .filter-button {
+    width: 100%;
+  }
+
+  .table-header {
+    padding: 8px 0;
+  }
+
+  .header-cell,
+  .table-cell {
+    padding: 8px 5px;
+    font-size: 14px;
+  }
+
+  /* Ajustes específicos para visualização em dispositivos móveis */
+  .location-cell {
+    flex: 1; /* Reduz proporcionalmente em dispositivos móveis */
+  }
+
+  .type-cell {
+    min-width: 80px;
+  }
+
+  .status-cell {
+    min-width: 80px;
+  }
+
+  .image-item {
+    width: 80px;
+    height: 80px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-cell,
+  .table-cell {
+    font-size: 13px;
+    padding: 6px 3px;
+  }
+
+  .details-content {
+    padding: 10px;
+  }
+
+  .description-box {
+    padding: 10px;
+  }
+
+  /* Em telas muito pequenas, reduzir ainda mais os itens */
+  .image-item {
+    width: 70px;
+    height: 70px;
+  }
+
+  /* Melhorar visualização dos detalhes */
+  .details-section h4 {
+    font-size: 15px;
+  }
+}
+
+/* Fix para iOS Safari */
+@supports (-webkit-touch-callout: none) {
+  .occurrences-table-wrapper {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .filter-select {
+    font-size: 16px; /* Evita zoom automático em inputs no iOS */
   }
 }
 </style>

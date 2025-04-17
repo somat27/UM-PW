@@ -4,6 +4,7 @@
       <h3 class="footer-heading">Links Uteis</h3>
       <a href="/sobre-nos" class="footer-link">Sobre nós</a>
       <a href="/help" class="footer-link">Ajuda</a>
+      <a href="/feedback" class="footer-link">Avaliação</a>
     </div>
 
     <div class="footer-social animate-fade-in">
@@ -68,7 +69,7 @@ export default {
 .footer-links,
 .footer-social,
 .footer-contact {
-  font-family: 'Open Sans', sans-serif;
+  font-family: "Open Sans", sans-serif;
   display: flex;
   flex-direction: column;
   gap: 11px;
@@ -98,7 +99,6 @@ export default {
 
 .footer-link,
 .contact-info {
-  
   font-size: 80%;
   text-decoration: none;
   color: #fff;
@@ -153,7 +153,7 @@ export default {
 }
 
 .copyright {
-  font-family: 'Open Sans', sans-serif;
+  font-family: "Open Sans", sans-serif;
   font-size: 80%;
   margin: 0;
   opacity: 0.8;

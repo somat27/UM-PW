@@ -38,28 +38,27 @@
     <section class="statistics-section">
       <StatCard
         :imageSrc="cardAuditoria"
-        xs
         iconAlt="Audit icon"
-        value="22"
+        :value="auditorias"
         description="Auditorias realizadas este ano"
       />
       <StatCard
         :imageSrc="cardOcorrencia"
         iconAlt="Reports icon"
-        value="150"
-        description="Ocorrencias registadas este ano"
+        :value="ocorrencias"
+        description="Ocorrências resolvidas"
       />
       <StatCard
         :imageSrc="cardTempo"
         iconAlt="Time icon"
-        value="2-3 dias"
+        :value="tempoMedio"
         description="Tempo médio de resolução"
       />
       <StatCard
         :imageSrc="cardSatisfacao"
         iconAlt="Satisfaction icon"
-        value="96%"
-        description="Percetagem de satisfação da comunidade"
+        :value="satisfacao"
+        description="Percentagem de satisfação da comunidade"
       />
     </section>
     <AppFooter />
@@ -85,6 +84,8 @@ import cardOcorrencia from "@/assets/PaginaInicial/cardEstatistica/ocorrencia.jp
 import cardTempo from "@/assets/PaginaInicial/cardEstatistica/tempo.jpg";
 import cardSatisfacao from "@/assets/PaginaInicial/cardEstatistica/satisfacao.jpg";
 
+import { getEstatisticas } from "@/services/firebase";
+
 export default {
   name: "MainPage",
   components: {
@@ -104,7 +105,16 @@ export default {
       cardOcorrencia,
       cardTempo,
       cardSatisfacao,
+
+      // Estatísticas
+      ocorrencias: 0,
+      auditorias: 0,
+      tempoMedio: "—",
+      satisfacao: "-",
     };
+  },
+  mounted() {
+    this.carregarEstatisticas();
   },
   methods: {
     goToReportPage(category) {
@@ -112,11 +122,20 @@ export default {
         name: "Report",
         query: { category },
       });
-
-      // Asegura que o scroll vai para o topo após a navegação
       this.$nextTick(() => {
         window.scrollTo(0, 0);
       });
+    },
+    async carregarEstatisticas() {
+      try {
+        const stats = await getEstatisticas();
+        this.ocorrencias = stats.ocorrenciasResolvidas;
+        this.auditorias = stats.auditoriasRealizadas;
+        this.tempoMedio = `${stats.tempoMedioResolucao.toFixed(1)} dias`;
+        this.satisfacao = `${stats.mediaAvaliacoes} %`;
+      } catch (error) {
+        console.error("Erro ao carregar estatísticas:", error);
+      }
     },
   },
 };

@@ -60,86 +60,89 @@
       <div v-else id="map" class="google-map"></div>
     </div>
 
-    <!-- Painel de detalhes da ocorrência selecionada -->
-    <transition name="slide">
-      <div v-if="selectedOcorrencia" class="occurrence-details-panel">
-        <div class="details-header">
-          <h3>Detalhes da Ocorrência</h3>
-          <button @click="closeDetails" class="close-button">✕</button>
-        </div>
-
-        <div class="details-content">
-          <div class="details-info">
-            <div class="detail-item">
-              <span class="detail-label">Data:</span>
-              <span class="detail-value">{{
-                formatarData(selectedOcorrencia.dataSubmissao)
-              }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Localização:</span>
-              <span class="detail-value">{{
-                selectedOcorrencia.endereco || "Endereço não disponível"
-              }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Tipo:</span>
-              <span class="detail-value">{{
-                mapearTipoOcorrencia(selectedOcorrencia.tipoOcorrencia)
-              }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">Status:</span>
-              <span class="detail-value">
-                <StatusBadge
-                  :status="mapearStatus(selectedOcorrencia.status)"
-                />
-              </span>
-            </div>
+    <!-- Painel de detalhes da ocorrência selecionada - Agora centralizado -->
+    <div v-if="selectedOcorrencia" class="modal-overlay">
+      <transition name="fade">
+        <div class="occurrence-details-modal">
+          <div class="details-header">
+            <h3>Detalhes da Ocorrência</h3>
+            <button @click="closeDetails" class="close-button">✕</button>
           </div>
 
-          <!-- Seção de descrição com estilo melhorado -->
-          <div class="details-section">
-            <h4>Descrição</h4>
-            <div class="description-box">
-              <p>
-                {{
-                  selectedOcorrencia.descricao || "Sem descrição disponível."
-                }}
-              </p>
+          <div class="details-content">
+            <div class="details-info">
+              <div class="detail-item">
+                <span class="detail-label">Data:</span>
+                <span class="detail-value">{{
+                  formatarData(selectedOcorrencia.dataSubmissao)
+                }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Localização:</span>
+                <span class="detail-value">{{
+                  selectedOcorrencia.endereco || "Endereço não disponível"
+                }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Tipo:</span>
+                <span class="detail-value">{{
+                  mapearTipoOcorrencia(selectedOcorrencia.tipoOcorrencia)
+                }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Status:</span>
+                <span class="detail-value">
+                  <StatusBadge
+                    :status="mapearStatus(selectedOcorrencia.status)"
+                  />
+                </span>
+              </div>
             </div>
-          </div>
 
-          <!-- Exibição de imagens melhorada -->
-          <div
-            v-if="
-              selectedOcorrencia.imagemVideo &&
-              selectedOcorrencia.imagemVideo.length > 0
-            "
-            class="details-section images-section"
-          >
-            <h4>Imagens</h4>
-            <div class="images-grid">
-              <div
-                v-for="(imagem, index) in selectedOcorrencia.imagemVideo"
-                :key="index"
-                class="image-item"
-              >
-                <img
-                  :src="imagem"
-                  alt="Imagem da ocorrência"
-                  @click="ampliarImagem(imagem)"
-                />
+            <!-- Seção de descrição com estilo melhorado -->
+            <div class="details-section">
+              <h4>Descrição</h4>
+              <div class="description-box">
+                <p>
+                  {{
+                    selectedOcorrencia.descricao || "Sem descrição disponível."
+                  }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Exibição de imagens melhorada -->
+            <div
+              v-if="
+                selectedOcorrencia.imagemVideo &&
+                selectedOcorrencia.imagemVideo.length > 0
+              "
+              class="details-section images-section"
+            >
+              <h4>Imagens</h4>
+              <div class="images-grid">
+                <div
+                  v-for="(imagem, index) in selectedOcorrencia.imagemVideo"
+                  :key="index"
+                  class="image-item"
+                >
+                  <img
+                    :src="imagem"
+                    alt="Imagem da ocorrência"
+                    @click="ampliarImagem(imagem)"
+                  />
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </transition>
+      </transition>
+    </div>
   </div>
 </template>
 
 <script>
+// Script permanece o mesmo
 import StatusBadge from "../OcurrencePage/StatusBadge.vue";
 import { getOcorrencias } from "@/services/firebase";
 
@@ -431,7 +434,7 @@ export default {
     aplicarFiltros() {
       this.selectedOcorrencia = null;
       if (this.infoWindow) this.infoWindow.close();
-      this.reinicializarMapa(); // 👈 aqui é onde tudo acontece agora
+      this.reinicializarMapa();
     },
 
     limparFiltros() {
@@ -682,21 +685,52 @@ export default {
   font-weight: 500;
 }
 
-/* Estilos para o painel de detalhes da ocorrência */
-.occurrence-details-panel {
-  position: absolute;
-  top: 70px;
-  right: 20px;
-  width: 350px;
-  max-height: calc(100% - 100px);
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-  overflow-y: auto;
-  z-index: 10;
-  animation: slideInRight 0.3s ease-out;
+/* NOVOS ESTILOS PARA O MODAL CENTRALIZADO */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
 }
 
+.occurrence-details-modal {
+  width: 75%;
+  max-height: 85vh;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.2);
+  overflow-y: auto;
+  animation: zoomIn 0.3s ease-out;
+}
+
+@keyframes zoomIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* Estilos para o cabeçalho do modal */
 .details-header {
   display: flex;
   justify-content: space-between;
@@ -706,11 +740,14 @@ export default {
   background-color: #204c6d;
   color: white;
   border-radius: 8px 8px 0 0;
+  position: sticky;
+  top: 0;
+  z-index: 5;
 }
 
 .details-header h3 {
   margin: 0;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
 }
 
@@ -718,11 +755,11 @@ export default {
   background: none;
   border: none;
   color: white;
-  font-size: 20px;
+  font-size: 22px;
   cursor: pointer;
   padding: 0;
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -732,21 +769,24 @@ export default {
 
 .close-button:hover {
   background-color: rgba(255, 255, 255, 0.2);
+  transform: rotate(90deg);
 }
 
+/* Estilos para o conteúdo do modal */
 .details-content {
-  padding: 20px;
+  padding: 25px;
 }
 
 .details-info {
-  margin-bottom: 20px;
+  margin-bottom: 25px;
   background-color: #f9f9f9;
-  padding: 15px;
-  border-radius: 5px;
+  padding: 20px;
+  border-radius: 6px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
 .detail-item {
-  margin-bottom: 10px;
+  margin-bottom: 15px;
   display: flex;
   flex-direction: column;
 }
@@ -757,18 +797,19 @@ export default {
 
 .detail-label {
   font-weight: 600;
-  color: #666;
-  font-size: 14px;
-  margin-bottom: 4px;
+  color: #555;
+  font-size: 15px;
+  margin-bottom: 5px;
 }
 
 .detail-value {
   color: #333;
+  font-size: 16px;
 }
 
 /* Estilos para a seção de detalhes */
 .details-section {
-  margin-bottom: 20px;
+  margin-bottom: 25px;
   animation: fadeIn 0.5s ease-in-out;
 }
 
@@ -778,12 +819,12 @@ export default {
 
 .details-section h4 {
   margin-top: 0;
-  margin-bottom: 12px;
+  margin-bottom: 15px;
   color: #204c6d;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   border-bottom: 1px solid #eaeaea;
-  padding-bottom: 8px;
+  padding-bottom: 10px;
   position: relative;
 }
 
@@ -792,60 +833,61 @@ export default {
   position: absolute;
   left: 0;
   bottom: -1px;
-  width: 50px;
+  width: 60px;
   height: 3px;
   background-color: #204c6d;
   transition: width 0.3s ease-in-out;
 }
 
 .details-section:hover h4::after {
-  width: 100px;
+  width: 120px;
 }
 
 /* Estilo para a caixa de descrição */
 .description-box {
   background-color: white;
-  border-radius: 4px;
-  padding: 15px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border-radius: 5px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   border: 1px solid #eaeaea;
   transition: box-shadow 0.3s ease;
 }
 
 .description-box:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
 .description-box p {
   margin: 0;
-  line-height: 1.5;
+  line-height: 1.6;
+  font-size: 15px;
 }
 
 /* Estilos para a seção de imagens */
 .images-section {
-  margin-top: 20px;
+  margin-top: 25px;
 }
 
 .images-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 15px;
+  gap: 20px;
 }
 
 .image-item {
-  width: 90px;
-  height: 90px;
+  width: 120px;
+  height: 120px;
   overflow: hidden;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
   border: 2px solid white;
   transition: all 0.3s ease;
 }
 
 .image-item:hover {
   transform: scale(1.05);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
   border-color: #204c6d;
 }
 
@@ -860,57 +902,6 @@ export default {
   transform: scale(1.1);
 }
 
-/* Animações para as transições */
-.slide-enter-active {
-  transition: all 0.3s ease-out;
-}
-
-.slide-leave-active {
-  transition: all 0.3s ease-in;
-}
-
-.slide-enter-from {
-  transform: translateX(100%);
-  opacity: 0;
-}
-
-.slide-leave-to {
-  transform: translateX(100%);
-  opacity: 0;
-}
-
-/* Animações de entrada */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes slideInUp {
-  from {
-    transform: translateY(20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-@keyframes slideInRight {
-  from {
-    transform: translateX(50px);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
 /* Responsividade */
 @media (max-width: 991px) {
   .filters-row {
@@ -922,22 +913,19 @@ export default {
     width: 100%;
   }
 
-  .occurrence-details-panel {
-    width: 100%;
-    max-width: none;
-    top: auto;
-    right: 0;
-    left: 0;
-    bottom: 0;
-    height: 50%;
-    max-height: 50%;
-    border-radius: 15px 15px 0 0;
+  .occurrence-details-modal {
+    width: 85%;
   }
 }
 
 @media (max-width: 640px) {
   .map-container {
     height: 400px;
+  }
+
+  .occurrence-details-modal {
+    width: 95%;
+    max-height: 80vh;
   }
 
   .details-content {
@@ -949,8 +937,8 @@ export default {
   }
 
   .image-item {
-    width: 70px;
-    height: 70px;
+    width: 80px;
+    height: 80px;
   }
 }
 </style>

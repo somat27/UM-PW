@@ -5,7 +5,8 @@ import Help from "@/views/Help.vue";
 import Report from "@/views/Report.vue";
 import Ocorrencias from "@/views/Ocurrence.vue";
 import Mapa from "@/views/Map.vue";
-import Social from "@/views/Social.vue"
+import Social from "@/views/Social.vue";
+import Feedback from "@/views/Feedback.vue";
 
 const routes = [
   {
@@ -43,6 +44,11 @@ const routes = [
     path: "/social",
     name: "Social",
     component: Social,
+  },
+  {
+    path: "/feedback",
+    name: "Feedback",
+    component: Feedback,
   },
 ];
 

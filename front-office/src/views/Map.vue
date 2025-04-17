@@ -44,7 +44,7 @@ export default {
 }
 
 .main-content {
-  padding: 0 64px;
+  padding: 0 30px;
   flex: 1;
   background-color: #fff;
   padding-bottom: 5%;
@@ -69,9 +69,9 @@ export default {
 
 .occurrences-title {
   color: #204c6d;
-  font-size: 50px;
+  font-size: 40px;
   font-weight: 700;
-  margin-bottom: 11px;
+  margin-bottom: 5px;
 }
 
 @media (max-width: 640px) {
