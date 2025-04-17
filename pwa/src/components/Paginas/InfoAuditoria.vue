@@ -1,6 +1,6 @@
 <template>
     
-    <AppCabecalho/>
+    <AppHeader titulo="Detalhe"/>
 
     <button class="flex-linha transparente margem" @click="goToPaginaIncial">
         <h2><i class="bi bi-arrow-left"></i>   Voltar para menu</h2>
@@ -43,14 +43,14 @@
 
 
 <script>
-    import AppCabecalho from '../AppCabecalho.vue';
     import { doc, getDoc } from 'firebase/firestore';
     import { db } from '@/firebase/firebase.js';
     import PopUpInfo from './PopUp/PopUpInfo.vue';
+    import AppHeader from '../AppHeader.vue';
     export default {
         name: "InfoAuditoria",
         components: {
-            AppCabecalho,
+            AppHeader,
             PopUpInfo,
         },
         data() {

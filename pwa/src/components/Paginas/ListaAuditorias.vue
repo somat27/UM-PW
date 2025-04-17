@@ -1,9 +1,9 @@
 <template>
 
-    <AppCabecalho/>
+    <AppHeader/>
 
     <div class="flex-linha margem" id="pesquisa">
-        <i class="bi bi-search icon"></i>
+        <i class="bi bi-search"></i>
         <input
             class="transparente"
             type="text"
@@ -39,18 +39,43 @@
             <h3><i class="bi bi-clock"></i> {{audit.dataInicio.toDate().toLocaleDateString()}}</h3>
         </div>
     </button>
+
+
+
+    <button class="flex-coluna margem painel" id="auditoria" v-for="audit in auditoriasVisiveis" :key="audit.id" @click="goToPaginaDetalhe(audit)">
+        <div class="flex-linha centro item-ponta">
+            <h1>{{ audit.nome }}</h1>
+            <h2 :class="corEstado(audit.estado)" id="estado">{{ audit.estado }}</h2>
+        </div>
+
+        <div class="flex-coluna">
+            <h3><i class="bi bi-geo-alt"></i> {{ audit.local }}</h3>
+            <h3><i class="bi bi-clock"></i> {{audit.dataInicio.toDate().toLocaleDateString()}}</h3>
+        </div>
+    </button>
+    <button class="flex-coluna margem painel" id="auditoria" v-for="audit in auditoriasVisiveis" :key="audit.id" @click="goToPaginaDetalhe(audit)">
+        <div class="flex-linha centro item-ponta">
+            <h1>{{ audit.nome }}</h1>
+            <h2 :class="corEstado(audit.estado)" id="estado">{{ audit.estado }}</h2>
+        </div>
+
+        <div class="flex-coluna">
+            <h3><i class="bi bi-geo-alt"></i> {{ audit.local }}</h3>
+            <h3><i class="bi bi-clock"></i> {{audit.dataInicio.toDate().toLocaleDateString()}}</h3>
+        </div>
+    </button>
 </template>
 
 
 <script>
-    import AppCabecalho from '../AppCabecalho.vue';
+    import AppHeader from '../AppHeader.vue'
     import { db } from '@/firebase/firebase.js';
     import { collection, getDocs } from 'firebase/firestore';
     import PopUpFiltro from './PopUp/PopUpFiltro.vue';
     export default {
         name: 'ListaAuditorias',
         components: {
-            AppCabecalho,
+            AppHeader,
             PopUpFiltro,
         },
         data() {
