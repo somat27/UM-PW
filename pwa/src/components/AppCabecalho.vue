@@ -12,10 +12,9 @@
             <i class="bi bi-chevron-down"></i>
           </div>
         </div>
-    </button>
+      </button>
     </div>
-  </header>
-  <div>
+    
     <div v-if="notificacao" class="popup" id="popupNotificacao">
       <h2>NOTIFICACAO</h2>
     </div>
@@ -23,7 +22,7 @@
       <button class="botao" @click="goToVerPerfil"><h2>Ver Perfil</h2></button>
       <button class="botao" @click="logout"><h2>Log Out</h2></button>
     </div>
-  </div>
+  </header>
 </template>
 
 
@@ -105,6 +104,8 @@
     flex-direction: column;
     position: absolute;
     padding: 1vh;
+    top: 0;
+    margin-top: 7.5vh;
     right: 0;
     text-align: left;
 

@@ -49,7 +49,7 @@
                     </div>
                     <div class="paragrafo">
                         <i class="bi bi-clock"></i>
-                        <h3>{{audit.data}}</h3>
+                        <h3>{{audit.dataInicioFormatada}}</h3>
                     </div>
                 </div>
 
@@ -65,6 +65,8 @@
 <script>
 
     import AppCabecalho from '../AppCabecalho.vue';
+    import { db } from '@/firebase/firebase.js';
+    import { collection, getDocs } from 'firebase/firestore';
     export default {
         name: 'PaginaInicial',
         components: {
@@ -75,38 +77,9 @@
                 valorRadio: null,
                 popupfiltro: false,
                 searchQuery: '',
-                uid: null,
+                //uid: null,
 
-                listaAuditorias: [
-                    {
-                        id: "1",
-                        nome: "Inspeção Instalações Elétricas",
-                        estado: "Pendente",
-                        local: "Edificio Central, Porto",
-                        data: "02/06/2023"
-                    },
-                    {
-                        id: "2",
-                        nome: "Poste eletrico no chao da rua",
-                        estado: "Concluido",
-                        local: "Castelo Guimarães, Cidade do berço",
-                        data: "02/04/2025"
-                    },
-                    {
-                        id: "2",
-                        nome: "Poste eletrico no chao da rua",
-                        estado: "Incompleto",
-                        local: "Castelo Guimarães, Cidade do berço",
-                        data: "02/04/2025"
-                    },
-                    {
-                        id: "2",
-                        nome: "Poste eletrico no chao da rua",
-                        estado: "Concluido",
-                        local: "Castelo Guimarães, Cidade do berço",
-                        data: "02/04/2025"
-                    }
-                ],
+                listaAuditorias: [],
             }; 
         },
         created() {
@@ -119,14 +92,35 @@
             auditoriasVisiveis() {
                 return this.listaAuditorias.filter(auditoria => {
                     const nomeMatch = auditoria.nome.toLowerCase().includes(this.searchQuery.toLowerCase());
-                    const estadoMatch = this.valorRadio ? auditoria.estado === this.valorRadio : true;
-                    return nomeMatch && estadoMatch;
-            });
-    }
+                    const statusMatch = this.valorRadio ? auditoria.estado === this.valorRadio : true;
+                    return nomeMatch && statusMatch;
+                });
+            }
         },
-        mounted() {
-            this.uid = this.$route.params.uid;
-        },
+        async mounted() {
+            //this.uid = this.$route.params.uid;
+
+            try {
+                const querySnapshot = await getDocs(collection(db, "auditorias"));
+                this.listaAuditorias = querySnapshot.docs.map(doc => {
+                    const data = doc.data();
+
+                    // converte timestamp para string legível
+                    const dataInicio = data.dataInicio?.toDate?.(); // faz .toDate() apenas se existir
+
+                    return {
+                        id: doc.id,
+                        ...data,
+                        dataInicioFormatada: dataInicio
+                        ? dataInicio.toLocaleDateString("pt-PT") // → "11/04/2025"
+                        : ""
+                    };
+                });
+
+            } catch (error) {
+                console.error("Erro ao buscar auditorias:", error);
+            }
+            },
         methods: {
             onSearch() {
                 
@@ -141,11 +135,8 @@
             },
             goToPaginaDetalhe(audit) {
                 this.$router.push({
-                    path: "/PaginaDetalhe",
+                    name: "PaginaDetalhe",
                     params: { id: audit.id },
-                    query: {
-                        auditoria: JSON.stringify(audit)
-                    }
                 });
             }
         }

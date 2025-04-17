@@ -3,7 +3,7 @@
         <AppCabecalho titulo="Detalhe"/>
         <button class="campo-dashboard" @click="goToPaginaIncial">
             <i class="bi bi-arrow-left"></i>
-            <p>Voltar para Dashboard</p>
+            <p>Voltar para menu</p>
         </button>
 
         <div class="campo-auditoria">
@@ -19,22 +19,23 @@
                         <i class="bi bi-geo-alt"></i>
                         <div class="local-hora">
                             <h2>{{ auditoria.local }}</h2>
-                            <h3>Avenida Central, 123, 1000-001 Lisboa</h3>
+                            <h3>{{ auditoria.local }}</h3>
                         </div>
                     </div>
                     <div class="paragrafo">
                         <i class="bi bi-clock"></i>
                         <div class="local-hora">
-                            <h2>09:00 - 12:00</h2>
-                            <h3>{{ auditoria.data }}</h3>
+                            <h2>{{ auditoria.data }}</h2>
+                            <h3>00:00 - 00:00</h3>
                         </div>
                     </div>
                 </div>
 
                 <div class="campo-descricao">
                     <h1>Descrição</h1>
-                    <h3>Verificação de rotina dos sistemas conforme procedimento padrão.</h3>
+                    <h3>{{ auditoria.descricao || "Verificação de rotina dos sistemas conforme procedimento padrão." }}</h3>
                 </div>
+
 
                 <div class="campo-equipa-equipamento">
                     <div class="equipa-equipamento">
@@ -65,33 +66,66 @@
 
 
 <script>
-import AppCabecalho from '../AppCabecalho.vue';
 
-export default {
-    name: "PaginaDetalhe",
-    components: {
-        AppCabecalho,
-    },
-    props: {
-        auditoria: {
-        type: Object,
-        default: () => ({
-            id: "",
-            nome: "Inspeção Instalações Elétricas",
-            estado: "Pendente",
-            local: "Edificio Central, Porto",
-            data: "02/06/2023"
-        })
+    import { doc, getDoc } from "firebase/firestore";
+    import { db } from "@/firebase/firebase";
+    import AppCabecalho from '../AppCabecalho.vue';
+
+    export default {
+        name: "PaginaDetalhe",
+        components: {
+            AppCabecalho,
+        },
+        data() {
+            return {
+                auditoria: {},
+            };
+        },
+        methods: {
+            goToPaginaIncial() {
+            this.$router.push("/PaginaInicial");
+            },
+            goToPaginaRegistar() {
+            this.$router.push({name: "PaginaRegistar", params: { id: this.auditoria.id },});
+            },
+        },
+        async mounted() {
+            const id = this.$route.params.id;
+
+            if (id) {
+                try {
+                const docRef = doc(db, "auditorias", id);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    const dataInicio = data.dataInicio?.toDate?.();
+                    const dataFormatada = dataInicio
+                        ? dataInicio.toLocaleDateString("pt-PT")
+                        : "";
+
+                    this.auditoria = {
+                    id: docSnap.id,
+                    nome: data.nome || '',
+                    estado: data.estado || '',
+                    local: data.local || '',
+                    data: dataFormatada,
+                    descricao: data.descricao || '',
+                    //peritos: data.peritos || [],
+                    //imagemVideo: data.imagemVideo || [],
+                    //audio: data.audio || [],
+                    //coordenadas: data.coordenadas || {},
+                    //dataFim: data.dataFim?.toDate?.() || '',
+                    };
+                } else {
+                    console.log("Documento não encontrado!");
+                }
+                } catch (error) {
+                console.error("Erro ao buscar auditoria:", error);
+                }
+            }
         }
-    },
-    methods: {
-        goToPaginaIncial() {
-        this.$router.push("/PaginaInicial");
-        },
-        goToPaginaRegistar() {
-        this.$router.push("/PaginaRegistar");
-        },
-    },
+
     };
 </script>
 

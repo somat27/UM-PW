@@ -3,7 +3,7 @@
         <div class="filtro-conteudo">
             <button id="botao-fechar" @click="$emit('fecharPopup')"><i class="bi bi-x-lg"></i></button>
             
-                <label v-for="(profissional, index) in listaProfissionais" :key="index" class="campo-quantidadetexto">
+                <label v-for="(profissional, index) in peritos" :key="index" class="campo-quantidadetexto">
                     <h2>{{ profissional.nome }}</h2>
                     <div class="campo-quantidade">
                         <h3>{{ profissional.quantidade }}</h3>
@@ -23,22 +23,22 @@
         name: 'PopUpTrabalhadores',
         data() {
             return {
-                listaProfissionais: [
-                    {"nome": "Engenheiro Civil", "quantidade": 0}, 
-                    {"nome": "Engenheiro Eletricista", "quantidade": 0}, 
-                    {"nome": "Auditor de Infraestruturas", "quantidade": 0}, 
-                    {"nome": "Fiscal de Obras Públicas", "quantidade": 0}, 
-                    {"nome": "Policia", "quantidade": 0}
-                ],
+                peritosLocal: [],
             };
+        },
+        props: {
+            peritos: {
+            type: Array,
+            default: () => []
+            }
         },
         methods: {
             adiciona(index) {
-                this.listaProfissionais[index].quantidade++;
+                this.$emit('atualizaQuantidade', index, this.peritos[index].quantidade + 1);
             },
             remove(index) {
-                if (this.listaProfissionais[index].quantidade > 0) {
-                    this.listaProfissionais[index].quantidade--;
+                if (this.peritos[index].quantidade > 0) {
+                    this.$emit('atualizaQuantidade', index, this.peritos[index].quantidade - 1);
                 }
             }
         },

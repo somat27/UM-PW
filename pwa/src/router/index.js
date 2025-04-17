@@ -4,7 +4,10 @@ import PaginaInicial from "@/components/PaginaInicial/PaginaInicial.vue";
 import PaginaDetalhe from "@/components/PaginaDetalhe/PaginaDetalhe.vue";
 import PaginaRegistar from "@/components/PaginaRegistar/PaginaRegistar.vue";
 import { auth } from "@/firebase/firebase.js";
-import VerPerfil from "@/components/VerPerfil.vue";
+//import VerPerfil from "@/components/VerPerfil.vue";
+import ListaAuditorias from "@/components/Paginas/ListaAuditorias.vue";
+import InfoAuditoria from "@/components/Paginas/InfoAuditoria.vue";
+import UserPerfil from "@/components/UserPerfil.vue";
 
 const routes = [
     {
@@ -19,26 +22,42 @@ const routes = [
         meta: { requiresAuth: true },
     },
     {
-        //path: "/pagina-detalhe/:id",
-        path: "/PaginaDetalhe",
+        path: "/PaginaDetalhe/:id",
         name: "PaginaDetalhe",
         component: PaginaDetalhe,
-        meta: { requiresAuth: true },
-        props: (route) => ({
-          auditoria: route.query.auditoria ? JSON.parse(route.query.auditoria) : null
-        })
-      },
-    {
-        path: "/PaginaRegistar",
-        name: "PaginaRegistar",
-        component: PaginaRegistar,
-        meta: { requiresAuth: true },
+        //meta: { requiresAuth: true },
     },
     {
+        path: "/PaginaRegistar/:id",
+        name: "PaginaRegistar",
+        component: PaginaRegistar,
+        //meta: { requiresAuth: true },
+    },
+/*    {
         path: "/Perfil",
         name: "Perfil",
         component: VerPerfil,
         meta: { requiresAuth: true },
+    },*/
+
+
+
+    {
+      path: "/ListaAuditorias",
+      name: "ListaAuditorias",
+      component: ListaAuditorias,
+    },
+
+    {
+      path: "/InfoAuditoria/:id",
+      name: "InfoAuditoria",
+      component: InfoAuditoria,
+    },
+
+    {
+      path: "/Perfil",
+      name: "UserPerfil",
+      component: UserPerfil,
     },
 ];
 
