@@ -2,10 +2,17 @@
   <div class="dashboard-container">
     <div class="dashboard-layout">
       <aside class="sidebar-column">
-        <NavigationList />
+        <nav class="sidebar-nav">
+          <div class="sidebar-background">
+            <NavigationList />
+          </div>
+        </nav>
       </aside>
 
+
       <main class="main-content">
+        <div class="content-wrapper">
+
         <h1 class="page-title">Gestão de Ocorrências</h1>
         
         <div class="content-section">
@@ -32,7 +39,13 @@
         </div>
       <div class="buttons-container">
         <div class="buttons-column">
+          <router-link 
+      to="/GestaoOcorrencias/AprovacaoOcorrencia" 
+      class="tab-link" 
+    >
           <button class="btn-approve">Aprovar</button>
+        </router-link>
+
           <button class="btn-reject">Rejeitar</button>
             </div>
           </div>
@@ -54,6 +67,7 @@
 
             </div>
         </div>
+      </div>
       </main>
     </div>
   </div>
@@ -72,6 +86,7 @@ export default {
     DetailsOco
   },
   data() {
+
     return {
       tableColumns: [
         { key: 'id', label: 'ID', headerClass: 'col-id' },
@@ -112,8 +127,10 @@ export default {
         }    
       ]
     };
-  }
+  },
+
 };
+
 </script>
 
 <style scoped>

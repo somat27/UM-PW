@@ -11,12 +11,13 @@
 
       <main class="main-content">
         <div class="content-wrapper">
+          <h1 class="page-title">Gestão de Peritos</h1>
+
           <nav class="navigation-tabs">
           </nav>
 
           <StatisticsGrid />
 
-          <h2>Gestão de Peritos</h2>
           <div class="search-section">
               <div class="search-form">
                 <div class="search-input">

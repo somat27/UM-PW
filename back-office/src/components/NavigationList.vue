@@ -23,6 +23,7 @@
 
     <router-link to="/GestaoAuditorias" 
       class="nav-item"
+
     >
       <img
         src="https://cdn.builder.io/api/v1/image/assets/TEMP/b414ddc8a44a7865af46891e60f33ca4a0160885?placeholderIfAbsent=true&apiKey=98100b9ac2c544efa71903dc3e1eda07"
@@ -34,6 +35,8 @@
 
     <router-link to="/GestaoOcorrencias" 
       class="nav-item"
+      :class="{ 'nav-item-active': isGAActive }"
+
     > 
 
       <img
@@ -123,12 +126,15 @@ export default {
     const isDashboardActive = computed(() => {
       return route.path.startsWith("/dashboards/");
     });
-
+    const isGAActive = computed(() => {
+      return route.path.startsWith("/GestaoOcorrencias/");
+    });
     return {
       userName,
       userPhoto,
       logOut,
       isDashboardActive,
+      isGAActive,
     }
   }
 }

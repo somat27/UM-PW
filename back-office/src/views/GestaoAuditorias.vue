@@ -2,10 +2,16 @@
   <div class="dashboard-container">
     <div class="dashboard-layout">
       <aside class="sidebar-column">
-        <NavigationList />
+        <nav class="sidebar-nav">
+          <div class="sidebar-background">
+            <NavigationList />
+          </div>
+        </nav>
       </aside>
 
       <main class="main-content">
+        <div class="content-wrapper">
+
         <h1 class="page-title">Gestão de Auditorias</h1>
         
         <div class="content-section">
@@ -34,6 +40,7 @@
           </template>
           </AuditTable>
         </div>
+      </div>
       </main>
     </div>
   </div>
@@ -121,6 +128,7 @@ export default {
 }
 
      .sidebar-column {
+      
       width: 19%;
     }
     

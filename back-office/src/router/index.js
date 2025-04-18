@@ -11,6 +11,7 @@ import GestaoOcorrencias from '@/views/GestaoOcorrencias.vue';
 import GestaoPeritos from '@/views/GestaoPeritos.vue';
 import GestaoMateriais from '@/views/GestaoMateriais.vue';
 import GestaoProfissionais from '@/views/GestaoProfissionais.vue';
+import AprovacaoOcorrencia from '@/views/AprovacaoOcorrencia.vue'; 
 const routes = [
   {
     path: '/',
@@ -48,10 +49,16 @@ const routes = [
     name: 'GestaoAuditorias', 
     component: GestaoAuditorias 
   },
-  { 
-    path: '/GestaoOcorrencias', 
-    name: 'GestaoOcorrencias', 
-    component: GestaoOcorrencias 
+  {
+    path: '/GestaoOcorrencias',
+    name: 'GestaoOcorrencias',
+    component: GestaoOcorrencias,
+
+  },
+  {
+    path: '/GestaoOcorrencias/AprovacaoOcorrencia', 
+    name: 'AprovacaoOcorrencia',
+    component: AprovacaoOcorrencia
   },
   { 
     path: '/GestaoPeritos', 
