@@ -1,53 +1,107 @@
 <template>
-    <div class="dashboard-container" :space="23">
-      <div class="dashboard-layout">
-        <aside class="sidebar-column">
-          <nav class="sidebar-nav">
-            <div class="sidebar-background">
-           
-              <NavigationList />
-            </div>
-          </nav>
-        </aside>
-    
-          <main class="main-content">
-         
-  
-            <div class="content-wrapper">
-              <nav class="navigation-tabs">
-  
-              </nav>
-  
-              <StatisticsGrid />
-    
-             Gestão de Materiais
-    
-          
-            
-            </div>
-          </main>
-        </div>
-      </div>
-    </template>
-  <script>
-  import NavigationList from "../components/NavigationList.vue";
+  <div class="dashboard-container" :space="23">
+    <div class="dashboard-layout">
+      <aside class="sidebar-column">
+        <nav class="sidebar-nav">
+          <div class="sidebar-background">
+            <NavigationList />
+          </div>
+        </nav>
+      </aside>
 
-  export default {
-    name: "GestaoMateriais",
-    components: {
-      NavigationList,
-     
-    },
-    setup() {
-  
-  
-      return {
-     
-         
-      };
-    }
-  };
-  </script>
+  <main class="main-content">
+  <div class="content-wrapper">
+    <nav class="navigation-tabs"></nav>
+    
+    <StatisticsGrid />
+
+    <div class="page-header">
+      <h2>Gestão de Materiais</h2>
+    </div>
+
+    <div class="filters-container">
+      <Filters
+        :filters="filterOptions"
+        :gap="'172px'"
+        search-placeholder="Procurar Materiais..."
+        button-text="+ Adicionar Materiais"
+        @search="handleSearch"
+        @filter-change="handleFilterChange"
+        @add="handleAddMaterial"
+      />
+    </div>
+
+    <GenericTable
+      :data="peritos"
+      :columns="columns"
+      :type="'striped'"
+      @action="handlePeritoAction"
+    />
+  </div>
+</main>
+    </div>
+  </div>
+</template>
+
+<script>
+import NavigationList from "../components/NavigationList.vue";
+import GenericTable from "../components/GenericTable.vue";
+import Filters from "../components/Filters.vue";
+
+export default {
+  name: "GestaoPeritos",
+  components: {
+    NavigationList,
+    GenericTable,
+    Filters
+  },
+  data() {
+    return {
+
+filterOptions: [
+        {
+          key: 'type',
+          label: 'Tipo',
+          selected: '',
+          options: [
+            { value: '', label: 'Filtrar Por' },
+            { key: 'details', label: 'Detalhes do Material' },
+            { key: 'category', label: 'Categoria' },
+            { key: 'price', label: 'Preço' },
+            { key: 'qtd', label: 'Quantidade' },
+            { key: 'status', label: 'Estado' }
+          ]
+        }
+      ],
+          columns: [
+            { key: 'details', label: 'Detalhes do Material' },
+            { key: 'category', label: 'Categoria' },
+            { key: 'price', label: 'Preço' },
+            { key: 'qtd', label: 'Quantidade' },
+            { key: 'status', label: 'Estado' },
+            { key: 'actions', label: 'Ações' }
+      ],
+      peritos: [
+        {
+          details: "Asfalto",
+          category: "Materiais de construção",
+          price: "399.99$",
+          qtd: "3",
+          status: "Em stock"
+        },
+        {
+          details: "Câmeras",
+          category: "Equipamento de segurança",
+          price: "199.00$",
+          qtd: "70",
+          status: "Fora de stock"
+        }
+      ]
+    };
+  }
+};
+</script>
+
   
     
     <style scoped>
@@ -146,72 +200,6 @@
       color: #1890ff;
     }
     
-    .search-section {
-      transform: rotate(3.141592653589793rad);
-      align-self: flex-end;
-      display: flex;
-      margin-top: 37px;
-      padding: 13px;
-      align-items: center;
-      gap: 4px;
-    }
-    
-    .search-item {
-      border-radius: 4px;
-      min-height: 34px;
-      padding: 6px 7px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 34px;
-    }
-    
-    .search-icon {
-      
-      aspect-ratio: 0.91;
-      object-fit: contain;
-      width: 20px;
-    }
-    
-    .search-form {
-      position: relative;
-      font-family:
-        Public Sans,
-        -apple-system,
-        Roboto,
-        Helvetica,
-        sans-serif;
-      font-size: 14px;
-      color: #6c757d;
-      width: 200px;
-    }
-    
-    .search-input {
-      border-radius: 4px;
-      border: 1px solid rgba(19, 194, 194, 0.85);
-      background-color: #fff;
-      width: 198px;
-      padding: 8px 29px 9px 12px;
-    }
-    
-    .search-container {
-      transform: rotate(3.141592653589793rad);
-      width: 100%;
-      overflow: hidden;
-    }
-    
-    .search-button {
-      transform: rotate(3.141592653589793rad);
-      aspect-ratio: 1;
-      object-fit: contain;
-      width: 18px;
-      position: absolute;
-      right: 160px;
-      bottom: 14px;
-      height: 12px;
-  
-    }
-    
     .map-visualization {
       aspect-ratio: 0.95;
       object-fit: contain;
@@ -257,18 +245,11 @@
         margin-top: 40px;
       }
     
-      .search-section {
-        margin-right: 5px;
-      }
-    
-      .search-input {
-        padding-right: 20px;
-      }
-    
       .map-visualization {
         max-width: 100%;
       }
     }
+
     .user-profile {
     display: flex;
     align-items: center;
@@ -286,5 +267,15 @@
     font-size: 16px;
     font-weight: bold;
   }
-    </style>
+
+.filters-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto;
+  max-width: fit-content;
+}
+
+
+</style>
     

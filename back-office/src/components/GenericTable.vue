@@ -24,19 +24,21 @@
                 </div>
               </template>
               <template v-else-if="column.key === 'status'">
-                <span :class="['status-badge', item.status.toLowerCase()]">{{ item.status }}</span>
+                <span class="status-badge" :data-status="item.status.toLowerCase()">
+                  {{ item.status }}
+                </span>
               </template>
               <template v-else-if="column.key === 'actions'">
-              <div class="action-btn-group">
-                <button class="icon-btn" @click="$emit('view', item)">
-                  <img src="@/assets/icons8-eye-forma-light/icons8-eye-24.png" alt="Ver" />
-                </button>
-                <button class="icon-btn" @click="$emit('edit', item)">
-                  <img src="@/assets/icons8-pencil-pastel-glyph/icons8-pencil-24.png" alt="Editar" />
-                </button>
-                <button class="icon-btn" @click="$emit('delete', item)">
-                  <img src="@/assets/icons8-trash-ink/icons8-trash-24.png" alt="Eliminar" />
-                </button>
+                <div class="action-btn-group">
+                  <button class="icon-btn" @click="$emit('view', item)">
+                    <img src="@/assets/icons8-eye-forma-light/icons8-eye-24.png" alt="Ver" />
+                  </button>
+                  <button class="icon-btn" @click="$emit('edit', item)">
+                    <img src="@/assets/icons8-pencil-pastel-glyph/icons8-pencil-24.png" alt="Editar" />
+                  </button>
+                  <button class="icon-btn" @click="$emit('delete', item)">
+                    <img src="@/assets/icons8-trash-ink/icons8-trash-24.png" alt="Eliminar" />
+                  </button>
                 </div>
               </template>
               <template v-else>
@@ -67,7 +69,7 @@ export default {
     type: {
       type: String,
       default: 'striped',
-      validator: (val) => ['striped', 'hover', 'plain'].includes(val)
+      validator: val => ['striped', 'hover', 'plain'].includes(val)
     }
   },
   computed: {
@@ -76,11 +78,6 @@ export default {
         'table-striped': this.type === 'striped',
         'table-hover': this.type === 'hover'
       };
-    }
-  },
-  methods: {
-    handleAction(item) {
-      this.$emit('action', item);
     }
   }
 };
@@ -91,7 +88,7 @@ export default {
   margin: 1.5rem 0;
   background: white;
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -160,28 +157,27 @@ export default {
   border-radius: 12px;
   font-size: 0.85rem;
   font-weight: 500;
+  text-transform: capitalize;
 }
 
-.status-badge.mobilizado {
+.status-badge[data-status="mobilizado"] {
   background-color: #e6f7e6;
   color: #28a745;
 }
 
-.status-badge.disponível {
+.status-badge[data-status="disponível"] {
   background-color: #e6f7e6;
-  color:rgb(40, 112, 167);
+  color: rgb(40, 112, 167);
 }
 
-.action-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  font-size: 1.2rem;
+.status-badge[data-status="em stock"] {
+  background-color: #e6f7e6;
+  color: #28a745;
 }
 
-.check-icon {
-  display: inline-block;
+.status-badge[data-status="fora de stock"] {
+  background-color: #fff1f0;
+  color: #f5222d;
 }
 
 .action-btn-group {
@@ -203,15 +199,4 @@ export default {
   width: 20px;
   height: 20px;
 }
-
-
-
-/**.table-striped tbody tr:nth-child(even) {
-  *background-color: #f8f9fa;
-*}
-
-*.table-hover tbody tr:hover {
-*  background-color: #f1f3f5;
-*}
-*/
 </style>
