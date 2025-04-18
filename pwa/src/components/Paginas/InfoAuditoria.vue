@@ -34,7 +34,7 @@
 
         </div>
 
-        <button class="flex-linha transparente centro fundo-azul margem-cima" id="iniciar">
+        <button class="flex-linha transparente centro fundo-azul margem-cima" id="iniciar" @click="goToPaginaRegisto">
             <h2><i class="bi bi-play-circle"></i> Iniciar Auditoria</h2>
         </button>
 
@@ -120,6 +120,12 @@
             goToPaginaIncial() {
                 this.$router.push("/ListaAuditorias");
             },
+            goToPaginaRegisto() {
+                this.$router.push({
+                    name: "RegistoAuditoria",
+                    params: { id: this.auditoria.id },
+                });
+            },
             corEstado(valor) {
                 switch(valor) {
                     case "Concluido":
@@ -146,7 +152,7 @@
 
 <style>
     #iniciar {
-        padding: 1vh 1vh;
+        padding: 1.5vh 1.5vh;
 
         color: #F8FAFC;
 

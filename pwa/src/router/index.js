@@ -8,6 +8,7 @@ import { auth } from "@/firebase/firebase.js";
 import ListaAuditorias from "@/components/Paginas/ListaAuditorias.vue";
 import InfoAuditoria from "@/components/Paginas/InfoAuditoria.vue";
 import UserPerfil from "@/components/UserPerfil.vue";
+import RegistoAuditoria from "@/components/Paginas/RegistoAuditoria.vue";
 
 const routes = [
     {
@@ -52,6 +53,12 @@ const routes = [
       path: "/InfoAuditoria/:id",
       name: "InfoAuditoria",
       component: InfoAuditoria,
+    },
+
+    {
+      path: "/RegistoAuditoria/:id",
+      name: "RegistoAuditoria",
+      component: RegistoAuditoria,
     },
 
     {

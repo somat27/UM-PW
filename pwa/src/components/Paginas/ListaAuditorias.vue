@@ -15,7 +15,7 @@
     <div class="flex-linha margem centro item-ponta">
         <h2>{{ auditoriasVisiveis.length }} auditorias</h2>
 
-        <div id="popUpCaixa">
+        <div class="pop-up">
             <button class="flex-linha centro" id="filtro" @click="filtroEstado = !filtroEstado">
                 <i class="bi bi-funnel"></i>
                 <h2>Filtrar</h2>
@@ -28,32 +28,7 @@
         
     </div>
 
-    <button class="flex-coluna margem painel" id="auditoria" v-for="audit in auditoriasVisiveis" :key="audit.id" @click="goToPaginaDetalhe(audit)">
-        <div class="flex-linha centro item-ponta">
-            <h1>{{ audit.nome }}</h1>
-            <h2 :class="corEstado(audit.estado)" id="estado">{{ audit.estado }}</h2>
-        </div>
-
-        <div class="flex-coluna">
-            <h3><i class="bi bi-geo-alt"></i> {{ audit.local }}</h3>
-            <h3><i class="bi bi-clock"></i> {{audit.dataInicio.toDate().toLocaleDateString()}}</h3>
-        </div>
-    </button>
-
-
-
-    <button class="flex-coluna margem painel" id="auditoria" v-for="audit in auditoriasVisiveis" :key="audit.id" @click="goToPaginaDetalhe(audit)">
-        <div class="flex-linha centro item-ponta">
-            <h1>{{ audit.nome }}</h1>
-            <h2 :class="corEstado(audit.estado)" id="estado">{{ audit.estado }}</h2>
-        </div>
-
-        <div class="flex-coluna">
-            <h3><i class="bi bi-geo-alt"></i> {{ audit.local }}</h3>
-            <h3><i class="bi bi-clock"></i> {{audit.dataInicio.toDate().toLocaleDateString()}}</h3>
-        </div>
-    </button>
-    <button class="flex-coluna margem painel" id="auditoria" v-for="audit in auditoriasVisiveis" :key="audit.id" @click="goToPaginaDetalhe(audit)">
+    <button class="flex-coluna margem painel item-ponta" id="auditoria" v-for="audit in auditoriasVisiveis" :key="audit.id" @click="goToPaginaDetalhe(audit)">
         <div class="flex-linha centro item-ponta">
             <h1>{{ audit.nome }}</h1>
             <h2 :class="corEstado(audit.estado)" id="estado">{{ audit.estado }}</h2>
@@ -147,11 +122,6 @@
 
     #pesquisa input {
         flex: 1;
-    }
-
-    #popUpCaixa {
-        position: relative; 
-        display: inline-block;
     }
 
     #filtro {
