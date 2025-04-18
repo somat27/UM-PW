@@ -1,73 +1,141 @@
 <template>
-    <div class="dashboard-container" :space="23">
-      <div class="dashboard-layout">
-        <aside class="sidebar-column">
-          <nav class="sidebar-nav">
-            <div class="sidebar-background">
-           
-              <NavigationList />
-            </div>
-          </nav>
-        </aside>
-    
-          <main class="main-content">
-         
-  
-            <div class="content-wrapper">
-              <nav class="navigation-tabs">
-  
-              </nav>
-  
-              <StatisticsGrid />
-    
-             Gestão de Ocorrências
-    
-          
-            
-            </div>
-          </main>
-        </div>
-      </div>
-    </template>
-  <script>
-  import NavigationList from "../components/NavigationList.vue";
+  <div class="dashboard-container">
+    <div class="dashboard-layout">
+      <aside class="sidebar-column">
+        <NavigationList />
+      </aside>
 
-  export default {
-    name: "GestaoOcorrencias",
-    components: {
-      NavigationList,
-     
-    },
-    setup() {
-  
-  
-      return {
-     
-         
-      };
-    }
-  };
-  </script>
-  
-    
-    <style scoped>
-    .dashboard-container {
-      background: linear-gradient(
-          0deg,
-          var(--color-grey-98, #fafafb) 0%,
-          var(--color-grey-98, #fafafb) 100%
-        ),
-        var(--color-white-solid, #fff);
-      padding-right: 18px;
-      padding-bottom: 135px;
-    }
-    
-    .dashboard-layout {
-      display: flex;
-      gap: 20px;
-    }
-    
-    .sidebar-column {
+      <main class="main-content">
+        <h1 class="page-title">Gestão de Ocorrências</h1>
+        
+        <div class="content-section">
+          <AuditTable
+            title="Tabela de Ocorrências"
+            subTitle="Lista completa de registros de ocorrências"
+            :columns="tableColumns"
+            :data="tableData"
+            type="striped"
+          >
+            <template #column-salary="{ value }">
+              <span class="text-success">{{ value }}</span>
+            </template>
+          </AuditTable>
+        </div>
+        <div class="details-down">
+        <div class="details-wrapper">
+          <DetailsOco
+            datetime="19/03/2024, 18:00"
+            category="Infraestruturas"
+            priority="Alta"
+            description="Queda de muro devido ao mau tempo, bloqueando parcialmente a via."
+          />
+        </div>
+      <div class="buttons-container">
+        <div class="buttons-column">
+          <button class="btn-approve">Aprovar</button>
+          <button class="btn-reject">Rejeitar</button>
+            </div>
+          </div>
+        <div class="search-section">
+              <div class="search-form">
+                <div class="search-input">
+                  <input 
+                    type="text" 
+                    class="search-container" 
+                    placeholder="Inserir Id da Ocorrência" 
+                  />
+                  <img
+                    src="https://cdn.builder.io/api/v1/image/assets/TEMP/e2adb638175328e468397894582b9de35e2a0581?placeholderIfAbsent=true&apiKey=98100b9ac2c544efa71903dc3e1eda07"
+                    alt="Search"
+                    class="search-button"
+                  />
+                </div>
+              </div>
+
+            </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</template>
+
+<script>
+import NavigationList from "@/components/NavigationList.vue";
+import AuditTable from "@/components/AuditTables.vue";
+import DetailsOco from "@/components/DetailsOco.vue";
+
+export default {
+  name: "GestaoAuditorias",
+  components: {
+    NavigationList,
+    AuditTable,
+    DetailsOco
+  },
+  data() {
+    return {
+      tableColumns: [
+        { key: 'id', label: 'ID', headerClass: 'col-id' },
+        { key: 'morada', label: 'Morada' },
+        { key: 'localidade', label: 'Localidade', cellClass: 'text-right' },
+        { key: 'coordenadas', label: 'Coordenadas' }
+      ],
+      tableData: [
+        { 
+          id: 1, 
+          morada: "Rua das Flores, nº45", 
+          localidade: "Lisboa",
+          coordenadas: "função mapa?" 
+        },
+        { 
+          id: 2, 
+          morada: "Avenida da Liberdade, nº100", 
+          localidade: "Lisboa",
+          coordenadas: "função mapa?"
+        },
+        { 
+          id: 3, 
+          morada: "Rua Jõao dos Santos, nº12", 
+          localidade: "Porto",
+          coordenadas: "função mapa?"
+        },
+        { 
+          id: 4, 
+          morada: "Rua Gil Vicente, nº67", 
+          localidade: "Guimarães",
+          coordenadas: "função mapa?"
+        },
+        { 
+          id: 5, 
+          morada: "Rua de Santo António, nº45", 
+          localidade: "Guimarães",
+          coordenadas: "função mapa?"
+        }    
+      ]
+    };
+  }
+};
+</script>
+
+<style scoped>
+
+.dashboard-container {
+  background: linear-gradient(
+      0deg,
+      var(--color-grey-98, #fafafb) 0%,
+      var(--color-grey-98, #fafafb) 100%
+    ),
+    var(--color-white-solid, #fff);
+  min-height: 100vh;
+  padding-right: 18px;
+  margin: 0;
+}
+
+.dashboard-layout {
+  display: flex;
+  gap: 20px;
+}
+
+     .sidebar-column {
       width: 19%;
     }
     
@@ -83,6 +151,18 @@
       padding-bottom: 395px;
       background-color: #fff;
     }
+
+
+.main-content {
+  width: 81%;
+  margin-left: 20px;
+}
+
+.data-section {
+  margin-top: 40px;
+  border: 1px dashed #ccc;
+  padding: 20px;
+}
     
     .logo {
       aspect-ratio: 6.17;
@@ -134,6 +214,7 @@
       font-size: 13px;
       color: #212529;
       flex-wrap: wrap;
+      -webkit-overflow-scrolling: touch; 
     }
     
     .tab-link {
@@ -154,16 +235,6 @@
       padding: 13px;
       align-items: center;
       gap: 4px;
-    }
-    
-    .search-item {
-      border-radius: 4px;
-      min-height: 34px;
-      padding: 6px 7px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 34px;
     }
     
     .search-icon {
@@ -286,5 +357,73 @@
     font-size: 16px;
     font-weight: bold;
   }
-    </style>
+
+  .details-wrapper {
+  margin: 20px 0;
+  }
+
+  .action-buttons {
+  margin-top: 20px;
+  display: flex;
+  gap: 12px;
+}
+
+
+.buttons-container {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 0;
+  position: relative;
+  top: -220px;
+  left: -120px;
+}
+
+.buttons-column {
+  display: flex;
+  flex-direction: column;
+  gap: 50px;
+  width: fit-content;
+}
+
+.btn-approve,
+.btn-reject {
+  padding: 15px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: white;
+  cursor: pointer;
+  width: 120px;
+}
+
+.btn-approve {
+  background-color: #28a745;
+}
+
+.btn-approve:hover {
+  background-color: #218838;
+}
+
+.btn-reject {
+  background-color: #f44336;
+}
+
+.btn-reject:hover {
+  background-color: #d32f2f;
+}
+
+
+.search-section {
+  position: relative;
+  top: -450px;
+  left: -900px;
+}
+
+.AuditTable{
+  position: relative;
+  left: -100px;
+}
+
+</style>
     

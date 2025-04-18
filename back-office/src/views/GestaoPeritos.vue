@@ -1,53 +1,106 @@
 <template>
-    <div class="dashboard-container" :space="23">
-      <div class="dashboard-layout">
-        <aside class="sidebar-column">
-          <nav class="sidebar-nav">
-            <div class="sidebar-background">
-           
-              <NavigationList />
-            </div>
-          </nav>
-        </aside>
-    
-          <main class="main-content">
-         
-  
-            <div class="content-wrapper">
-              <nav class="navigation-tabs">
-  
-              </nav>
-  
-              <StatisticsGrid />
-    
-             Gestão de Peritos
-    
-          
-            
-            </div>
-          </main>
-        </div>
-      </div>
-    </template>
-  <script>
-  import NavigationList from "../components/NavigationList.vue";
+  <div class="dashboard-container" :space="23">
+    <div class="dashboard-layout">
+      <aside class="sidebar-column">
+        <nav class="sidebar-nav">
+          <div class="sidebar-background">
+            <NavigationList />
+          </div>
+        </nav>
+      </aside>
 
-  export default {
-    name: "GestaoPeritos",
-    components: {
-      NavigationList,
-     
-    },
-    setup() {
-  
-  
-      return {
-     
-         
-      };
+      <main class="main-content">
+        <div class="content-wrapper">
+          <nav class="navigation-tabs">
+          </nav>
+
+          <StatisticsGrid />
+
+          <h2>Gestão de Peritos</h2>
+          <div class="search-section">
+              <div class="search-form">
+                <div class="search-input">
+                  <input 
+                    type="text" 
+                    class="search-container" 
+                    placeholder="Procurar Peritos" 
+                  />
+                  <img
+                    src="https://cdn.builder.io/api/v1/image/assets/TEMP/e2adb638175328e468397894582b9de35e2a0581?placeholderIfAbsent=true&apiKey=98100b9ac2c544efa71903dc3e1eda07"
+                    alt="Search"
+                    class="search-button"
+                  />
+                </div>
+              </div>
+            </div>
+          <GenericTable
+            :title="'Lista de Peritos'"
+            :subTitle="'Gestão de peritos mobilizados'"
+            :data="peritos"
+            :columns="columns"
+            :type="'striped'"
+            @action="handlePeritoAction"
+          />
+        </div>
+      </main>
+    </div>
+  </div>
+</template>
+
+<script>
+import NavigationList from "../components/NavigationList.vue";
+import GenericTable from "../components/GenericTable.vue";
+
+export default {
+  name: "GestaoPeritos",
+  components: {
+    NavigationList,
+    GenericTable
+  },
+  data() {
+    return {
+      columns: [
+  { key: 'nameEmail', label: 'Nome' },
+  { key: 'address', label: 'Morada' },
+  { key: 'birthDate', label: 'Data Nascimento' },
+  { key: 'specialty', label: 'Especialidade' },
+  { key: 'phone', label: 'Telemóvel' },
+  { key: 'status', label: 'Estado' },
+  { key: 'actions', label: 'Ações' }
+],
+      peritos: [
+        {
+          id: 1,
+          name: "Joana Silva",
+          email: "joana@sapo.pt",
+          address: "Porto",
+          birthDate: "22/07/1990",
+          specialty: "Engenheira Civil",
+          phone: "912345678",
+          status: "Mobilizado"
+        },
+        {
+          id: 2,
+          name: "Carlos Pinto",
+          email: "carlos@sapo.pt",
+          address: "Lisboa",
+          birthDate: "15/11/1987",
+          specialty: "Pedreiro",
+          phone: "934567890",
+          status: "Disponível"
+        }
+      ]
+    };
+  },
+  methods: {
+    handlePeritoAction(perito) {
+      console.log("Ação realizada para:", perito);
+      // Aqui podes adicionar lógica para editar, remover ou ver detalhes do perito
     }
-  };
-  </script>
+  }
+};
+</script>
+
   
     
     <style scoped>
@@ -286,5 +339,58 @@
     font-size: 16px;
     font-weight: bold;
   }
+
+
+    .search-section {
+      position: relative;
+      top: -20px;
+      left: -930px;
+    }
+    
+    .search-icon {
+      aspect-ratio: 0.91;
+      object-fit: contain;
+      width: 20px;
+    }
+    
+    .search-form {
+      position: relative;
+      font-family:
+        Public Sans,
+        -apple-system,
+        Roboto,
+        Helvetica,
+        sans-serif;
+      font-size: 14px;
+      color: #6c757d;
+      width: 200px;
+    }
+    
+    .search-input {
+      border-radius: 4px;
+      border: 1px solid rgba(19, 194, 194, 0.85);
+      background-color: #fff;
+      width: 198px;
+      padding: 8px 29px 9px 12px;
+    }
+    
+    .search-container {
+      transform: rotate(3.141592653589793rad);
+      width: 100%;
+      overflow: hidden;
+    }
+    
+    .search-button {
+      transform: rotate(3.141592653589793rad);
+      aspect-ratio: 1;
+      object-fit: contain;
+      width: 18px;
+      position: absolute;
+      right: 160px;
+      bottom: 14px;
+      height: 12px;
+  
+    }
+
     </style>
     
