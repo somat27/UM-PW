@@ -7,14 +7,12 @@
             <div v-for="(elemento, index) in dados.lista" :key="index" class="flex-linha item-ponta centro">
                 <h2>{{ elemento.item }}</h2>
 
-                <div class="flex-linha painel painel-ajustado centro">
 
-                    <button class="transparente" @click="if(elemento.quantidade > 0) {elemento.quantidade--;}"><h1>-</h1></button>
+                <button class="transparente" :class="elemento.presente ? 'fundo-verde' : 'fundo-vermelho'" id="botao-verificar" @click="elemento.presente = !elemento.presente">
+                    <i v-if="elemento.presente" class='bi bi-check' style="color: #fff;"></i>
+                    <i v-else class='bi bi-x' style="color: #fff;"></i>
+                </button>
 
-                    <h2>{{ elemento.quantidade }}</h2>
-                    
-                    <button class="transparente" @click="elemento.quantidade++"><h1>+</h1></button>
-                </div>
             </div>
         </div>
     </div>
@@ -23,7 +21,7 @@
 
 <script>
     export default {
-        name: "PopUpInfo",
+        name: "PopUpPresente",
         props: {
             dados: {
                 type: Object,
@@ -39,10 +37,9 @@
         width: 90vw;
     }
 
-    .painel-ajustado {
-        height: 5vh;
-        padding: 1vh;
-
-        justify-content: space-evenly;
+    #botao-verificar {
+        border: 1px solid #e6eaf0;
+        border-radius: 5px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     }
 </style>

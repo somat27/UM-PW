@@ -26,7 +26,7 @@
             <button class="flex-linha transparente" @click="dados.estado = !dados.estado">
                 <h2 v-html="dados.texto"/>
 
-                <PopUpInfo v-if="dados.estado" :dados="dados" @fechar="dados.estado = false" @atualizaQuantidade="atualizaQuantidade"/>
+                <PopUpPresente v-if="dados.estado" :dados="dados"/>
             </button>
         </div>
 
@@ -45,61 +45,67 @@
 <script>
     import { doc, getDoc } from 'firebase/firestore';
     import { db } from '@/firebase/firebase.js';
-    import PopUpInfo from './PopUp/PopUpInfo.vue';
+    import PopUpPresente from './PopUp/PopUpPresente.vue';
     import AppHeader from '../AppHeader.vue';
     export default {
         name: "InfoAuditoria",
         components: {
             AppHeader,
-            PopUpInfo,
+            PopUpPresente,
         },
         data() {
             return {
                 auditoria: {},
                 popUp: [
                     {
-                        "identificador": "equipa",
                         "texto": "<i class='bi bi-people'></i> Equipa",
                         "estado": false,
                         "lista": [
                             {
                                 "item": "Engenheiro Civil",
                                 "quantidade": 0,
+                                "presente": false,
                             },
                             {
                                 "item": "Engenheiro Eletricista",
                                 "quantidade": 0,
+                                "presente": true,
                             },
                             {
                                 "item": "Auditor de Infraestruturas",
                                 "quantidade": 0,
+                                "presente": true,
                             },
                             {
                                 "item": "Fiscal de Obras Públicas",
                                 "quantidade": 0,
+                                "presente": false,
                             },
                             {
                                 "item": "Policia",
                                 "quantidade": 0,
+                                "presente": false,
                             },
                         ]
                     },
                     {
-                        "identificador": "material",
                         "texto": "<i class='bi bi-file-earmark-text'></i> Equipamento",
                         "estado": false,
                         "lista": [
                             {
                                 "item": "Madeira",
                                 "quantidade": 0,
+                                "presente": false,
                             },
                             {
                                 "item": "Metal",
                                 "quantidade": 0,
+                                "presente": false,
                             },
                             {
                                 "item": "Cimento",
                                 "quantidade": 0,
+                                "presente": false,
                             },
                         ]
                     }
@@ -138,13 +144,6 @@
                         return "";
                 }
             },
-            atualizaQuantidade(index, novaQuantidade, identificador) {
-                const i = this.popUp.findIndex(obj => obj.identificador === identificador);
-
-                if (i !== -1) {
-                    this.popUp[i].lista[index].quantidade = novaQuantidade;
-                }
-            }
         }
     }
 </script>
