@@ -3,7 +3,7 @@
         <AppCabecalho titulo="Registo"/>
         <button class="campo-detalhe" @click="goToPaginaIncial">
             <i class="bi bi-arrow-left"></i>
-            <p>Voltar para Dashboard</p>
+            <p>Voltar para menu</p>
         </button>
 
         <div class="campo-registo">
@@ -30,8 +30,8 @@
                     </div>
                 </div>
 
-                <div class="campo-imagens">
-                    <CarrocelImagem :imagens="imagens" />
+                <div class="campo-imagens" v-if="auditoria?.imagemVideo?.length > 1">
+                    <CarrocelImagem :imagens="auditoria.imagemVideo" />
                 </div>
 
                 <div class="icon-texto">
@@ -45,7 +45,7 @@
                     </div>
                 </div>
 
-                <div v-for="(audio, index) in audios" :key="index" class="audio-gravado">
+                <div v-for="(audio, index) in this.auditoria.audios" :key="index" class="audio-gravado">
                     <audio :src="audio" controls></audio>
                 </div>
 
@@ -56,7 +56,7 @@
                 <div class="campo-texto">
                     <textarea
                         type="text"
-                        v-model="observacao"
+                        v-model="auditoria.descricao"
                         placeholder="Adicione notas, observações ou detalhes importantes..."
                     />
                 </div>
@@ -64,16 +64,16 @@
                 <div class="campo-profissionais">
                     <h2>Profissioais</h2>
                     <button class="botao-profissionais" @click="popup = !popup">
-                        <h3>{{ profissionalEscolhido.length }} funcionarios em uso</h3>
+                        <h3>{{ contarPeritos() }} funcionarios em uso</h3>
                     </button>
-                    <PopUpTrabalhadores v-if="popup" @fecharPopup="popup = false" />
+                    <PopUpTrabalhadores v-if="popup" :peritos="auditoria.peritos" @fecharPopup="popup = false" @atualizaQuantidade="atualizaQuantidade"/>
 
                 </div>
 
                 <div class="campo-datahora">
                     <div class="campo-data">
                         <h2 class="texto-datahora">Data</h2>
-                        <h4 id="data">{{ dataAtual }}</h4>
+                        <h4 id="data">{{ auditoria.dataInicio ? auditoria.dataInicio.toDate().toLocaleDateString("pt-PT") : 'Data não definida' }}</h4>
                     </div>
                     <div>
                         <div class="campo-hora">
@@ -87,7 +87,7 @@
                     </div>
                 </div>
 
-                <div class="botao-guardar">
+                <div class="botao-guardar" @click="guardarAuditoria">
                     <i class="bi bi-save"></i>
                     <h2>Guardar Evidências</h2>
                 </div>
@@ -99,6 +99,8 @@
 
 
 <script>
+    import { doc, getDoc, setDoc } from "firebase/firestore";
+    import { db, uploadToCloudinary} from "@/firebase/firebase";
     import AppCabecalho from '../AppCabecalho.vue';
     import PopUpTrabalhadores from './PopUpTrabalhadores.vue';
     import CarrocelImagem from './CarrocelImagem.vue';
@@ -111,37 +113,33 @@
         },
         data() {
             return {
-                profissionalEscolhido: [],
                 dataAtual: new Date().toLocaleDateString(),
                 horainicio: new Date().toLocaleTimeString(),
                 horafim: new Date().toLocaleTimeString(),
-                observacao: "",
-                imagens: [],
+
                 popup: false,
                 mediaRecorder: null,
                 chunks: [],
                 isGravando: false,
-                audios: []
+
+                auditoria: {},
             };
         },
         methods: {
             goToPaginaIncial() {
                 this.$router.push("/PaginaInicial");
             },
-            carregarImagem(event) {
+            async carregarImagem(event) {
                 const file = event.target.files[0];
                 if (file) {
-                    const url = URL.createObjectURL(file);
+                    const url = await uploadToCloudinary(file);
                     const tipo = file.type;
 
-                    this.imagens.push({
+                    this.auditoria.imagemVideo.push({
                         url: url,
                         tipo: tipo
                     });
                 }
-            },
-            atualizaHoraFinal() {
-                this.horafim = new Date().toLocaleTimeString();
             },
             async iniciarGravacao() {
                 try {
@@ -160,11 +158,12 @@
                     }
                     };
 
-                    this.mediaRecorder.onstop = () => {
+                    this.mediaRecorder.onstop = async () => {
                     const blob = new Blob(this.chunks, { type: 'audio/webm' });
-                    const url = URL.createObjectURL(blob);
+                    const file = new File([blob], "gravacao.webm", { type: "audio/webm" });
+                    const url = await uploadToCloudinary(file);
 
-                    this.audios.push(url);
+                    this.auditoria.audios.push(url);
 
                     // Finaliza o estado de gravação
                     this.isGravando = false;
@@ -181,13 +180,63 @@
                 if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
                     this.mediaRecorder.stop();
                 }
+            },
+
+            atualizaQuantidade(index, novaQuantidade) {
+                this.auditoria.peritos[index].quantidade = novaQuantidade;
+            },
+
+            contarPeritos() {
+                let totalPeritos = 0;
+                for (let i in this.auditoria.peritos) {
+                    totalPeritos += this.auditoria.peritos[i].quantidade;
+                }
+                return totalPeritos;
+            },
+
+            async guardarAuditoria() {
+                try {
+                    const auditoriaId = this.$route.params.id;
+                    await setDoc(doc(db, "auditorias", auditoriaId), {
+                    ...this.auditoria
+                    });
+                    console.log("Dados da auditoria salvos com sucesso!");
+                } catch (error) {
+                    console.error("Erro ao salvar os dados:", error);
+                }
             }
+
         },
-        mounted() {
-            this.intervalId = setInterval(this.atualizaHoraFinal, 1000);
-        },
-        beforeUnmount() {
-            clearInterval(this.intervalId);
+        async mounted() {
+            const id = this.$route.params.id;
+
+            if (id) {
+                try {
+                const docRef = doc(db, "auditorias", id);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+
+                    this.auditoria = {
+                    nome: data.nome || '',
+                    estado: data.estado || '',
+                    local: data.local || '',
+                    descricao: data.descricao || '',
+                    peritos: data.peritos || [],
+                    imagemVideo: data.imagemVideo || [],
+                    audios: data.audios || [],
+                    coordenadas: data.coordenadas || {},
+                    dataInicio: data.dataInicio || null,
+                    dataFim: data.dataFim || null,
+                    };
+                } else {
+                    console.log("Documento não encontrado!");
+                }
+                } catch (error) {
+                console.error("Erro ao buscar auditoria:", error);
+                }
+            }
         }
     };
 </script>
