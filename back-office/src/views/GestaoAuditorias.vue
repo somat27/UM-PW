@@ -11,8 +11,9 @@
 
       <main class="main-content">
         <div class="content-wrapper">
-
-        <h1 class="page-title">Gestão de Auditorias</h1>
+          <div class="page-header">
+      <h2>Gestão de Auditorias</h2>
+    </div>
         
         <div class="content-section">
           <AuditTable

@@ -14,7 +14,9 @@
        
 
           <div class="content-wrapper">
-            <h1 class="page-title">Plano de Auditoria</h1>
+            <div class="page-header">
+      <h2>Plano de Auditoria</h2>
+    </div>
 
             <div class="audit-form">
               <div class="breadcrumb"> Criar Plano de Auditoria / Registo</div>
@@ -54,38 +56,67 @@
               @delete="handleDelete"
             />
             </div>
-            <nav class="navigation-tabs">
-
-            </nav>
-
-            <StatisticsGrid />
-  
-        
-          
+            <div class="audit-form">
+            <div class="breadcrumb"> Criar Plano de Auditoria / Associar Materiais</div>
+            <GenericTable1
+              :data="materiais"
+              :columns="columns1"
+              :type="'striped'"
+              @action="handlePeritoAction"
+            />
           </div>
+          <div class="audit-form">
+            <div class="breadcrumb1">Criar Plano de Auditoria / Duração Estimada</div>
+            <form class="form-grid">
+              <div class="form-row duration-row">
+                <label for="duracao">Duração estimada:</label>
+                <input id="duracao" type="text" class="small-input" />
+                <span class="days-text">dias.</span>
+              </div>
+            </form>     
+          </div>
+          <div class="audit-form">
+          <router-link 
+            to="/GestaoAuditorias" 
+            class="tab-link" 
+          >
+          <button class="btn-primary">Criar Plano</button>
+        </router-link>
+      </div>
+          </div>
+    
         </main>
+        
       </div>
     </div>
   </template>
 <script>
 import NavigationList from "../components/NavigationList.vue";
 import GenericTable from "../components/GenericTable.vue";
+import GenericTable1 from "../components/GenericTable.vue";
 
 export default {
   name: "AprovacaoOcorrencia",
   components: {
     NavigationList,
-    GenericTable
+    GenericTable,
+    GenericTable1
   },
   setup() {
- 
-
-
+    
     return {
-      columns: [
-  { key: 'nameEmail', label: 'Nome' },
-  { key: 'address', label: 'Morada' },
-  { key: 'specialty', label: 'Especialidade' },
+      
+    columns: [
+    { key: 'nameEmail', label: 'Nome' },
+    { key: 'address', label: 'Morada' },
+    { key: 'specialty', label: 'Especialidade' },
+  
+],
+columns1: [
+            { key: 'details', label: 'Detalhes do Material' },
+            { key: 'category', label: 'Categoria' },
+            { key: 'qtd', label: 'Quantidade' },
+        
   
 ],
       peritos: [
@@ -104,8 +135,30 @@ export default {
           address: "Lisboa",
           specialty: "Pedreiro",
         
+        },
+        {
+          id: 2,
+          name: "Carlos Pinto",
+          email: "carlos@sapo.pt",
+          address: "Lisboa",
+          specialty: "Pedreiro",
+        
         }
-      ]
+      ],
+      materiais: [
+        {
+          details: "Asfalto",
+          category: "Materiais de construção",
+          qtd: "3",
+        },
+       
+        {
+          details: "Câmeras",
+          category: "Equipamento de segurança",
+          qtd: "70",
+        }
+      ],
+
     };
   }
 };
@@ -113,6 +166,47 @@ export default {
 
   
   <style scoped>
+.tab-link {
+  text-decoration: none; 
+  display: inline-block; 
+  margin-right: 1000px;
+
+}
+
+.btn-primary {
+  background-color: #4a6cf7; 
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-primary:hover {
+  background-color: #3a5ce4; 
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+}
+
+
+.btn-primary::before {
+  content: "+";
+  font-weight: bold;
+  font-size: 16px;
+}
  .audit-form {
   background-color: #fff;
   padding: 32px;
@@ -127,7 +221,43 @@ export default {
   margin-bottom: 24px;
   margin-right:850px;
 }
+.breadcrumb1 {
+  font-size: 14px;
+  color: #6c757d;
+  margin-bottom: 24px;
+  margin-right:850px;
+}
+.duration-input-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
+
+.duration-row {
+  display: flex;
+  align-items: center;
+  gap: 8px; 
+  flex-wrap: nowrap;
+}
+
+.duration-row label {
+  width: auto; 
+  margin-right: 0; 
+  white-space: nowrap; 
+}
+
+.small-input {
+  width: 60px !important; 
+  padding: 6px 8px !important;
+  margin-right: 0; 
+}
+
+.days-text {
+  font-size: 14px;
+  color: #6c757d;
+  white-space: nowrap;
+}
 .form-grid {
   display: flex;
   flex-direction: column;
@@ -156,38 +286,64 @@ export default {
   border-radius: 6px;
   background-color: #f9f9f9;
 }
-  .dashboard-container {
-    background: linear-gradient(
-        0deg,
-        var(--color-grey-98, #fafafb) 0%,
-        var(--color-grey-98, #fafafb) 100%
-      ),
-      var(--color-white-solid, #fff);
-    padding-right: 18px;
-    padding-bottom: 135px;
-  }
+
+.dashboard-container {
+  background: linear-gradient(
+      0deg,
+      var(--color-grey-98, #fafafb) 0%,
+      var(--color-grey-98, #fafafb) 100%
+    ),
+    var(--color-white-solid, #fff);
+  padding-right: 18px;
   
-  .dashboard-layout {
-    display: flex;
-    gap: 20px;
-  }
-  
-  .sidebar-column {
-    width: 19%;
-  }
-  
-  .sidebar-nav {
-    box-shadow: 1px 0px 0px 0px #f0f0f0;
-    background-color: #fff;
-    padding-bottom: 772px;
-    overflow: hidden;
-    width: 100%;
-  }
-  
-  .sidebar-background {
-    padding-bottom: 395px;
-    background-color: #fff;
-  }
+  height: 100vh; 
+  overflow: hidden; 
+}
+
+.dashboard-layout {
+  display: flex;
+  gap: 20px;
+  height: 100%; 
+}
+
+.sidebar-column {
+  width: 19%;
+  height: 100vh; 
+  position: sticky; 
+  top: 0;
+  overflow-y: auto; 
+}
+
+.sidebar-nav {
+  box-shadow: 1px 0px 0px 0px #f0f0f0;
+  background-color: #fff;
+  height: 100vh; 
+  width: 100%;
+  position: sticky;
+  top: 0;
+  overflow-y: auto; 
+}
+
+.main-content {
+  width: 81%;
+  margin-left: 20px;
+  height: 100vh; 
+  overflow-y: auto; 
+  padding-bottom: 60px; 
+}
+
+.content-wrapper {
+  display: flex;
+  margin-top: 59px;
+  width: 100%;
+  flex-direction: column;
+  min-height: calc(100vh - 59px);
+}
+.data-section {
+  margin-top: 40px;
+  border: 1px dashed #ccc;
+  padding: 20px;
+}
   
   .logo {
     aspect-ratio: 6.17;
@@ -214,17 +370,8 @@ export default {
     margin-top: 27px;
   }
   
-  .main-content {
-    width: 81%;
-    margin-left: 20px;
-  }
-  
-  .content-wrapper {
-    display: flex;
-    margin-top: 59px;
-    width: 100%;
-    flex-direction: column;
-  }
+
+ 
   
   .navigation-tabs {
     display: flex;
@@ -346,6 +493,7 @@ export default {
   
     .sidebar-background {
       padding-bottom: 100px;
+
     }
   
     .notification-icons {

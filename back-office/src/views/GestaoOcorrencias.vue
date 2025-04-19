@@ -13,7 +13,9 @@
       <main class="main-content">
         <div class="content-wrapper">
 
-        <h1 class="page-title">Gestão de Ocorrências</h1>
+          <div class="page-header">
+      <h2>Gestão de Ocorrências</h2>
+    </div>
         
         <div class="content-section">
           <AuditTable

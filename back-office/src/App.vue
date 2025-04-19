@@ -9,7 +9,7 @@ export default {
   name: "App",
   watch: {
     $route(to) {
-      if (to.path === '/dashboards/peritos') {
+      if (to.path === '/dashboards/peritos' || to.path === '/GestaoOcorrencias/AprovacaoOcorrencia') {
         document.body.style.overflow = 'auto'; 
       } else {
         document.body.style.overflow = 'hidden';
@@ -17,7 +17,7 @@ export default {
     }
   },
   mounted() {
-    if (this.$route.path === '/dashboards/peritos') {
+    if (this.$route.path === '/dashboards/peritos'|| this.$route.path  === '/GestaoOcorrencias/AprovacaoOcorrencia') {
       document.body.style.overflow = 'auto'; 
     } else {
       document.body.style.overflow = 'hidden'; 

@@ -230,24 +230,29 @@
     
   
   <style scoped>
-  .dashboard-container {
-    background: linear-gradient(
-        0deg,
-        var(--color-grey-98, #fafafb) 0%,
-        var(--color-grey-98, #fafafb) 100%
-      ),
-      var(--color-white-solid, #fff);
-    padding-right: 18px;
-    padding-bottom: 135px;
-  }
+.dashboard-container {
+  background: linear-gradient(
+      0deg,
+      var(--color-grey-98, #fafafb) 0%,
+      var(--color-grey-98, #fafafb) 100%
+    ),
+    var(--color-white-solid, #fff);
+  padding-right: 18px;
+  height: 100vh; 
+  overflow: hidden; 
+}
+
+.dashboard-layout {
+  display: flex;
+  gap: 20px;
+  height: 100%; 
+}
+
   
-  .dashboard-layout {
-    display: flex;
-    gap: 20px;
-  }
-  
-  .sidebar-column {
+.sidebar-column {
     width: 19%;
+    
+
   }
   
   .sidebar-nav {
@@ -256,11 +261,29 @@
     padding-bottom: 772px;
     overflow: hidden;
     width: 100%;
+    
   }
+
+.main-content {
+  width: 81%;
+  margin-left: 20px;
+  height: 100vh; 
+  overflow-y: auto; 
+  padding-bottom: 60px; 
+}
+
+.content-wrapper {
+  display: flex;
+  margin-top: 59px;
+  width: 100%;
+  flex-direction: column;
+  min-height: calc(100vh - 59px); 
+}
   
   .sidebar-background {
     padding-bottom: 395px;
     background-color: #fff;
+    
   }
   
   .logo {
