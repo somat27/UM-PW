@@ -194,7 +194,6 @@ export async function getEstatisticas() {
         ? parseFloat((totalRating / totalFeedbacks).toFixed(2))
         : 0;
 
-    console.log("aquiiiiiiiiii" + mediaAvaliacoes);
 
     return {
       ocorrenciasResolvidas: numResolvidas,
