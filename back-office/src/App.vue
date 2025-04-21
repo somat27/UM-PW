@@ -38,7 +38,6 @@ html, body {
   margin: 0;
   padding: 0;
   height: 100%;
-  background-color: rgba(32, 76, 109, 1); 
   overflow: hidden; 
 }
 </style>

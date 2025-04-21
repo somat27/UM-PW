@@ -25,7 +25,6 @@
   
   <style scoped>
   .statistics-grid {
-    margin-top: 80px;
     width: 100%;
     max-width: 1036px;
   }

@@ -13,13 +13,13 @@ import {
 } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyD3N8Qjadp7YXEuQriKOtKrS_4YQ-abI8o",
-  authDomain: "login-10361.firebaseapp.com",
-  projectId: "login-10361",
-  storageBucket: "login-10361.firebasestorage.app",
-  messagingSenderId: "179958839045",
-  appId: "1:179958839045:web:98b3f9078afd4559e8a96c",
-  measurementId: "G-F53FK8VD5J",
+  apiKey: "AIzaSyDfrWf9cajeBe7BVT7PWT5nBOWj7gPDBiw",
+  authDomain: "pw-g201.firebaseapp.com",
+  projectId: "pw-g201",
+  storageBucket: "pw-g201.firebasestorage.app",
+  messagingSenderId: "858778948795",
+  appId: "1:858778948795:web:8bb0688f9713fec265c59e",
+  measurementId: "G-JWNEDZWNTX"
 };
 
 const app = initializeApp(firebaseConfig);

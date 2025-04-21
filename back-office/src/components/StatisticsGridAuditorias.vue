@@ -1,49 +1,44 @@
 <template>
-    <section class="statistics-grid" :space="62">
-      <div class="statistics-layout">
-        <StatisticsCard title="Total de Auditorias Realizadas" value="200" />
-        <StatisticsCard title="Média de Auditorias" value="67" />
-        <StatisticsCard
-          title="Área com Mais Auditorias"
-          value="Viana do Castelo"
-        />
-        <StatisticsCard title="Área com Menos Auditorias" value="Guimarães" />
-      </div>
-    </section>
-  </template>
-  
-  <script>
-  import StatisticsCard from "./StatisticsCard.vue";
-  
-  export default {
-    name: "StatisticsGrid",
-    components: {
-      StatisticsCard,
-    },
-  };
-  </script>
-  
-  <style scoped>
-  .statistics-grid {
-    margin-top: 80px;
-    width: 100%;
-    max-width: 1036px;
-  }
-  
-  .statistics-layout {
-    display: flex;
-    gap: 20px;
-  }
-  
-  @media (max-width: 991px) {
-    .statistics-grid {
-      max-width: 100%;
-      margin-top: 40px;
-    }
-  
-    .statistics-layout {
-      flex-direction: column;
+  <section class="statistics-grid">
+    <div class="statistics-layout">
+      <StatisticsCard
+        v-for="(card, idx) in cards"
+        :key="idx"
+        :title="card.title"
+        :value="card.value"
+      />
+    </div>
+  </section>
+</template>
+
+<script>
+import StatisticsCard from './StatisticsCard.vue';
+
+export default {
+  name: 'StatisticsGridAuditorias',
+  components: { StatisticsCard },
+  props: {
+    labels: { type: Array, required: true },
+    values: { type: Array, required: true }
+  },
+  computed: {
+    cards() {
+      const total = this.values.reduce((sum, v) => sum + v, 0);
+      const average = Math.round(total / this.values.length);
+      const maxIdx = this.values.indexOf(Math.max(...this.values));
+      const minIdx = this.values.indexOf(Math.min(...this.values));
+      return [
+        { title: 'Total de Auditorias Realizadas', value: total },
+        { title: 'Média de Auditorias',           value: average },
+        { title: 'Área com Mais Auditorias',      value: this.labels[maxIdx] },
+        { title: 'Área com Menos Auditorias',     value: this.labels[minIdx] }
+      ];
     }
   }
-  </style>
-  
+};
+</script>
+
+<style scoped>
+.statistics-grid { margin-top: 16px; width: 100%; }
+.statistics-layout { display: flex; gap: 20px; }
+</style>

@@ -1,421 +1,364 @@
 <template>
-    <div class="dashboard-container" :space="23">
-      <div class="dashboard-layout">
-        <aside class="sidebar-column">
-          <nav class="sidebar-nav">
-            <div class="sidebar-background">
-          
-              <NavigationList />
-            </div>
-          </nav>
-        </aside>
-  
-        <main class="main-content">
-          <div class="content-wrapper">
-            <nav class="navigation-tabs">
-              <router-link 
-                to="/dashboards/auditorias" 
-                class="tab-link" 
-                :class="{ active: activeTab === 'auditorias' }"
-              >
-                Auditorias por região
-              </router-link>
-              
-              <router-link 
-                to="/dashboards/ocorrencias" 
-                class="tab-link" 
-                :class="{ active: activeTab === 'ocorrencias' }"
-              >
-                Ocorrências resolvidas
-              </router-link>
-
-              <router-link 
-                to="/dashboards/peritos" 
-                class="tab-link" 
-                :class="{ active: activeTab === 'peritos' }"
-              >
-              Peritos mobilizados e no aguardo
-              </router-link>
-              <router-link 
-                  to="/dashboards/materiais" 
-                  class="tab-link" 
-                  :class="{ active: activeTab === 'materiais' }"
-                >
-                Materiais expedidos
-              </router-link>
-            </nav>
-  
-            <StatisticsGrid2 />
-  
-
-            <div class="search-section">
-              <div class="search-item">
-                <img
-                  src="https://cdn.builder.io/api/v1/image/assets/TEMP/0dc2d2a81d2a326f4151dcc6a4defcd801630669?placeholderIfAbsent=true&apiKey=98100b9ac2c544efa71903dc3e1eda07"
-                  alt="Search Icon"
-                  class="search-icon"
-                />
-              </div>
-              <div class="search-form">
-                <div class="search-input">
-                  <input 
-                    type="text" 
-                    class="search-container" 
-                    placeholder="Pesquisar Localidade..." 
-                  />
-                  <img
-                    src="https://cdn.builder.io/api/v1/image/assets/TEMP/e2adb638175328e468397894582b9de35e2a0581?placeholderIfAbsent=true&apiKey=98100b9ac2c544efa71903dc3e1eda07"
-                    alt="Search"
-                    class="search-button"
-                  />
-                </div>
-              </div>
-
-            </div>
-        
-          <div id="chart">
-            <apexchart type="area" height="350" :options="chartOptions" :series="series"></apexchart>   
-           </div>
+  <div class="dashboard-container">
+    <div class="dashboard-layout">
+      <aside class="sidebar-column">
+        <nav class="sidebar-nav">
+          <div class="sidebar-background">
+            <NavigationList />
           </div>
-        </main>
-      </div>
+        </nav>
+      </aside>
+      <main class="main-content">
+        <div class="content-wrapper">
+
+          <!-- Navigation tabs -->
+          <nav class="navigation-tabs">
+            <router-link
+              to="/dashboards/auditorias"
+              class="tab-link"
+              :class="{ active: activeTab === 'auditorias' }"
+              @click="activeTab = 'auditorias'"
+            >
+              Auditorias por região
+            </router-link>
+            <router-link
+              to="/dashboards/ocorrencias"
+              class="tab-link"
+              :class="{ active: activeTab === 'ocorrencias' }"
+              @click="activeTab = 'ocorrencias'"
+            >
+              Ocorrências resolvidas
+            </router-link>
+            <router-link
+              to="/dashboards/peritos"
+              class="tab-link"
+              :class="{ active: activeTab === 'peritos' }"
+              @click="activeTab = 'peritos'"
+            >
+              Peritos mobilizados e no aguardo
+            </router-link>
+            <router-link
+              to="/dashboards/materiais"
+              class="tab-link"
+              :class="{ active: activeTab === 'materiais' }"
+              @click="activeTab = 'materiais'"
+            >
+              Materiais expedidos
+            </router-link>
+          </nav>
+
+          <!-- filtros: cidade + semana -->
+          <div class="filters-row">
+            <select v-model="selectedCity" class="filter-select">
+              <option v-for="loc in localities" :key="loc" :value="loc">
+                {{ loc }}
+              </option>
+            </select>
+
+            <div class="filter-week-wrapper">
+              <input
+                type="week"
+                v-model="selectedWeek"
+                class="filter-week"
+              />
+            </div>
+          </div>
+
+          <!-- cards dinâmicos -->
+          <StatisticsGridOcorrencia :cards="weeklyCards" />
+
+          <!-- gráfico de área -->
+          <div id="chart">
+            <apexchart
+              type="area"
+              height="350"
+              :options="chartOptions"
+              :series="series"
+            />
+          </div>
+
+        </div>
+      </main>
     </div>
-  </template>
-  
-  <script>
-import { ref } from "vue";
-import NavigationList from "@/components/NavigationList.vue";
-import StatisticsGrid2 from "@/components/StatisticsGridOcorrencia.vue";
+  </div>
+</template>
+
+<script>
+import { ref, computed } from 'vue';
 import VueApexCharts from 'vue3-apexcharts';
+import NavigationList from '@/components/NavigationList.vue';
+import StatisticsGridOcorrencia from '@/components/StatisticsGridOcorrencia.vue';
+
+// Exemplo de base de dados diária
+// Em produção, substitui por fetch/API
+const rawData = [
+  // cada entrada: { date: '2025-04-14', city: 'Lisboa', total: 5, resolved: 4 }
+  { date: '2025-04-21', city: 'Lisboa', total: 5, resolved: 4 },
+  { date: '2025-04-22', city: 'Lisboa', total: 6, resolved: 5 },
+  // ... mais dias e cidades ...
+];
+
+function isoWeekDates(weekString) {
+  // Recebe "YYYY-WW", devolve array de 7 datas 'YYYY-MM-DD'
+  const [year, wk] = weekString.split('-W').map(Number);
+  // calcula o 4º de janeiro desse ano (sempre na semana 1 ISO)
+  const jan4 = new Date(Date.UTC(year, 0, 4));
+  // quantos dias para início de semana ISO
+  const dayOfWeek = jan4.getUTCDay() || 7; // domingo→7
+  const week1Start = new Date(Date.UTC(
+    year, 0, 4 - (dayOfWeek - 1)
+  ));
+  // agora avança (wk - 1) * 7 dias
+  const start = new Date(week1Start);
+  start.setUTCDate(start.getUTCDate() + (wk - 1) * 7);
+  // gera 7 dias
+  return Array.from({length:7}, (_, i) => {
+    const d = new Date(start);
+    d.setUTCDate(d.getUTCDate() + i);
+    return d.toISOString().slice(0,10);
+  });
+}
+
+// Dentro do setup() ou fora dele, antes de setup():
+function getCurrentISOWeek() {
+  const now = new Date();
+  // pega só a data UTC (evita off‑by‑one por fuso)
+  const date = new Date(Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate()
+  ));
+  // ISO semana: calcula data do 4 de janeiro e deriva semana
+  const dayNum = date.getUTCDay() || 7; // Domingo→7
+  date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil(
+    (((date - yearStart) / 86400000) + 1) / 7
+  );
+  const weekStr = String(weekNo).padStart(2, '0');
+  return `${date.getUTCFullYear()}-W${weekStr}`;
+}
 
 export default {
-  name: "DashboardOcorrencias",
   components: {
     NavigationList,
-    StatisticsGrid2,
-    apexchart: VueApexCharts,
+    StatisticsGridOcorrencia,
+    apexchart: VueApexCharts
   },
   setup() {
-    const activeTab = ref("ocorrencias");
+    const activeTab   = ref('ocorrencias');
 
- 
+    const localities = ['Lisboa','Porto','Coimbra','Faro','Braga'];
+    const selectedCity = ref(localities[0]);
+    const selectedWeek = ref(getCurrentISOWeek());
+
+    // datas da semana ISO escolhida
+    const weekDates = computed(() =>
+      selectedWeek.value ? isoWeekDates(selectedWeek.value) : []
+    );
+
+    // filtra rawData pela cidade e pela semana
+    const weeklyData = computed(() =>
+      rawData.filter(item =>
+        item.city === selectedCity.value &&
+        weekDates.value.includes(item.date)
+      )
+    );
+
+    // cards: total, resolved, dia com max/min taxa
+    const weeklyCards = computed(() => {
+      if (!weeklyData.value.length) {
+        return [
+          { title:'Total Confirmadas', value:0 },
+          { title:'Total Resolvidas',  value:0 },
+          { title:'Maior taxa (dia)',  value:'–' },
+          { title:'Menor taxa (dia)',  value:'–' }
+        ];
+      }
+      const total = weeklyData.value.reduce((sum,d)=> sum + d.total, 0);
+      const resolved = weeklyData.value.reduce((sum,d)=> sum + d.resolved, 0);
+      // calcula taxa diária e encontra max/min
+      const rates = weeklyData.value.map(d => ({
+        date: d.date,
+        pct: Math.round(d.resolved/d.total*100)
+      }));
+      const max = rates.reduce((a,b)=> b.pct>a.pct?b:a);
+      const min = rates.reduce((a,b)=> b.pct<a.pct?b:a);
+      return [
+        { title:'Total de Ocorrências Confirmadas', value: total },
+        { title:'Total de Ocorrências Resolvidas',  value: resolved },
+        { title:'Dia com a maior taxa de resolução', value:`${max.date} (${max.pct}%)` },
+        { title:'Dia com a menor taxa de resolução',  value:`${min.date} (${min.pct}%)` }
+      ];
+    });
+
+    // gráfico: duas séries ao longo dos dias da semana
+    const series = computed(() => [
+      { name:'Total',     data: weekDates.value.map(d => {
+          const rec = weeklyData.value.find(x=>x.date===d);
+          return rec ? rec.total : 0;
+        })
+      },
+      { name:'Resolvidas', data: weekDates.value.map(d => {
+          const rec = weeklyData.value.find(x=>x.date===d);
+          return rec ? rec.resolved : 0;
+        })
+      }
+    ]);
+
+    const chartOptions = computed(() => ({
+      chart:{type:'area',height:350},
+      stroke:{curve:'smooth'},
+      xaxis:{ categories: weekDates.value },
+      dataLabels:{enabled:false},
+      legend:{position:'top'},
+      tooltip:{x:{format:'dd/MM'}}
+    }));
 
     return {
-   
       activeTab,
-      series: [
-        {
-          name: "series1",
-          data: [31, 40, 28, 51, 42, 109, 100],
-        },
-        {
-          name: "series2",
-          data: [11, 32, 45, 32, 34, 52, 41],
-        },
-      ],
-      chartOptions: {
-        chart: {
-          height: 350,
-          type: "area",
-        },
-        dataLabels: {
-          enabled: false,
-        },
-        stroke: {
-          curve: "smooth",
-        },
-        xaxis: {
-          type: "datetime",
-          categories: [
-            "2018-09-19T00:00:00.000Z",
-            "2018-09-19T01:30:00.000Z",
-            "2018-09-19T02:30:00.000Z",
-            "2018-09-19T03:30:00.000Z",
-            "2018-09-19T04:30:00.000Z",
-            "2018-09-19T05:30:00.000Z",
-            "2018-09-19T06:30:00.000Z",
-          ],
-        },
-        tooltip: {
-          x: {
-            format: "dd/MM/yy HH:mm",
-          },
-        },
-      },
+      localities,
+      selectedCity,
+      selectedWeek,
+      weeklyCards,
+      series,
+      chartOptions
     };
-  },
+  }
 };
 </script>
 
-  
-   
 <style scoped>
-.dashboard-container {
-  background: linear-gradient(
-      0deg,
-      var(--color-grey-98, #fafafb) 0%,
-      var(--color-grey-98, #fafafb) 100%
-    ),
-    var(--color-white-solid, #fff);
-  padding-right: 18px;
-  padding-bottom: 135px;
-}
+.dashboard-layout    { display: flex; gap: 20px; }
+.sidebar-column      { width: 20%; }
+.main-content        { flex: 1; }
+.content-wrapper     { margin-top: 40px; }
 
-.dashboard-layout {
-  display: flex;
-  gap: 20px;
-}
-
-.sidebar-column {
-  width: 19%;
-}
-
-.sidebar-nav {
-  box-shadow: 1px 0px 0px 0px #f0f0f0;
-  background-color: #fff;
-  padding-bottom: 772px;
-  overflow: hidden;
-  width: 100%;
-}
-
-.sidebar-background {
-  padding-bottom: 395px;
-  background-color: #fff;
-}
-
-.logo {
-  aspect-ratio: 6.17;
-  object-fit: contain;
-  width: 260px;
-  box-shadow: 0px 4px 4px rgba(254, 247, 247, 1);
-}
-
-.notification-icons {
-  z-index: 10;
-  margin-top: 160px;
-  margin-left: 25px;
-  width: 16px;
-}
-
-.notification-icon,
-.alert-icon {
-  aspect-ratio: 1;
-  object-fit: contain;
-  width: 100%;
-}
-
-.alert-icon {
-  margin-top: 27px;
-}
-
-.main-content {
-  width: 81%;
-  margin-left: 20px;
-}
-
-.content-wrapper {
-  display: flex;
-  margin-top: 59px;
-  width: 100%;
-  flex-direction: column;
-}
-
+/* Mesmos estilos de DashboardOcorrencia.vue */
 .navigation-tabs {
-  margin-top: -15px; 
-
-display: flex;
-align-items: center;
-gap: 8px; 
-font-family: 'Public Sans', -apple-system, Roboto, Helvetica, sans-serif;
-padding: 8px 0;
-margin-bottom: 24px;
-border-bottom: 1px solid #f0f0f0; 
+  margin-top: -15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Public Sans', -apple-system, Roboto, Helvetica, sans-serif;
+  padding: 8px 0;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #f0f0f0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tab-link {
-text-decoration: none;
-color: #6c757d;
-font-size: 14px;
-line-height: 1.5;
-padding: 10px 16px;
-border-radius: 6px;
-transition: all 0.3s ease;
-position: relative;
-font-weight: 500;
-letter-spacing: 0.2px;
-white-space: nowrap; 
+  text-decoration: none;
+  color: #6c757d;
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 10px 16px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  position: relative;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
 }
 
 .tab-link:hover {
-background-color: #f8f9fa; 
-color: #495057; 
+  background-color: #f8f9fa;
+  color: #495057;
 }
 
 .tab-link.active {
-color: #1890ff;
-background-color: rgba(24, 144, 255, 0.08); 
-font-weight: 600;
+  color: #1890ff;
+  background-color: rgba(24, 144, 255, 0.08);
+  font-weight: 600;
 }
 
 .tab-link.active::after {
-content: '';
-position: absolute;
-bottom: -9px; 
-left: 16px;
-right: 16px;
-height: 2px;
-background-color: #1890ff;
-border-radius: 2px 2px 0 0;
+  content: '';
+  position: absolute;
+  bottom: -9px;
+  left: 16px;
+  right: 16px;
+  height: 2px;
+  background-color: #1890ff;
+  border-radius: 2px 2px 0 0;
 }
 
 .tab-link::after {
-content: '';
-position: absolute;
-bottom: -9px;
-left: 50%;
-right: 50%;
-height: 2px;
-background-color: #1890ff;
-transition: all 0.3s ease;
-border-radius: 2px 2px 0 0;
+  content: '';
+  position: absolute;
+  bottom: -9px;
+  left: 50%;
+  right: 50%;
+  height: 2px;
+  background-color: #1890ff;
+  transition: all 0.3s ease;
+  border-radius: 2px 2px 0 0;
 }
 
-.tab-link.active::after {
-left: 16px;
-right: 16px;
-}
-.search-section {
-  transform: rotate(3.141592653589793rad);
-  align-self: flex-end;
-  display: flex;
-  margin-top: 37px;
-  padding: 13px;
-  align-items: center;
-  gap: 4px;
-}
-
-.search-item {
+.search-section { display: flex; justify-content: flex-end; margin-bottom: 20px; }
+.search-input   { position: relative; }
+.search-container {
+  padding: 8px 12px;
+  border: 1px solid #13c2c2;
   border-radius: 4px;
-  min-height: 34px;
-  padding: 6px 7px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-}
-
-.search-icon {
-  
-  aspect-ratio: 0.91;
-  object-fit: contain;
-  width: 20px;
-}
-
-.search-form {
-  position: relative;
-  font-family:
-    Public Sans,
-    -apple-system,
-    Roboto,
-    Helvetica,
-    sans-serif;
-  font-size: 14px;
-  color: #6c757d;
   width: 200px;
 }
 
-.search-input {
-  border-radius: 4px;
-  border: 1px solid rgba(19, 194, 194, 0.85);
-  background-color: #fff;
-  width: 198px;
-  padding: 8px 29px 9px 12px;
+.filters-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  align-items: center;
 }
 
-.search-container {
-  transform: rotate(3.141592653589793rad);
-  width: 100%;
-  overflow: hidden;
-}
-
-.search-button {
-  transform: rotate(3.141592653589793rad);
-  aspect-ratio: 1;
-  object-fit: contain;
-  width: 18px;
-  position: absolute;
-  right: 160px;
-  bottom: 14px;
-  height: 12px;
-
-}
-
-.map-visualization {
-  aspect-ratio: 0.95;
-  object-fit: contain;
-  width: 100%;
-}
-
-@media (max-width: 991px) {
-  .dashboard-container {
-    padding-bottom: 100px;
-    
-  }
-
-  .dashboard-layout {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0;
-  }
-
-  .sidebar-column {
-    width: 100%;
-  }
-
-  .sidebar-nav {
-    margin-top: 24px;
-    padding-bottom: 100px;
-  }
-
-  .sidebar-background {
-    padding-bottom: 100px;
-  }
-
-  .notification-icons {
-    margin-left: 10px;
-    margin-top: 40px;
-  }
-
-  .main-content {
-    width: 100%;
-  }
-
-  .content-wrapper {
-    max-width: 100%;
-    margin-top: 40px;
-  }
-
-  .search-section {
-    margin-right: 5px;
-  }
-
-  .search-input {
-    padding-right: 20px;
-  }
-
-  .map-visualization {
-    max-width: 100%;
-  }
-  .navigation-tabs {
-  overflow-x: auto; 
-  padding-bottom: 8px; 
-  -webkit-overflow-scrolling: touch; 
-}
-
-.tab-link {
+/* Dropdown da cidade */
+.filter-select {
   padding: 8px 12px;
-  font-size: 13px;
+  border: 1px solid #13c2c2;
+  border-radius: 4px;
+  background: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color 0.2s;
 }
+.filter-select:hover,
+.filter-select:focus {
+  border-color: #1890ff;
+  outline: none;
 }
 
+/* Wrapper e label para o week-picker */
+.filter-week-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+.filter-week-label {
+  font-size: 12px;
+  color: #6c757d;
+  margin-bottom: 4px;
+}
+
+/* Input type=week */
+.filter-week {
+  padding: 8px 12px;
+  border: 1px solid #13c2c2;
+  border-radius: 4px;
+  background: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  /* forçar largura consistente */
+  width: 160px;
+}
+.filter-week:hover,
+.filter-week:focus {
+  border-color: #1890ff;
+  outline: none;
+}
+select, input[type="week"] {
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
 </style>
