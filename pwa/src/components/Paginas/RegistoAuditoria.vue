@@ -26,7 +26,8 @@
             </button>
         </div>
 
-        <div class="painel fundo-cinza" style="padding: 0;">
+        <div class="painel fundo-cinza pop-up" style="padding: 0;">
+            <progress v-if="carregarFicheiro" id="barra-progresso" :value="percentagemUpload" max="100"></progress>
             <PainelImagens :imagens="auditoria.imagemVideo" @removeFicheiro="removeFicheiro"/>
         </div>
 
@@ -90,6 +91,9 @@
                 mediaRecorder: null,
                 chunks: [],
                 isGravando: false,
+
+                carregarFicheiro: false,
+                percentagemUpload: 0,
                 popUp: [
                     {
                         "texto": "<i class='bi bi-people icon'></i> Equipa",
@@ -155,13 +159,22 @@
             async carregarImagem(event) {
                 const file = event.target.files[0];
                 if (file) {
-                    const url = await uploadToCloudinary(file);
+                    this.carregarFicheiro = true;
+                    this.percentagemUpload = 0;
+
+                    const url = await uploadToCloudinary(file, (e) => {
+                        const percent = Math.round((e.loaded * 100) / e.total);
+                        this.percentagemUpload = percent;
+                        console.log("Progresso:", percent);
+                    });
                     const tipo = file.type;
 
                     this.auditoria.imagemVideo.push({
                         url: url,
                         tipo: tipo
                     });
+                    this.carregarFicheiro = false;
+                    this.percentagemUpload = 0;
                 }
             },
             async guardarAuditoria() {
@@ -243,5 +256,13 @@
 
     #gravar {
         color: red;
+    }
+
+    #barra-progresso {
+        position: absolute;
+        z-index: 5;
+        top: -1vh;
+        left: 0;
+        width: 100%;
     }
 </style>

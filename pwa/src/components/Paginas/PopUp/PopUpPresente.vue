@@ -2,11 +2,10 @@
     <div v-if="dados" class="fundo centro">
         <div class="fundo-cinza painel flex-coluna popup" @click.stop>
 
-            <h1 v-html="dados.texto"/>
+            <h1 v-html="texto"/>
 
-            <div v-for="(elemento, index) in dados.lista" :key="index" class="flex-linha item-ponta centro">
-                <h2>{{ elemento.item }}</h2>
-
+            <div v-for="(elemento, index) in dados" :key="index" class="flex-linha item-ponta centro">
+                <h2>{{ elemento.nome }}</h2>
 
                 <button class="transparente" :class="elemento.presente ? 'fundo-verde' : 'fundo-vermelho'" id="botao-verificar" @click="elemento.presente = !elemento.presente">
                     <i v-if="elemento.presente" class='bi bi-check' style="color: #fff;"></i>
@@ -24,7 +23,11 @@
         name: "PopUpPresente",
         props: {
             dados: {
-                type: Object,
+                type: Array,
+                required: true
+            },
+            texto: {
+                type: String,
                 required: true
             }
         },

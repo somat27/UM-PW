@@ -22,13 +22,17 @@
         </div>
 
 
-        <div v-for="dados in popUp" :key="dados">
-            <button class="flex-linha transparente" @click="dados.estado = !dados.estado">
-                <h2 v-html="dados.texto"/>
+        <button class="flex-linha transparente" @click="popUpEquipa = !popUpEquipa">
+            <h2><i class='bi bi-people'></i> Equipa</h2>
+            <PopUpPresente v-if="popUpEquipa && auditoria.peritos.length > 0" :dados="this.auditoria.peritos" :texto="`<i class='bi bi-people'></i> Equipa`"/>
+        </button>
 
-                <PopUpPresente v-if="dados.estado" :dados="dados"/>
-            </button>
-        </div>
+
+        <button class="flex-linha transparente" @click="popUpEquipamento = !popUpEquipamento">
+            <h2><i class='bi bi-file-earmark-text'></i> Equipamento</h2>
+            <PopUpPresente v-if="popUpEquipamento && auditoria.equipamento.length > 0" :dados="this.auditoria.equipamento" :texto="`<i class='bi bi-file-earmark-text'></i> Equipamento`"/>
+        </button>
+
 
         <div class="painel fundo-cinza margem-cima">            <!--Local para colocar o mapa-->
 
@@ -56,60 +60,8 @@
         data() {
             return {
                 auditoria: {},
-                popUp: [
-                    {
-                        "texto": "<i class='bi bi-people'></i> Equipa",
-                        "estado": false,
-                        "lista": [
-                            {
-                                "item": "Engenheiro Civil",
-                                "quantidade": 0,
-                                "presente": false,
-                            },
-                            {
-                                "item": "Engenheiro Eletricista",
-                                "quantidade": 0,
-                                "presente": true,
-                            },
-                            {
-                                "item": "Auditor de Infraestruturas",
-                                "quantidade": 0,
-                                "presente": true,
-                            },
-                            {
-                                "item": "Fiscal de Obras Públicas",
-                                "quantidade": 0,
-                                "presente": false,
-                            },
-                            {
-                                "item": "Policia",
-                                "quantidade": 0,
-                                "presente": false,
-                            },
-                        ]
-                    },
-                    {
-                        "texto": "<i class='bi bi-file-earmark-text'></i> Equipamento",
-                        "estado": false,
-                        "lista": [
-                            {
-                                "item": "Madeira",
-                                "quantidade": 0,
-                                "presente": false,
-                            },
-                            {
-                                "item": "Metal",
-                                "quantidade": 0,
-                                "presente": false,
-                            },
-                            {
-                                "item": "Cimento",
-                                "quantidade": 0,
-                                "presente": false,
-                            },
-                        ]
-                    }
-                ],
+                popUpEquipa: false,
+                popUpEquipamento: false,
             }
         },
         async mounted() {

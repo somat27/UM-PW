@@ -4,9 +4,9 @@
             <i class="bi bi-chevron-compact-left"></i>
         </button>
 
-        <img v-if="imagens[imagemAtual].tipo.startsWith('image/')" :src="imagens[imagemAtual].url" class="imagem" />
+        <img v-if="imagens[imagemAtual] && imagens[imagemAtual].tipo.startsWith('image/')" :src="imagens[imagemAtual].url" class="imagem" />
         
-        <video v-else-if="imagens[imagemAtual].tipo.startsWith('video/')" :src="imagens[imagemAtual].url" controls class="imagem"></video>
+        <video v-else-if="imagens[imagemAtual] && imagens[imagemAtual].tipo.startsWith('video/')" :src="imagens[imagemAtual].url" controls class="imagem"></video>
 
         <button class="transparente" id="remover" @click="removeFicheiro"><i class="bi bi-trash-fill"></i></button>
 
@@ -39,7 +39,13 @@
                 this.imagemAtual = (this.imagemAtual - 1 + this.imagens.length) % this.imagens.length;
             },
             removeFicheiro() {
-                this.$emit("removeFicheiro", this.imagemAtual);
+                const index = this.imagemAtual;
+                if (this.imagens.length === 1) {
+                    this.imagemAtual = 0;
+                } else if (this.imagemAtual >= this.imagens.length - 1) {
+                    this.imagemAtual = this.imagens.length - 2;
+                }
+                this.$emit("removeFicheiro", index);
             }
         }
     }
