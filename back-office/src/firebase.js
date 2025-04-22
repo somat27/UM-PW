@@ -5,9 +5,13 @@ import {
   getFirestore,
   doc,
   updateDoc,
+  setDoc,
+  getDoc,
 } from "firebase/firestore";
 import {
   getAuth,
+  signInWithPopup,
+  signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
 } from "firebase/auth";
@@ -22,18 +26,43 @@ const firebaseConfig = {
   measurementId: "G-JWNEDZWNTX"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-export const auth = getAuth(app);
+export const app            = initializeApp(firebaseConfig);
+export const auth           = getAuth(app);
+export const db             = getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
-googleProvider.setCustomParameters({
-  prompt: "select_account",
-});
+
+export const registerWithEmail = async (email, password, displayName) => {
+  const { user } = await createUserWithEmailAndPassword(auth, email, password);
+  await setDoc(doc(db, "users", user.uid), {
+    uid: user.uid,
+    displayName,
+    email,
+    photoURL: null,
+    role: "usuario", 
+  });
+  return user;
+};
+
+export const loginWithEmail = (email, password) =>
+  signInWithEmailAndPassword(auth, email, password);
+
+export const loginWithGoogle = async () => {
+  const { user } = await signInWithPopup(auth, googleProvider);
+  const ref = doc(db, "users", user.uid);
+  if (!(await getDoc(ref)).exists()) {
+    await setDoc(ref, {
+      uid: user.uid,
+      displayName: user.displayName,
+      email: user.email,
+      photoURL: user.photoURL,
+      role: "usuario",
+    });
+  }
+  return user;
+};
 
 export async function addPerito(DadosPerito) {
   try {
-    // First add the document to Firestore
     const Perito = {
       nome: DadosPerito.nome || "",
       email: DadosPerito.email || "",

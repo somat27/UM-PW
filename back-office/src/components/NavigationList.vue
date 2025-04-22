@@ -81,14 +81,17 @@
       <span class="nav-text">GESTÃO DE PROFISSIONAIS</span>
     </router-link>
 
-    <div class="user-profile">
-      <img 
-        :src="userPhoto" 
-        :alt="userName" 
-        class="user-avatar"
-      />
-      <span class="user-name">{{ userName }}</span>
-    </div>
+     <!-- Painel do utilizador -->
+    <router-link
+      to="/profile"
+      class="user-panel text-decoration-none"
+      v-if="currentUser"
+    >
+      <img :src="currentUser.photoURL || defaultAvatar" class="avatar" />
+      <span class="user-name">
+        {{ currentUser.displayName || currentUser.email }}
+      </span>
+    </router-link>
     
     <button @click="logOut" class="logout-button">
       <span class="logout-text">LOG OUT</span>
@@ -98,46 +101,36 @@
 </template>
 
 <script>
-import { onMounted, ref, computed } from 'vue';
-import { useRouter } from 'vue-router'; 
-import { useRoute } from "vue-router";
+import { computed } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+import { useCurrentUser } from '@/composables/useCurrentUser';
 
 export default {
   name: 'NavigationList',
   setup() {
-    const userName = ref('');
-    const userPhoto = ref('');
-    const router = useRouter(); 
-    
+    const router = useRouter();
+    const route  = useRoute();
+
+    // Dados reactivos do utilizador (Firestore)
+    const { currentUser } = useCurrentUser();
+    const defaultAvatar   = 'https://i.pravatar.cc/40?u=placeholder';
+
     const logOut = () => {
-      router.push('/'); 
+      router.push('/');
     };
-    
-    onMounted(() => {   
-      const storedUser = localStorage.getItem('user');
-      if (storedUser) {
-        const user = JSON.parse(storedUser);
-        userName.value = user.displayName || user.email;
-        userPhoto.value = user.photoURL || 'default-avatar.png';
-      }
-    });
-    
-    const route = useRoute();
-    const isDashboardActive = computed(() => {
-      return route.path.startsWith("/dashboards/");
-    });
-    const isGAActive = computed(() => {
-      return route.path.startsWith("/GestaoOcorrencias/");
-    });
+
+    const isDashboardActive = computed(() => route.path.startsWith('/dashboards/'));
+    const isGAActive        = computed(() => route.path.startsWith('/GestaoOcorrencias/'));
+
     return {
-      userName,
-      userPhoto,
+      currentUser,
+      defaultAvatar,
       logOut,
       isDashboardActive,
       isGAActive,
-    }
-  }
-}
+    };
+  },
+};
 </script>
 
 <style scoped>
@@ -273,16 +266,6 @@ export default {
   background-color: #f0f0f0; 
 }
 
-.user-name {
-  line-height: 21px;
-  max-width: 150px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: #666;
-  font-size: 15px;
-}
-
 .logout-button {
   display: flex;
   align-items: center;
@@ -322,4 +305,28 @@ export default {
     border-right: 20px solid #fff;
   }
 }
+
+.user-panel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+}
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.user-name {
+  line-height: 21px;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #666;
+  font-size: 15px;
+}
+
 </style>
+
