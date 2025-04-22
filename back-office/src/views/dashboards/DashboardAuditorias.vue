@@ -11,68 +11,38 @@
       <main class="main-content">
         <div class="content-wrapper">
 
-          <!-- Navigation tabs -->
           <nav class="navigation-tabs">
-            <router-link
-              to="/dashboards/auditorias"
-              class="tab-link"
-              :class="{ active: activeTab === 'auditorias' }"
-              @click="activeTab = 'auditorias'"
-            >
+            <router-link to="/dashboards/auditorias" class="tab-link" :class="{ active: activeTab === 'auditorias' }"
+              @click="activeTab = 'auditorias'">
               Auditorias por região
             </router-link>
-            <router-link
-              to="/dashboards/ocorrencias"
-              class="tab-link"
-              :class="{ active: activeTab === 'ocorrencias' }"
-              @click="activeTab = 'ocorrencias'"
-            >
+            <router-link to="/dashboards/ocorrencias" class="tab-link" :class="{ active: activeTab === 'ocorrencias' }"
+              @click="activeTab = 'ocorrencias'">
               Ocorrências resolvidas
             </router-link>
-            <router-link
-              to="/dashboards/peritos"
-              class="tab-link"
-              :class="{ active: activeTab === 'peritos' }"
-              @click="activeTab = 'peritos'"
-            >
+            <router-link to="/dashboards/peritos" class="tab-link" :class="{ active: activeTab === 'peritos' }"
+              @click="activeTab = 'peritos'">
               Peritos mobilizados e no aguardo
             </router-link>
-            <router-link
-              to="/dashboards/materiais"
-              class="tab-link"
-              :class="{ active: activeTab === 'materiais' }"
-              @click="activeTab = 'materiais'"
-            >
+            <router-link to="/dashboards/materiais" class="tab-link" :class="{ active: activeTab === 'materiais' }"
+              @click="activeTab = 'materiais'">
               Materiais expedidos
             </router-link>
           </nav>
 
-          <!-- ROW: stats + pesquisa -->
           <div class="stats-search-row">
-            <StatisticsGridAuditorias
-              :labels="filteredIndices.map(i => localities[i])"
-              :values="filteredIndices.map(i => dataValues[i])"
-            />
+            <StatisticsGridAuditorias :labels="filteredIndices.map(i => localities[i])"
+              :values="filteredIndices.map(i => dataValues[i])" />
             <div class="search-section inline">
               <div class="search-input">
-                <input
-                  type="text"
-                  v-model="searchQuery"
-                  placeholder="Pesquisar Localidade..."
-                  class="search-container"
-                />
+                <input type="text" v-model="searchQuery" placeholder="Pesquisar Localidade..."
+                  class="search-container" />
               </div>
             </div>
           </div>
 
-          <!-- Chart -->
           <div id="chart">
-            <apexchart
-              type="bar"
-              height="350"
-              :options="chartOptions"
-              :series="series"
-            />
+            <apexchart type="bar" height="350" :options="chartOptions" :series="series" />
           </div>
         </div>
       </main>
@@ -119,7 +89,7 @@ export default {
       xaxis: { categories: filteredIndices.value.map(i => localities[i]) }
     }));
 
-    const onSearch = () => {};
+    const onSearch = () => { };
 
     return {
       activeTab,
@@ -153,7 +123,6 @@ export default {
   margin-top: 40px;
 }
 
-/* Navigation tabs styling matching DashboardOcorrencia */
 .navigation-tabs {
   margin-top: -15px;
   display: flex;
@@ -247,12 +216,15 @@ export default {
   justify-content: space-between;
   align-items: center;
   gap: 16px;
-  margin-bottom: 24px; /* ajusta conforme seu espaçamento */
+  margin-bottom: 24px;
+  /* ajusta conforme seu espaçamento */
   padding-right: 20px;
 }
 
 .search-section.inline {
-  margin: 0; /* remove margin-bottom original */
-  margin-right: 16px; /* margem extra à direita do input */
+  margin: 0;
+  /* remove margin-bottom original */
+  margin-right: 16px;
+  /* margem extra à direita do input */
 }
 </style>

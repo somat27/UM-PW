@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard-container" :space="23">
+  <div class="dashboard-container">
     <div class="dashboard-layout">
       <aside class="sidebar-column">
         <nav class="sidebar-nav">
@@ -9,36 +9,24 @@
         </nav>
       </aside>
 
-  <main class="main-content">
-  <div class="content-wrapper">
-    <nav class="navigation-tabs"></nav>
-    
-    <StatisticsGrid />
+      <main class="main-content">
+        <div class="content-wrapper">
 
-    <div class="page-header">
-      <h2>Gestão de Materiais</h2>
-    </div>
+          <StatisticsGrid />
 
-    <div class="filters-container">
-      <Filters
-        :filters="filterOptions"
-        :gap="'172px'"
-        search-placeholder="Procurar Materiais..."
-        button-text="+ Adicionar Materiais"
-        @search="handleSearch"
-        @filter-change="handleFilterChange"
-        @add="handleAddMaterial"
-      />
-    </div>
+          <div class="page-header">
+            <h2>Gestão de Materiais</h2>
+          </div>
 
-    <GenericTable
-      :data="peritos"
-      :columns="columns"
-      :type="'striped'"
-      @action="handlePeritoAction"
-    />
-  </div>
-</main>
+          <div class="filters-container">
+            <Filters :filters="filterOptions" :gap="'172px'" search-placeholder="Procurar Materiais..."
+              button-text="+ Adicionar Materiais" @search="handleSearch" @filter-change="handleFilterChange"
+              @add="handleAddMaterial" />
+          </div>
+
+          <GenericTable :data="peritos" :columns="columns" :type="'striped'" @action="handlePeritoAction" />
+        </div>
+      </main>
     </div>
   </div>
 </template>
@@ -58,7 +46,7 @@ export default {
   data() {
     return {
 
-filterOptions: [
+      filterOptions: [
         {
           key: 'type',
           label: 'Tipo',
@@ -73,13 +61,13 @@ filterOptions: [
           ]
         }
       ],
-          columns: [
-            { key: 'details', label: 'Detalhes do Material' },
-            { key: 'category', label: 'Categoria' },
-            { key: 'price', label: 'Preço' },
-            { key: 'qtd', label: 'Quantidade' },
-            { key: 'status', label: 'Estado' },
-            { key: 'actions', label: 'Ações' }
+      columns: [
+        { key: 'details', label: 'Detalhes do Material' },
+        { key: 'category', label: 'Categoria' },
+        { key: 'price', label: 'Preço' },
+        { key: 'qtd', label: 'Quantidade' },
+        { key: 'status', label: 'Estado' },
+        { key: 'actions', label: 'Ações' }
       ],
       peritos: [
         {
@@ -102,171 +90,71 @@ filterOptions: [
 };
 </script>
 
-  
-    
-    <style scoped>
-    .dashboard-container {
-      background: linear-gradient(
-          0deg,
-          var(--color-grey-98, #fafafb) 0%,
-          var(--color-grey-98, #fafafb) 100%
-        ),
-        var(--color-white-solid, #fff);
-      padding-right: 18px;
-      padding-bottom: 135px;
-    }
-    
-    .dashboard-layout {
-      display: flex;
-      gap: 20px;
-    }
-    
-    .sidebar-column {
-      width: 19%;
-    }
-    
-    .sidebar-nav {
-      box-shadow: 1px 0px 0px 0px #f0f0f0;
-      background-color: #fff;
-      padding-bottom: 772px;
-      overflow: hidden;
-      width: 100%;
-    }
-    
-    .sidebar-background {
-      padding-bottom: 395px;
-      background-color: #fff;
-    }
-    
-    .logo {
-      aspect-ratio: 6.17;
-      object-fit: contain;
-      width: 260px;
-      box-shadow: 0px 4px 4px rgba(254, 247, 247, 1);
-    }
-    
-    .notification-icons {
-      z-index: 10;
-      margin-top: 160px;
-      margin-left: 25px;
-      width: 16px;
-    }
-    
-    .notification-icon,
-    .alert-icon {
-      aspect-ratio: 1;
-      object-fit: contain;
-      width: 100%;
-    }
-    
-    .alert-icon {
-      margin-top: 27px;
-    }
-    
-    .main-content {
-      width: 81%;
-      margin-left: 20px;
-    }
-    
-    .content-wrapper {
-      display: flex;
-      margin-top: 59px;
-      width: 100%;
-      flex-direction: column;
-    }
-    
-    .navigation-tabs {
-      display: flex;
-      align-items: center;
-      gap: 30px;
-      font-family:
-        Public Sans,
-        -apple-system,
-        Roboto,
-        Helvetica,
-        sans-serif;
-      font-size: 13px;
-      color: #212529;
-      flex-wrap: wrap;
-    }
-    
-    .tab-link {
-      text-decoration: none;
-      color: inherit;
-      line-height: 19.5px;
-    }
-    
-    .tab-link.active {
-      color: #1890ff;
-    }
-    
-    .map-visualization {
-      aspect-ratio: 0.95;
-      object-fit: contain;
-      width: 100%;
-    }
-    
-    @media (max-width: 991px) {
-      .dashboard-container {
-        padding-bottom: 100px;
-        
-      }
-    
-      .dashboard-layout {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0;
-      }
-    
-      .sidebar-column {
-        width: 100%;
-      }
-    
-      .sidebar-nav {
-        margin-top: 24px;
-        padding-bottom: 100px;
-      }
-    
-      .sidebar-background {
-        padding-bottom: 100px;
-      }
-    
-      .notification-icons {
-        margin-left: 10px;
-        margin-top: 40px;
-      }
-    
-      .main-content {
-        width: 100%;
-      }
-    
-      .content-wrapper {
-        max-width: 100%;
-        margin-top: 40px;
-      }
-    
-      .map-visualization {
-        max-width: 100%;
-      }
-    }
+<style scoped>
+.dashboard-layout {
+  display: flex;
+  gap: 20px;
+}
 
-    .user-profile {
-    display: flex;
-    align-items: center;
-    margin-bottom: 20px;
-  }
-  
-  .user-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    margin-right: 10px;
-  }
-  
-  .user-name {
-    font-size: 16px;
-    font-weight: bold;
-  }
+.sidebar-column {
+  width: 20%;
+}
+
+.main-content {
+  flex: 1;
+}
+
+.content-wrapper {
+  margin-top: 40px;
+}
+
+.tab-link {
+  text-decoration: none;
+  color: #6c757d;
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 10px 16px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  position: relative;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+
+.tab-link:hover {
+  background-color: #f8f9fa;
+  color: #495057;
+}
+
+.tab-link.active {
+  color: #1890ff;
+  background-color: rgba(24, 144, 255, 0.08);
+  font-weight: 600;
+}
+
+.tab-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: -9px;
+  left: 16px;
+  right: 16px;
+  height: 2px;
+  background-color: #1890ff;
+  border-radius: 2px 2px 0 0;
+}
+
+.tab-link::after {
+  content: '';
+  position: absolute;
+  bottom: -9px;
+  left: 50%;
+  right: 50%;
+  height: 2px;
+  background-color: #1890ff;
+  transition: all 0.3s ease;
+  border-radius: 2px 2px 0 0;
+}
 
 .filters-container {
   display: flex;
@@ -275,7 +163,4 @@ filterOptions: [
   margin: 0 auto;
   max-width: fit-content;
 }
-
-
 </style>
-    

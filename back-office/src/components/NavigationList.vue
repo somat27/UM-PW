@@ -1,98 +1,67 @@
 <template>
   <nav class="navigation-list">
- 
-    
-    <div class="divider"></div>
     <img
-              src="https://cdn.builder.io/api/v1/image/assets/TEMP/9cae2c5a44e739bfd2edc79e5215ab61eb4c5ee8?placeholderIfAbsent=true&apiKey=98100b9ac2c544efa71903dc3e1eda07"
-              alt="Logo"
-              class="logo"
-              
-            />
-    <router-link to="/dashboards/auditorias" 
-      class="nav-item" 
-      :class="{ 'nav-item-active': isDashboardActive }"
-    >
+      src="https://cdn.builder.io/api/v1/image/assets/TEMP/9cae2c5a44e739bfd2edc79e5215ab61eb4c5ee8?placeholderIfAbsent=true&apiKey=98100b9ac2c544efa71903dc3e1eda07"
+      alt="Logo" class="logo" />
+    <div class="menu-header"></div>
+    <router-link to="/dashboards/auditorias" class="nav-item" :class="{ 'nav-item-active': isDashboardActive }">
       <img
         src="https://cdn.builder.io/api/v1/image/assets/TEMP/bd9d82f1effb8381bb1929299adeb4fb409cd704?placeholderIfAbsent=true&apiKey=98100b9ac2c544efa71903dc3e1eda07"
-        alt="Dashboard"
-        class="nav-icon"
-      />
+        alt="Dashboard" class="nav-icon" />
       <span class="nav-text">DASHBOARDS</span>
     </router-link>
 
-    <router-link to="/GestaoAuditorias" 
-      class="nav-item"
-
-    >
+    <router-link to="/GestaoAuditorias" class="nav-item">
       <img
         src="https://cdn.builder.io/api/v1/image/assets/TEMP/b414ddc8a44a7865af46891e60f33ca4a0160885?placeholderIfAbsent=true&apiKey=98100b9ac2c544efa71903dc3e1eda07"
-        alt="Auditorias"
-        class="nav-icon"
-      />
+        alt="Auditorias" class="nav-icon" />
       <span class="nav-text">GESTÃO DE AUDITORIAS</span>
     </router-link>
 
-    <router-link to="/GestaoOcorrencias" 
-      class="nav-item"
-      :class="{ 'nav-item-active': isGAActive }"
-
-    > 
+    <router-link to="/GestaoOcorrencias" class="nav-item" :class="{ 'nav-item-active': isGAActive }">
 
       <img
         src="https://cdn.builder.io/api/v1/image/assets/TEMP/32555fc51897e2a6d661a8bff00a21a07bb15d13?placeholderIfAbsent=true&apiKey=98100b9ac2c544efa71903dc3e1eda07"
-        alt="Notification"
-        class="nav-icon"
-      />
+        alt="Notification" class="nav-icon" />
       <span class="nav-text">GESTÃO DE OCORRÊNCIAS</span>
     </router-link>
 
-    <router-link to="/GestaoPeritos" 
-      class="nav-item"
-    >
+    <router-link to="/GestaoPeritos" class="nav-item">
 
       <img
         src="https://cdn.builder.io/api/v1/image/assets/TEMP/08fd61f8d2974d973bc8956784b3929b25f9988a?placeholderIfAbsent=true&apiKey=98100b9ac2c544efa71903dc3e1eda07"
-        alt="Alert"
-        class="nav-icon"
-      />
+        alt="Alert" class="nav-icon" />
       <span class="nav-text">GESTÃO DE PERITOS</span>
     </router-link>
 
-    <router-link to="/GestaoMateriais" 
-      class="nav-item"
-    >
+    <router-link to="/GestaoMateriais" class="nav-item">
       <img
         src="https://cdn.builder.io/api/v1/image/assets/TEMP/890255b1fe5b0074d3223ecb23bf8221887fb032?placeholderIfAbsent=true&apiKey=98100b9ac2c544efa71903dc3e1eda07"
-        alt="Materiais"
-        class="nav-icon"
-      />
+        alt="Materiais" class="nav-icon" />
       <span class="nav-text">GESTÃO DE MATERIAIS</span>
     </router-link>
 
-    <router-link to="/GestaoProfissionais" 
-      class="nav-item"
-    >
+    <router-link to="/GestaoProfissionais" class="nav-item">
       <img
         src="https://cdn.builder.io/api/v1/image/assets/TEMP/2130c19d7d5c87c243ec6c2559e349da836493a5?placeholderIfAbsent=true&apiKey=98100b9ac2c544efa71903dc3e1eda07"
-        alt="Profissionais"
-        class="nav-icon"
-      />
+        alt="Profissionais" class="nav-icon" />
       <span class="nav-text">GESTÃO DE PROFISSIONAIS</span>
     </router-link>
 
-     <!-- Painel do utilizador -->
-    <router-link
-      to="/profile"
-      class="user-panel text-decoration-none"
-      v-if="currentUser"
-    >
+    <router-link to="/GestaoUtilizadores" class="nav-item" v-if="isAdmin">
+      <img
+        src="https://cdn.builder.io/api/v1/image/assets/TEMP/2130c19d7d5c87c243ec6c2559e349da836493a5?placeholderIfAbsent=true&apiKey=98100b9ac2c544efa71903dc3e1eda07"
+        alt="Profissionais" class="nav-icon" />
+      <span class="nav-text">GESTÃO DE USUARIOS</span>
+    </router-link>
+
+    <router-link to="/profile" class="user-panel text-decoration-none" v-if="currentUser">
       <img :src="currentUser.photoURL || defaultAvatar" class="avatar" />
       <span class="user-name">
         {{ currentUser.displayName || currentUser.email }}
       </span>
     </router-link>
-    
+
     <button @click="logOut" class="logout-button">
       <span class="logout-text">LOG OUT</span>
       <div class="lock-icon">⏻</div>
@@ -101,26 +70,37 @@
 </template>
 
 <script>
-import { computed } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useCurrentUser } from '@/composables/useCurrentUser';
+import { auth, db } from '@/firebase'
+import { onAuthStateChanged } from 'firebase/auth'
+import { doc, getDoc } from 'firebase/firestore'
 
 export default {
   name: 'NavigationList',
   setup() {
+    const isAdmin = ref(false)
     const router = useRouter();
-    const route  = useRoute();
+    const route = useRoute();
 
-    // Dados reactivos do utilizador (Firestore)
     const { currentUser } = useCurrentUser();
-    const defaultAvatar   = 'https://i.pravatar.cc/40?u=placeholder';
+    const defaultAvatar = 'https://i.pravatar.cc/40?u=placeholder';
 
     const logOut = () => {
       router.push('/');
     };
 
     const isDashboardActive = computed(() => route.path.startsWith('/dashboards/'));
-    const isGAActive        = computed(() => route.path.startsWith('/GestaoOcorrencias/'));
+    const isGAActive = computed(() => route.path.startsWith('/GestaoOcorrencias/'));
+
+    onMounted(() => {
+      onAuthStateChanged(auth, async user => {
+        if (!user) return
+        const snap = await getDoc(doc(db, 'users', user.uid))
+        isAdmin.value = snap.exists() && snap.data().role === 'admin'
+      })
+    })
 
     return {
       currentUser,
@@ -128,6 +108,7 @@ export default {
       logOut,
       isDashboardActive,
       isGAActive,
+      isAdmin,
     };
   },
 };
@@ -171,10 +152,6 @@ export default {
   font-weight: 500;
 }
 
-.divider {
-  display: none; 
-}
-
 .nav-item {
   position: relative;
   display: flex;
@@ -188,7 +165,7 @@ export default {
   box-sizing: border-box;
   margin: 0;
   background-color: #fff;
-  transition: 
+  transition:
     background-color 0.3s ease,
     transform 0.2s ease,
     box-shadow 0.3s ease;
@@ -200,15 +177,16 @@ export default {
   background-color: #f0f7ff;
 }
 
-.nav-item-active, .nav-item.router-link-active {
+.nav-item-active,
+.nav-item.router-link-active {
   color: #1890ff;
   background-color: #f0f7ff;
   font-weight: 500;
   position: relative;
-  border-left: 3px solid #1890ff; 
+  border-left: 3px solid #1890ff;
 }
 
-.nav-item-active::after, 
+.nav-item-active::after,
 .nav-item.router-link-active::after {
   display: none;
 }
@@ -218,7 +196,7 @@ export default {
   height: 22px;
   object-fit: contain;
   filter: grayscale(100%);
-  transition: 
+  transition:
     filter 0.3s ease,
     transform 0.3s ease;
 }
@@ -229,11 +207,12 @@ export default {
   transform: scale(1.1) rotate(-5deg);
 }
 
-.nav-item-active .nav-icon, .nav-item.router-link-active .nav-icon {
+.nav-item-active .nav-icon,
+.nav-item.router-link-active .nav-icon {
   filter: grayscale(0%);
   filter: invert(42%) sepia(93%) saturate(1352%) hue-rotate(190deg) brightness(119%) contrast(119%);
   transform: scale(1.15) rotate(0deg);
-  animation: iconPulse 1.5s infinite alternate; 
+  animation: iconPulse 1.5s infinite alternate;
 }
 
 .nav-text {
@@ -241,7 +220,7 @@ export default {
   font-size: 13px;
   letter-spacing: 0.5px;
   text-transform: uppercase;
-  transition: 
+  transition:
     letter-spacing 0.3s ease,
     transform 0.3s ease;
 }
@@ -263,7 +242,7 @@ export default {
   object-fit: cover;
   border-radius: 50%;
   display: block;
-  background-color: #f0f0f0; 
+  background-color: #f0f0f0;
 }
 
 .logout-button {
@@ -284,7 +263,7 @@ export default {
 }
 
 .logout-button:hover {
-  background-color: #e74c3c; 
+  background-color: #e74c3c;
 }
 
 .logout-text {
@@ -293,13 +272,15 @@ export default {
 }
 
 @media (max-width: 991px) {
-  .nav-item, 
+
+  .nav-item,
   .app-title {
     padding-left: 16px;
     padding-right: 16px;
   }
-  
-  .nav-item-active::after, .nav-item.router-link-active::after {
+
+  .nav-item-active::after,
+  .nav-item.router-link-active::after {
     border-top: 20px solid transparent;
     border-bottom: 20px solid transparent;
     border-right: 20px solid #fff;
@@ -312,12 +293,15 @@ export default {
   gap: 8px;
   padding: 12px 16px;
 }
+
 .avatar {
+  margin-left: 10px;
   width: 32px;
   height: 32px;
   border-radius: 50%;
   object-fit: cover;
 }
+
 .user-name {
   line-height: 21px;
   max-width: 150px;
@@ -328,5 +312,12 @@ export default {
   font-size: 15px;
 }
 
-</style>
+.logo {
+  margin-top: 24px;
+}
 
+.menu-header {
+  height: 1px;
+  margin: 12px 0 20px;
+}
+</style>
