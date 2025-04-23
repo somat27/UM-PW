@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard-container">
+  <div class="dashboard-container" :space="23">
     <div class="dashboard-layout">
       <aside class="sidebar-column">
         <nav class="sidebar-nav">
@@ -22,153 +22,142 @@
           <div class="filters-container">
             <Filters
               :filters="filterOptions"
-              :gap="'10%'"
+              :gap="'80px'"
               search-placeholder="Procurar Peritos..."
               button-text="+ Adicionar Peritos"
               @search="handleSearch"
               @filter-change="handleFilterChange"
-              @add="togglePeritoForm"
+              @add="openAddPeritoModal"
             />
           </div>
 
-          <!-- Notificação de sucesso -->
-          <transition name="fade">
-            <div
-              v-if="notification.show"
-              class="notification"
-              :class="notification.type"
-            >
-              <div class="notification-content">
-                <i class="notification-icon" :class="notification.icon"></i>
-                <span>{{ notification.message }}</span>
-              </div>
-              <button class="notification-close" @click="closeNotification">
-                ×
-              </button>
-            </div>
-          </transition>
-
-          <!-- Expander para formulário de adição de perito -->
-          <transition name="expand">
-            <div v-if="showPeritoForm" class="perito-form-wrapper">
-              <div class="perito-form-expander">
-                <div class="perito-form-header">
-                  <h3>Adicionar Novo Perito</h3>
-                  <button
-                    class="close-button"
-                    @click="togglePeritoForm"
-                    aria-label="Fechar formulário"
-                  >
-                    <span aria-hidden="true">×</span>
-                  </button>
-                </div>
-                <form @submit.prevent="submitPeritoForm" class="perito-form">
-                  <div class="form-scroll-area">
-                    <div class="form-row">
-                      <div class="form-group">
-                        <label for="nome">Nome</label>
-                        <input
-                          type="text"
-                          id="nome"
-                          v-model="novoPeritoData.nome"
-                          required
-                          placeholder="Nome completo"
-                        />
-                      </div>
-                      <div class="form-group">
-                        <label for="email">Email</label>
-                        <input
-                          type="email"
-                          id="email"
-                          v-model="novoPeritoData.email"
-                          required
-                          placeholder="exemplo@email.com"
-                        />
-                      </div>
-                    </div>
-
-                    <div class="form-row">
-                      <div class="form-group">
-                        <label for="morada">Morada</label>
-                        <input
-                          type="text"
-                          id="morada"
-                          v-model="novoPeritoData.morada"
-                          required
-                          placeholder="Endereço completo"
-                        />
-                      </div>
-                      <div class="form-group">
-                        <label for="dataNascimento">Data de Nascimento</label>
-                        <input
-                          type="date"
-                          id="dataNascimento"
-                          v-model="novoPeritoData.dataNascimento"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div class="form-row">
-                      <div class="form-group">
-                        <label for="especialidade">Especialidade</label>
-                        <input
-                          type="text"
-                          id="especialidade"
-                          v-model="novoPeritoData.especialidade"
-                          required
-                          placeholder="Ex: Engenheiro Civil"
-                        />
-                      </div>
-                      <div class="form-group">
-                        <label for="numeroTelemovel">Número de Telemóvel</label>
-                        <input
-                          type="tel"
-                          id="numeroTelemovel"
-                          v-model="novoPeritoData.numeroTelemovel"
-                          required
-                          placeholder="9XX XXX XXX"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="form-actions">
-                    <button
-                      type="button"
-                      class="cancel-button"
-                      @click="togglePeritoForm"
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      type="submit"
-                      class="submit-button"
-                      :disabled="isSubmitting"
-                    >
-                      <span v-if="isSubmitting" class="spinner"></span>
-                      <span>{{
-                        isSubmitting ? "A processar..." : "Guardar Perito"
-                      }}</span>
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </transition>
-
-          <div class="table-container">
-            <GenericTable
-              :title="'Lista de Peritos'"
-              :subTitle="'Gestão de peritos mobilizados'"
-              :data="peritos"
-              :columns="columns"
-              :type="'striped'"
-              @action="handlePeritoAction"
-            />
+          <div v-if="loading" class="loading-container">
+            <p>Carregando peritos...</p>
           </div>
+
+          <div v-else-if="error" class="error-container">
+            <p>Erro ao carregar peritos: {{ error }}</p>
+          </div>
+
+          <GenericTable
+            v-else
+            :title="'Lista de Peritos'"
+            :subTitle="'Gestão de peritos mobilizados'"
+            :data="peritos"
+            :columns="columns"
+            :type="'striped'"
+            @action="handlePeritoAction"
+          />
         </div>
       </main>
+    </div>
+
+    <!-- Modal para adicionar perito -->
+    <div
+      class="modal-overlay"
+      v-if="showAddPeritoModal"
+      @click.self="closeAddPeritoModal"
+    >
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Adicionar Novo Perito</h2>
+          <button class="close-button" @click="closeAddPeritoModal">
+            &times;
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <form @submit.prevent="submitPerito">
+            <div class="form-group">
+              <label for="name">Nome Completo</label>
+              <input
+                type="text"
+                id="name"
+                v-model="novoPeritoForm.name"
+                required
+                placeholder="Insira o nome completo"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="email">Email</label>
+              <input
+                type="email"
+                id="email"
+                v-model="novoPeritoForm.email"
+                required
+                placeholder="exemplo@email.com"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="birthDate">Data de Nascimento</label>
+              <input
+                type="text"
+                id="birthDate"
+                v-model="novoPeritoForm.birthDate"
+                required
+                placeholder="DD/MM/AAAA"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="address">Morada</label>
+              <input
+                type="text"
+                id="address"
+                v-model="novoPeritoForm.address"
+                required
+                placeholder="Cidade, Rua"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="specialty">Especialidade</label>
+              <input
+                type="text"
+                id="specialty"
+                v-model="novoPeritoForm.specialty"
+                required
+                placeholder="Especialidade do perito"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="phone">Número de Telemóvel</label>
+              <input
+                type="text"
+                id="phone"
+                v-model="novoPeritoForm.phone"
+                required
+                placeholder="9XXXXXXXX"
+              />
+            </div>
+
+            <div class="form-actions">
+              <button
+                type="button"
+                class="cancel-button"
+                @click="closeAddPeritoModal"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                class="submit-button"
+                :disabled="isSubmitting"
+              >
+                {{ isSubmitting ? "A guardar..." : "Guardar" }}
+              </button>
+            </div>
+          </form>
+
+          <!-- Mensagem de erro/sucesso -->
+          <div v-if="submitMessage" :class="['submit-message', submitStatus]">
+            {{ submitMessage }}
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -177,7 +166,7 @@
 import NavigationList from "../components/NavigationList.vue";
 import GenericTable from "../components/GenericTable.vue";
 import Filters from "../components/Filters.vue";
-import { addPerito } from "../firebase.js";
+import { addPerito, getPeritos } from "../firebase";
 
 export default {
   name: "GestaoPeritos",
@@ -188,6 +177,23 @@ export default {
   },
   data() {
     return {
+      peritos: [],
+      loading: true,
+      error: null,
+      showAddPeritoModal: false,
+      isSubmitting: false,
+      submitMessage: "",
+      submitStatus: "",
+      novoPeritoForm: {
+        name: "",
+        email: "",
+        birthDate: "",
+        address: "",
+        specialty: "",
+        phone: "",
+        status: "Disponível",
+        role: "perito",
+      },
       filterOptions: [
         {
           key: "status",
@@ -222,223 +228,123 @@ export default {
         { key: "status", label: "Estado" },
         { key: "actions", label: "Ações" },
       ],
-      peritos: [
-        {
-          id: 1,
-          name: "Joana Silva",
-          email: "joana@sapo.pt",
-          address: "Porto",
-          birthDate: "22/07/1990",
-          specialty: "Engenheira Civil",
-          phone: "912345678",
-          status: "Mobilizado",
-        },
-        {
-          id: 2,
-          name: "Carlos Pinto",
-          email: "carlos@sapo.pt",
-          address: "Lisboa",
-          birthDate: "15/11/1987",
-          specialty: "Pedreiro",
-          phone: "934567890",
-          status: "Disponível",
-        },
-      ],
-      // Novos estados para o formulário de adicionar perito
-      showPeritoForm: false,
-      isSubmitting: false,
-      novoPeritoData: {
-        nome: "",
-        email: "",
-        morada: "",
-        dataNascimento: "",
-        especialidade: "",
-        numeroTelemovel: "",
-      },
-      // Sistema de notificações
-      notification: {
-        show: false,
-        message: "",
-        type: "",
-        icon: "",
-        timeout: null,
-      },
     };
   },
+  created() {
+    // Carregar peritos ao iniciar o componente
+    this.loadPeritos();
+  },
   methods: {
-    // Métodos para notificações
-    showNotification(message, type = "success") {
-      // Limpar timeout anterior se existir
-      if (this.notification.timeout) {
-        clearTimeout(this.notification.timeout);
-      }
-
-      this.notification.show = true;
-      this.notification.message = message;
-      this.notification.type = type;
-
-      // Definir ícone baseado no tipo
-      if (type === "success") {
-        this.notification.icon = "icon-check";
-      } else if (type === "error") {
-        this.notification.icon = "icon-error";
-      } else if (type === "warning") {
-        this.notification.icon = "icon-warning";
-      } else {
-        this.notification.icon = "icon-info";
-      }
-
-      // Auto-fechar após 5 segundos
-      this.notification.timeout = setTimeout(() => {
-        this.closeNotification();
-      }, 5000);
-    },
-
-    closeNotification() {
-      this.notification.show = false;
-      if (this.notification.timeout) {
-        clearTimeout(this.notification.timeout);
-      }
-    },
-
-    // Métodos existentes
-    handleSearch(query) {
-      // Implementar lógica de busca
-      console.log("Busca por:", query);
-    },
-
-    handleFilterChange(filters) {
-      // Implementar lógica de filtro
-      console.log("Filtros alterados:", filters);
-    },
-
-    handlePeritoAction(action) {
-      // Implementar lógica para ações na tabela
-      console.log("Ação na tabela:", action);
-    },
-
-    // Novos métodos para o formulário de adicionar perito
-    togglePeritoForm() {
-      this.showPeritoForm = !this.showPeritoForm;
-      if (!this.showPeritoForm) {
-        this.resetPeritoForm();
-      }
-    },
-
-    resetPeritoForm() {
-      this.novoPeritoData = {
-        nome: "",
-        email: "",
-        morada: "",
-        dataNascimento: "",
-        especialidade: "",
-        numeroTelemovel: "",
-      };
-      this.isSubmitting = false;
-    },
-
-    async submitPeritoForm() {
-      if (this.isSubmitting) return;
-
+    async loadPeritos() {
       try {
+        this.loading = true;
+        this.error = null;
+
+        // Buscar peritos do Firebase
+        const peritosList = await getPeritos();
+
+        // Formatar os dados se necessário para compatibilidade com a tabela
+        this.peritos = peritosList.map((perito) => ({
+          id: perito.uid,
+          name: perito.name || "",
+          email: perito.email || "",
+          nameEmail: {
+            // Combinando nome e email para a coluna "Nome"
+            name: perito.name || "",
+            email: perito.email || "",
+          },
+          address: perito.address || "",
+          birthDate: perito.birthDate || "",
+          specialty: perito.specialty || "",
+          phone: perito.phone || "",
+          status: perito.status || "Disponível",
+        }));
+      } catch (error) {
+        console.error("Erro ao carregar peritos:", error);
+        this.error = error.message || "Erro ao carregar peritos";
+      } finally {
+        this.loading = false;
+      }
+    },
+    handleSearch(searchTerm) {
+      // Implementar lógica de busca com Firebase
+      console.log("Buscando por:", searchTerm);
+      // Aqui você pode buscar localmente nos peritos já carregados
+      // ou fazer uma nova consulta ao Firebase com filtros adicionais
+    },
+    handleFilterChange(filters) {
+      // Implementar lógica de filtragem com Firebase
+      console.log("Filtros alterados:", filters);
+      // Você pode fazer nova consulta ao Firebase incluindo where clauses adicionais
+    },
+    handlePeritoAction(action, perito) {
+      // Implementar ações de perito
+      console.log("Ação:", action, "Perito:", perito);
+    },
+    openAddPeritoModal() {
+      // Abre o modal e reseta o formulário
+      this.showAddPeritoModal = true;
+      this.submitMessage = "";
+      this.submitStatus = "";
+      this.novoPeritoForm = {
+        name: "",
+        email: "",
+        birthDate: "",
+        address: "",
+        specialty: "",
+        phone: "",
+        status: "Disponível",
+        role: "perito",
+      };
+    },
+    closeAddPeritoModal() {
+      // Fecha o modal
+      this.showAddPeritoModal = false;
+    },
+    async submitPerito() {
+      try {
+        // Indicador de carregamento
         this.isSubmitting = true;
+        this.submitMessage = "";
 
-        // Validação adicional de dados (opcional)
-        if (!this.validarFormulario()) {
-          this.showNotification(
-            "Por favor, preencha todos os campos corretamente.",
-            "error"
-          );
-          this.isSubmitting = false;
-          return;
-        }
-
-        // Chamar a função de adicionar perito
-        const peritoId = await addPerito(this.novoPeritoData);
-
-        // Adicionar o novo perito à lista local
-        const novoPeritoParaLista = {
-          id: peritoId,
-          name: this.novoPeritoData.nome,
-          email: this.novoPeritoData.email,
-          address: this.novoPeritoData.morada,
-          birthDate: this.formatarDataNascimento(
-            this.novoPeritoData.dataNascimento
-          ),
-          specialty: this.novoPeritoData.especialidade,
-          phone: this.novoPeritoData.numeroTelemovel,
-          status: "Disponível",
+        const peritoData = {
+          ...this.novoPeritoForm,
         };
 
-        this.peritos.push(novoPeritoParaLista);
+        // Envia dados para Firebase
+        const docId = await addPerito(peritoData);
+        console.log("Novo perito: " + docId);
 
-        // Mostrar notificação de sucesso
-        this.showNotification("Perito adicionado com sucesso!", "success");
+        // Recarrega peritos para refletir a mudança
+        await this.loadPeritos();
 
-        // Fechar o formulário e redefinir
-        this.$nextTick(() => {
-          this.togglePeritoForm();
-        });
+        // Exibe mensagem de sucesso
+        this.submitStatus = "success";
+        this.submitMessage = "Perito adicionado com sucesso!";
+
+        // Fecha o modal após 1.5 segundos
+        setTimeout(() => {
+          this.closeAddPeritoModal();
+        }, 1500);
       } catch (error) {
+        // Exibe mensagem de erro
         console.error("Erro ao adicionar perito:", error);
-        this.showNotification(
-          "Erro ao adicionar perito. Por favor, tente novamente.",
-          "error"
-        );
+        this.submitStatus = "error";
+        this.submitMessage = `Erro ao adicionar perito: ${
+          error.message || "Tente novamente."
+        }`;
       } finally {
         this.isSubmitting = false;
       }
     },
-
-    validarFormulario() {
-      // Validação básica - verifica se todos os campos obrigatórios estão preenchidos
-      return (
-        this.novoPeritoData.nome.trim() !== "" &&
-        this.novoPeritoData.email.trim() !== "" &&
-        this.novoPeritoData.morada.trim() !== "" &&
-        this.novoPeritoData.dataNascimento !== "" &&
-        this.novoPeritoData.especialidade.trim() !== "" &&
-        this.novoPeritoData.numeroTelemovel.trim() !== ""
-      );
-    },
-
-    formatarDataNascimento(data) {
-      if (!data) return "";
-
-      const [ano, mes, dia] = data.split("-");
-      return `${dia}/${mes}/${ano}`;
-    },
-
     handleAddPerito() {
-      this.togglePeritoForm();
+      this.openAddPeritoModal();
     },
   },
 };
 </script>
 
 <style scoped>
-:root {
-  --primary-color: #1890ff;
-  --primary-color-hover: #40a9ff;
-  --success-color: #28a745;
-  --error-color: #dc3545;
-  --warning-color: #ffc107;
-  --info-color: #17a2b8;
-  --gray-light: #f0f0f0;
-  --gray-medium: #ddd;
-  --gray-dark: #666;
-  --text-primary: #333;
-  --text-secondary: #555;
-  --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.1);
-  --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.15);
-  --border-radius-sm: 0.25rem;
-  --border-radius-md: 0.5rem;
-  --transition-fast: 0.2s;
-  --transition-med: 0.3s;
-  --easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Base Styles */
 .dashboard-container {
   background: linear-gradient(
       0deg,
@@ -446,459 +352,263 @@ export default {
       var(--color-grey-98, #fafafb) 100%
     ),
     var(--color-white-solid, #fff);
-  padding-right: 1.5%;
-  padding-bottom: 5%;
-  height: 100vh;
-  overflow-y: auto;
+  padding-right: 18px;
+  padding-bottom: 135px;
 }
 
 .dashboard-layout {
   display: flex;
-  height: 100%;
+  gap: 20px;
 }
 
-/* Sidebar Styles */
 .sidebar-column {
   width: 19%;
-  height: 100%;
-  position: sticky;
-  top: 0;
-  z-index: 100;
 }
 
 .sidebar-nav {
-  box-shadow: 1px 0 0 0 var(--gray-light);
+  box-shadow: 1px 0px 0px 0px #f0f0f0;
   background-color: #fff;
-  height: 100vh;
+  padding-bottom: 772px;
   overflow: hidden;
+  width: 100%;
 }
 
 .sidebar-background {
+  padding-bottom: 395px;
   background-color: #fff;
-  height: 100%;
 }
 
-/* Main Content Styles */
+.logo {
+  aspect-ratio: 6.17;
+  object-fit: contain;
+  width: 260px;
+  box-shadow: 0px 4px 4px rgba(254, 247, 247, 1);
+}
+
+.notification-icons {
+  z-index: 10;
+  margin-top: 160px;
+  margin-left: 25px;
+  width: 16px;
+}
+
+.notification-icon,
+.alert-icon {
+  aspect-ratio: 1;
+  object-fit: contain;
+  width: 100%;
+}
+
+.alert-icon {
+  margin-top: 27px;
+}
+
 .main-content {
   width: 81%;
-  padding-left: 2%;
-  overflow-y: auto;
-  height: 100vh;
+  margin-left: 20px;
+  margin-right: 20px;
 }
 
 .content-wrapper {
   display: flex;
-  flex-direction: column;
-  padding-top: 2%;
+  margin-top: 59px;
   width: 100%;
-  position: relative;
+  flex-direction: column;
 }
 
-.page-header {
-  margin-bottom: 2%;
+.navigation-tabs {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  font-family: Public Sans, -apple-system, Roboto, Helvetica, sans-serif;
+  font-size: 13px;
+  color: #212529;
+  flex-wrap: wrap;
 }
 
-.page-header h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--text-primary);
+.tab-link {
+  text-decoration: none;
+  color: inherit;
+  line-height: 19.5px;
+}
+
+.tab-link.active {
+  color: #1890ff;
+}
+
+.map-visualization {
+  aspect-ratio: 0.95;
+  object-fit: contain;
+  width: 100%;
+}
+
+/* Estilos para o modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: #fff;
+  border-radius: 8px;
+  width: 500px;
+  max-width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.modal-header h2 {
   margin: 0;
-  transition: font-size var(--transition-fast) var(--easing-standard);
+  font-size: 18px;
+  color: #333;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #777;
+}
+
+.modal-body {
+  padding: 10%;
+  background-position: center;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #333;
+}
+
+.form-group input {
+  align-items: center;
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.cancel-button {
+  padding: 8px 16px;
+  background-color: #f2f2f2;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.submit-button {
+  padding: 8px 16px;
+  background-color: #1890ff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+@media (max-width: 991px) {
+  .dashboard-container {
+    padding-bottom: 100px;
+  }
+
+  .dashboard-layout {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+  }
+
+  .sidebar-column {
+    width: 100%;
+  }
+
+  .sidebar-nav {
+    margin-top: 24px;
+    padding-bottom: 100px;
+  }
+
+  .sidebar-background {
+    padding-bottom: 100px;
+  }
+
+  .notification-icons {
+    margin-left: 10px;
+    margin-top: 40px;
+  }
+
+  .main-content {
+    width: 100%;
+  }
+
+  .content-wrapper {
+    max-width: 100%;
+    margin-top: 40px;
+  }
+
+  .map-visualization {
+    max-width: 100%;
+  }
+
+  .modal-content {
+    width: 95%;
+  }
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.user-name {
+  font-size: 16px;
+  font-weight: bold;
 }
 
 .filters-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 0 auto 2%;
+  margin: 0 auto;
   max-width: fit-content;
-  width: 80%;
-}
-
-/* Animation Transitions */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity var(--transition-med) var(--easing-standard),
-    transform var(--transition-med) var(--easing-standard);
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-  transform: translateY(-0.625rem);
-}
-
-.expand-enter-active,
-.expand-leave-active {
-  transition: all var(--transition-med) var(--easing-standard);
-  max-height: 80vh;
-  overflow: hidden;
-}
-
-.expand-enter-from,
-.expand-leave-to {
-  max-height: 0;
-  opacity: 0;
-  transform: translateY(-5%);
-}
-
-/* Notification System */
-.notification {
-  position: relative;
-  margin: 0 auto 2%;
-  padding: 0.75rem 1rem;
-  border-radius: var(--border-radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 80%;
-  max-width: 50rem;
-  box-shadow: var(--shadow-light);
-  animation: slideInDown var(--transition-med) var(--easing-standard);
-}
-
-@keyframes slideInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-1rem);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.notification.success {
-  background-color: #e6f7e6;
-  border-left: 0.25rem solid var(--success-color);
-  color: #155724;
-}
-
-.notification.error {
-  background-color: #fae3e5;
-  border-left: 0.25rem solid var(--error-color);
-  color: #721c24;
-}
-
-.notification.warning {
-  background-color: #fff3cd;
-  border-left: 0.25rem solid var(--warning-color);
-  color: #856404;
-}
-
-.notification.info {
-  background-color: #e9f5fe;
-  border-left: 0.25rem solid var(--info-color);
-  color: #0c5460;
-}
-
-.notification-content {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.notification-icon {
-  display: inline-block;
-  width: 1.5rem;
-  height: 1.5rem;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: contain;
-}
-
-.icon-check {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' viewBox='0 0 24 24' stroke='%23155724' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
-}
-
-.icon-error {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' viewBox='0 0 24 24' stroke='%23721c24' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cline x1='15' y1='9' x2='9' y2='15'%3E%3C/line%3E%3Cline x1='9' y1='9' x2='15' y2='15'%3E%3C/line%3E%3C/svg%3E");
-}
-
-.icon-warning {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' viewBox='0 0 24 24' stroke='%23856404' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z'%3E%3C/path%3E%3Cline x1='12' y1='9' x2='12' y2='13'%3E%3C/line%3E%3Cline x1='12' y1='17' x2='12.01' y2='17'%3E%3C/line%3E%3C/svg%3E");
-}
-
-.icon-info {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' viewBox='0 0 24 24' stroke='%230c5460' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cline x1='12' y1='16' x2='12' y2='12'%3E%3C/line%3E%3Cline x1='12' y1='8' x2='12.01' y2='8'%3E%3C/line%3E%3C/svg%3E");
-}
-
-.notification-close {
-  background: none;
-  border: none;
-  font-size: 1.25rem;
-  cursor: pointer;
-  color: inherit;
-  opacity: 0.7;
-  transition: opacity var(--transition-fast);
-}
-
-.notification-close:hover {
-  opacity: 1;
-}
-
-/* Perito Form */
-.perito-form-wrapper {
-  position: relative;
-  width: 100%;
-  margin: 2% 0;
-  z-index: 10;
-  display: flex;
-  justify-content: center;
-}
-
-.perito-form-expander {
-  background-color: #fff;
-  border-radius: var(--border-radius-md);
-  box-shadow: var(--shadow-medium);
-  padding: 1.5rem;
-  width: 80%;
-  max-width: 60rem;
-  display: flex;
-  flex-direction: column;
-}
-
-.perito-form-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.25rem;
-  padding-bottom: 0.625rem;
-  border-bottom: 1px solid var(--gray-light);
-}
-
-.perito-form-header h3 {
-  margin: 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.close-button {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: var(--gray-dark);
-  transition: color var(--transition-fast);
-  padding: 0.25rem 0.5rem;
-  border-radius: var(--border-radius-sm);
-  line-height: 1;
-}
-
-.close-button:hover {
-  color: var(--text-primary);
-  background-color: rgba(0, 0, 0, 0.05);
-}
-
-.form-scroll-area {
-  overflow-y: auto;
-  max-height: 50vh;
-  padding-right: 0.625rem;
-}
-
-.perito-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  width: 100%;
-}
-
-.form-row {
-  display: flex;
-  gap: 1rem;
-  width: 100%;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-}
-
-.form-group label {
-  font-size: 0.875rem;
-  margin-bottom: 0.375rem;
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-.form-group input {
-  padding: 0.625rem 0.75rem;
-  border: 1px solid var(--gray-medium);
-  border-radius: var(--border-radius-sm);
-  font-size: 0.875rem;
-  transition: border-color var(--transition-fast),
-    box-shadow var(--transition-fast);
-}
-
-.form-group input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--gray-light);
-}
-
-.cancel-button {
-  padding: 0.625rem 1rem;
-  border: 1px solid #d9d9d9;
-  background-color: white;
-  border-radius: var(--border-radius-sm);
-  cursor: pointer;
-  color: var(--gray-dark);
-  font-size: 0.875rem;
-  transition: all var(--transition-fast);
-}
-
-.cancel-button:hover {
-  background-color: #f5f5f5;
-  border-color: #ccc;
-}
-
-.submit-button {
-  padding: 0.625rem 1.125rem;
-  border: none;
-  background-color: var(--primary-color);
-  border-radius: var(--border-radius-sm);
-  cursor: pointer;
-  color: white;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: all var(--transition-fast);
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.submit-button:hover {
-  background-color: var(--primary-color-hover);
-}
-
-.submit-button:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
-.spinner {
-  display: inline-block;
-  width: 1rem;
-  height: 1rem;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  border-top-color: #fff;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Table Container */
-.table-container {
-  width: 100%;
-  margin-top: 2%;
-  overflow-x: auto;
-  border-radius: var(--border-radius-sm);
-  box-shadow: var(--shadow-light);
-  background-color: #fff;
-  transition: box-shadow var(--transition-fast);
-}
-
-.table-container:hover {
-  box-shadow: var(--shadow-medium);
-}
-
-/* Media Queries */
-@media (max-width: 1200px) {
-  .page-header h2 {
-    font-size: 1.25rem;
-  }
-
-  .form-row {
-    gap: 0.75rem;
-  }
-
-  .perito-form-expander {
-    width: 90%;
-  }
-}
-
-@media (max-width: 1024px) {
-  .dashboard-layout {
-    flex-direction: column;
-  }
-
-  .sidebar-column {
-    width: 100%;
-    height: auto;
-    position: relative;
-  }
-
-  .sidebar-nav {
-    height: auto;
-    padding-bottom: 1.25rem;
-  }
-
-  .main-content {
-    width: 100%;
-    padding-left: 0;
-    margin-top: 1.25rem;
-    height: auto;
-  }
-
-  .notification,
-  .perito-form-expander {
-    width: 95%;
-  }
-}
-
-@media (max-width: 768px) {
-  .form-row {
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-
-  .filters-container {
-    width: 95%;
-  }
-
-  .form-actions {
-    flex-direction: column;
-  }
-
-  .cancel-button,
-  .submit-button {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .perito-form-header h3 {
-    font-size: 1rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .dashboard-container {
-    padding-right: 0.625rem;
-    padding-left: 0.625rem;
-  }
-
-  .perito-form-expander {
-    padding: 1rem;
-  }
-
-  .page-header h2 {
-    font-size: 1.125rem;
-  }
 }
 </style>

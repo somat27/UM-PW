@@ -1,12 +1,13 @@
 import { initializeApp } from "firebase/app";
 import {
-  addDoc,
   collection,
   getFirestore,
   doc,
-  updateDoc,
   setDoc,
   getDoc,
+  getDocs,
+  query,
+  where,
 } from "firebase/firestore";
 import {
   getAuth,
@@ -23,12 +24,12 @@ const firebaseConfig = {
   storageBucket: "pw-g201.firebasestorage.app",
   messagingSenderId: "858778948795",
   appId: "1:858778948795:web:8bb0688f9713fec265c59e",
-  measurementId: "G-JWNEDZWNTX"
+  measurementId: "G-JWNEDZWNTX",
 };
 
-export const app            = initializeApp(firebaseConfig);
-export const auth           = getAuth(app);
-export const db             = getFirestore(app);
+export const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
+export const db = getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
 
 export const registerWithEmail = async (email, password, displayName) => {
@@ -38,7 +39,7 @@ export const registerWithEmail = async (email, password, displayName) => {
     displayName,
     email,
     photoURL: null,
-    role: "usuario", 
+    role: "usuario",
   });
   return user;
 };
@@ -61,43 +62,50 @@ export const loginWithGoogle = async () => {
   return user;
 };
 
-export async function addPerito(DadosPerito) {
+export const addPerito = async (peritoData) => {
   try {
-    const Perito = {
-      nome: DadosPerito.nome || "",
-      email: DadosPerito.email || "",
-      morada: DadosPerito.morada || "",
-      dataNascimento: DadosPerito.dataNascimento || "",
-      especialidade: DadosPerito.especialidade || "",
-      numeroTelemovel: DadosPerito.numeroTelemovel || "",
-      estado: "Disponivel",
-      timestamp: new Date(), // Add timestamp for tracking
+    const usersCollection = collection(db, "users");
+
+    const newDocRef = doc(usersCollection);
+
+    const newUser = {
+      displayName: peritoData.name,
+      email: peritoData.email,
+      birthDate: peritoData.birthDate,
+      address: peritoData.address,
+      phone: peritoData.phone,
+      specialty: peritoData.specialty,
+      role: "perito",
+      status: peritoData.status,
+      uid: newDocRef.id,
     };
 
-    const docRef = await addDoc(collection(db, "peritos"), Perito);
-    console.log("Perito Registado com ID: " + docRef.id);
+    await setDoc(newDocRef, newUser);
 
-    // Then try to create the user account
-    try {
-      const randomPassword = Math.random().toString(36).slice(-8);
-      await createUserWithEmailAndPassword(
-        auth,
-        DadosPerito.email,
-        randomPassword
-      );
-      console.log("Conta de usuário criada com sucesso");
-    } catch (authError) {
-      // If auth fails, still return the document ID since the data was saved
-      console.error("Erro ao criar conta de usuário:", authError);
-      // You might want to handle this case - perhaps flag the perito as needing account setup
-      await updateDoc(doc(db, "peritos", docRef.id), {
-        contaCriada: false,
-      });
-    }
-
-    return docRef.id;
+    return newDocRef.id;
   } catch (error) {
-    console.error("Erro ao adicionar perito:", error);
+    console.error("Erro ao adicionar usuário:", error);
     throw error;
   }
-}
+};
+
+export const getPeritos = async () => {
+  try {
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, where("role", "==", "perito"));
+
+    const querySnapshot = await getDocs(q);
+
+    const peritos = querySnapshot.docs.map((doc) => ({
+      uid: doc.id,
+      ...doc.data(),
+    }));
+
+    return peritos;
+  } catch (error) {
+    console.error("Erro ao buscar peritos:", error);
+    throw error;
+  }
+};
+
+export default { addPerito, getPeritos };
