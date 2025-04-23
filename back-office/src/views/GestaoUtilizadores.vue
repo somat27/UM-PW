@@ -113,6 +113,11 @@ export default {
     margin-top: 40px;
 }
 
+.page-header h2 {
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
+}
+
 .navigation-tabs {
     margin-top: -15px;
     display: flex;

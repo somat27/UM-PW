@@ -1,33 +1,28 @@
 <template>
-  <main class="login-page d-flex align-items-center justify-content-center min-vh-100">
-    <div class="card shadow-sm p-4 w-100" style="max-width: 420px;">
-      <h2 class="text-center mb-4 text-primary">Iniciar Sessão</h2>
-
-      <form @submit.prevent="handleEmailLogin" novalidate>
-        <div class="mb-3">
-          <input v-model.trim="email" type="email" class="form-control form-control-lg" placeholder="Email" required />
-        </div>
-        <div class="mb-2">
-          <input v-model="password" type="password" class="form-control form-control-lg" placeholder="Palavra‑passe"
-            required />
-        </div>
-        <p v-if="errorMsg" class="text-danger small mb-3">{{ errorMsg }}</p>
-        <button class="btn btn-primary w-100 btn-lg mb-3" :disabled="!canSubmit || emailLoading" type="submit">
-          {{ emailLoading ? 'A aguardar...' : 'Entrar' }}
-        </button>
-      </form>
+  <main class="login-page">
+    <form class="auth-form" @submit.prevent="handleEmailLogin" novalidate>
+      <h2>Iniciar Sessão</h2>
+      <div class="form-group">
+        <input v-model.trim="email" type="email" placeholder="Email" required />
+      </div>
+      <div class="form-group">
+        <input v-model="password" type="password" placeholder="Palavra‑passe" required />
+      </div>
+      <p v-if="errorMsg">{{ errorMsg }}</p>
+      <button :disabled="!canSubmit || emailLoading" type="submit">
+        {{ emailLoading ? 'A aguardar...' : 'Login' }}
+      </button>
       <hr />
-
-      <button class="btn btn-outline-secondary w-100 btn-lg" @click="handleGoogleLogin" :disabled="googleLoading">
+      <button @click="handleGoogleLogin" :disabled="googleLoading">
+        <img class="google" src="@/assets/google.png" alt="google">
         <span v-if="googleLoading">Abrindo Google...</span>
         <span v-else>Entrar com Google</span>
       </button>
-
-      <p class="text-center mt-3">
+      <p>
         Não tem conta?
         <router-link to="/register">Registar</router-link>
       </p>
-    </div>
+    </form>
   </main>
 </template>
 
@@ -120,36 +115,65 @@ const handleGoogleLogin = async () => {
 
 <style scoped>
 .login-page {
-  background: linear-gradient(135deg, #e6f1ff 0%, #cde4ff 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #e3f2fd 0%, #90caf9 100%);
 }
 
-.card {
+.auth-form {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 360px;
+  text-align: center;
+}
+
+.auth-form h2 {
+  margin-bottom: 1.5rem;
+  color: #1976d2;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+  margin-right: 1.6rem;
+  text-align: left;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #1565c0;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #bbb;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+button {
+  width: 100%;
+  padding: 0.75rem;
+  background: #1976d2;
+  color: white;
   border: none;
-  border-radius: 1rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s;
 }
 
-.btn-primary {
-  background-color: #227ce7;
-  border-color: #227ce7;
+button:hover {
+  background: #1565c0;
 }
 
-.btn-primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn-outline-secondary {
-  border-color: #227ce7;
-  color: #227ce7;
-}
-
-.btn-outline-secondary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn-outline-secondary:hover {
-  background-color: #227ce7;
-  color: #fff;
+.google {
+  margin-right: 10px;
 }
 </style>

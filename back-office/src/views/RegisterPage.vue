@@ -1,33 +1,28 @@
 <template>
-  <main class="login-page d-flex align-items-center justify-content-center min-vh-100">
-    <div class="card shadow-sm p-4 w-100" style="max-width: 460px;">
-      <h2 class="text-center mb-4 text-primary">Criar Conta</h2>
-      <form @submit.prevent="handleRegister" novalidate>
-        <div class="mb-3">
-          <input v-model.trim="displayName" type="text" class="form-control form-control-lg" placeholder="Nome"
-            required />
-        </div>
-        <div class="mb-3">
-          <input v-model.trim="email" type="email" class="form-control form-control-lg" placeholder="Email" required />
-        </div>
-        <div class="mb-3">
-          <input v-model="password" type="password" class="form-control form-control-lg"
-            placeholder="Palavra‑passe (min. 6)" required />
-        </div>
-        <div class="mb-2">
-          <input v-model="confirm" type="password" class="form-control form-control-lg"
-            placeholder="Confirmar palavra‑passe" required />
-        </div>
-        <p v-if="errorMsg" class="text-danger small mb-3">{{ errorMsg }}</p>
-        <button class="btn btn-primary w-100 btn-lg" :disabled="!canSubmit" type="submit">
-          Registar
-        </button>
-      </form>
-      <p class="text-center mt-4 small">
+  <main class="register-page">
+    <form class="auth-form" @submit.prevent="handleRegister" novalidate>
+      <h2>Registar Conta</h2>
+      <div class="form-group">
+        <input v-model.trim="displayName" type="text" placeholder="Nome" required />
+      </div>
+      <div class="form-group">
+        <input v-model.trim="email" type="email" placeholder="Email" required />
+      </div>
+      <div class="form-group">
+        <input v-model="password" type="password" placeholder="Palavra‑passe (min. 6)" required />
+      </div>
+      <div class="form-group">
+        <input v-model="confirm" type="password" placeholder="Confirmar palavra‑passe" required />
+      </div>
+      <p v-if="errorMsg">{{ errorMsg }}</p>
+      <button :disabled="!canSubmit" type="submit">
+        Registar
+      </button>
+      <p>
         Já tens conta?
         <router-link to="/">Entrar</router-link>
       </p>
-    </div>
+    </form>
   </main>
 </template>
 
@@ -68,18 +63,62 @@ const handleRegister = async () => {
 </script>
 
 <style scoped>
-/* Reusa as mesmas cores */
-.login-page {
-  background: linear-gradient(135deg, #e6f1ff 0%, #cde4ff 100%);
+.register-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #e3f2fd 0%, #90caf9 100%);
 }
 
-.card {
+.auth-form {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 360px;
+  text-align: center;
+}
+
+.auth-form h2 {
+  margin-bottom: 1.5rem;
+  color: #1976d2;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+  margin-right: 1.6rem;
+  text-align: left;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #1565c0;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #bbb;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+button {
+  width: 100%;
+  padding: 0.75rem;
+  background: #1976d2;
+  color: white;
   border: none;
-  border-radius: 1rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s;
 }
 
-.btn-primary {
-  background-color: #227ce7;
-  border-color: #227ce7;
+button:hover {
+  background: #1565c0;
 }
 </style>
