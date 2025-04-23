@@ -11,7 +11,6 @@
       <main class="main-content">
         <div class="content-wrapper">
 
-          <!-- Navigation tabs -->
           <nav class="navigation-tabs">
             <router-link
               to="/dashboards/auditorias"
@@ -47,14 +46,12 @@
             </router-link>
           </nav>
 
-          <!-- Statistics Grid -->
           <StatisticsGridPeritos
             :labels="filteredIndices.map(i => localities[i])"
             :mobilized-data="mobilizedData"
             :waiting-data="waitingData"
           />
 
-          <!-- Main Bar Chart -->
           <div id="chart">
             <apexchart
               type="bar"
@@ -111,6 +108,7 @@ const chartOptions = computed(() => ({
 }
 .main-content {
   flex: 1;
+  margin-right: 10px;
 }
 .content-wrapper {
   margin-top: 40px;

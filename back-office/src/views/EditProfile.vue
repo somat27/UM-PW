@@ -25,8 +25,6 @@
                             <input id="email" type="email" v-model="form.email" disabled />
                         </div>
 
-                        <!-- mais campos se precisar -->
-
                         <div class="form-actions">
                             <button class="btn btn-primary" type="submit" :disabled="saving">
                                 {{ saving ? 'A gravar...' : 'Salvar' }}
@@ -104,6 +102,7 @@ export default {
 
 .main-content {
     flex: 1;
+    margin-right: 10px;
 }
 
 .content-wrapper {

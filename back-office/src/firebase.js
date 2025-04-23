@@ -8,6 +8,8 @@ import {
   getDocs,
   query,
   where,
+  updateDoc,
+  deleteDoc
 } from "firebase/firestore";
 import {
   getAuth,
@@ -15,6 +17,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
+  signOut
 } from "firebase/auth";
 
 const firebaseConfig = {
@@ -31,7 +34,9 @@ export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
+export const logout = () => signOut(auth);
 
+// Registo com email/password (mantém role "usuario")
 export const registerWithEmail = async (email, password, displayName) => {
   const { user } = await createUserWithEmailAndPassword(auth, email, password);
   await setDoc(doc(db, "users", user.uid), {
@@ -44,9 +49,11 @@ export const registerWithEmail = async (email, password, displayName) => {
   return user;
 };
 
+// Login com email/password
 export const loginWithEmail = (email, password) =>
   signInWithEmailAndPassword(auth, email, password);
 
+// Login com Google (cria user em users se não existir)
 export const loginWithGoogle = async () => {
   const { user } = await signInWithPopup(auth, googleProvider);
   const ref = doc(db, "users", user.uid);
@@ -62,50 +69,90 @@ export const loginWithGoogle = async () => {
   return user;
 };
 
-export const addPerito = async (peritoData) => {
+// Atualiza só o role do utilizador (ex: de "perito" para "gestor")
+export const updateUserRole = async (uid, newRole) => {
+  await updateDoc(doc(db, "users", uid), { role: newRole });
+};
+
+// Cria ou substitui perfil de perito na coleção "peritos"
+export const addPeritoProfile = async (uid, peritoData) => {
   try {
-    const usersCollection = collection(db, "users");
-
-    const newDocRef = doc(usersCollection);
-
-    const newUser = {
-      displayName: peritoData.name,
-      email: peritoData.email,
-      birthDate: peritoData.birthDate,
-      address: peritoData.address,
-      phone: peritoData.phone,
-      specialty: peritoData.specialty,
-      role: "perito",
-      status: peritoData.status,
-      uid: newDocRef.id,
-    };
-
-    await setDoc(newDocRef, newUser);
-
-    return newDocRef.id;
+    await setDoc(doc(db, "peritos", uid), {
+      uid,
+      ...peritoData // { name, email, birthDate, address, phone, specialty, status, localidades }
+    });
   } catch (error) {
-    console.error("Erro ao adicionar usuário:", error);
+    console.error("Erro ao adicionar perfil de perito:", error);
     throw error;
   }
 };
 
-export const getPeritos = async () => {
+// Busca só os peritos que têm perfil na coleção "peritos"
+export const getActivePeritos = async () => {
   try {
     const usersRef = collection(db, "users");
     const q = query(usersRef, where("role", "==", "perito"));
-
-    const querySnapshot = await getDocs(q);
-
-    const peritos = querySnapshot.docs.map((doc) => ({
-      uid: doc.id,
-      ...doc.data(),
-    }));
-
-    return peritos;
+    const userSnaps = await getDocs(q);
+    const peritos = await Promise.all(
+      userSnaps.docs.map(async uDoc => {
+        const uid = uDoc.id;
+        const peritoSnap = await getDoc(doc(db, "peritos", uid));
+        return peritoSnap.exists() ? { uid, ...peritoSnap.data() } : null;
+      })
+    );
+    return peritos.filter(p => p);
   } catch (error) {
-    console.error("Erro ao buscar peritos:", error);
+    console.error("Erro ao buscar peritos ativos:", error);
     throw error;
   }
 };
 
-export default { addPerito, getPeritos };
+// Busca utilizadores com role "perito" em users mas sem perfil em peritos
+export const getPeritosWithoutProfile = async () => {
+  try {
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, where("role", "==", "perito"));
+    const userSnaps = await getDocs(q);
+    const missing = await Promise.all(
+      userSnaps.docs.map(async uDoc => {
+        const uid = uDoc.id;
+        const peritoSnap = await getDoc(doc(db, "peritos", uid));
+        if (!peritoSnap.exists()) {
+          return { uid, ...uDoc.data() };
+        }
+        return null;
+      })
+    );
+    return missing.filter(p => p);
+  } catch (error) {
+    console.error("Erro ao buscar peritos sem perfil:", error);
+    throw error;
+  }
+};
+
+// Alias para quem quiser usar por nome mais claro
+export const getPeritosWithProfile = getActivePeritos;
+
+// Atualiza campos do perfil de perito
+export const updatePeritoProfile = async (uid, updates) => {
+  await updateDoc(doc(db, "peritos", uid), updates);
+};
+
+// Apaga perfil de perito (opcional)
+export const deletePeritoProfile = async (uid) => {
+  await deleteDoc(doc(db, "peritos", uid));
+};
+
+export default {
+  registerWithEmail,
+  loginWithEmail,
+  loginWithGoogle,
+  logout,
+  updateUserRole,
+  addPeritoProfile,
+  getActivePeritos,
+  getPeritosWithoutProfile,
+  getPeritosWithProfile,
+  updatePeritoProfile,
+  deletePeritoProfile
+};

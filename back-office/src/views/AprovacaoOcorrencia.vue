@@ -323,6 +323,7 @@ export default {
 
 .main-content {
   flex: 1;
+  margin-right: 10px;
 }
 
 .content-wrapper {

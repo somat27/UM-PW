@@ -1,7 +1,8 @@
-import { createRouter, createWebHistory } from 'vue-router';
-
-import { auth, db } from "@/firebase";
-import { doc, getDoc } from "firebase/firestore";
+// src/router/index.js
+import { createRouter, createWebHistory } from 'vue-router'
+import { auth, db } from '@/firebase'
+import { onAuthStateChanged } from 'firebase/auth'
+import { doc, getDoc } from 'firebase/firestore'
 
 import LoginPage from '@/views/LoginPage.vue'
 import RegisterPage from '@/views/RegisterPage.vue'
@@ -12,22 +13,16 @@ import DashboardPeritos from '@/views/dashboards/DashboardPeritos.vue'
 import DashboardMateriais from '@/views/dashboards/DashboardMateriais.vue'
 import GestaoAuditorias from '@/views/GestaoAuditorias.vue'
 import GestaoOcorrencias from '@/views/GestaoOcorrencias.vue'
+import AprovacaoOcorrencia from '@/views/AprovacaoOcorrencia.vue'
 import GestaoPeritos from '@/views/GestaoPeritos.vue'
 import GestaoMateriais from '@/views/GestaoMateriais.vue'
 import GestaoProfissionais from '@/views/GestaoProfissionais.vue'
-import AprovacaoOcorrencia from '@/views/AprovacaoOcorrencia.vue';
 import ProfileView from '@/views/ProfileView.vue'
 import EditProfile from '@/views/EditProfile.vue'
 import GestaoUtilizadores from '@/views/GestaoUtilizadores.vue'
 import PendingValidation from '@/views/PendingValidation.vue'
 
 const routes = [
-  {
-    path: '/pendente',
-    name: 'PendingValidation',
-    component: PendingValidation,
-    meta: { requiresAuth: true }
-  },
   {
     path: '/',
     name: 'LoginPage',
@@ -36,111 +31,90 @@ const routes = [
   {
     path: '/register',
     name: 'RegisterPage',
-    component: RegisterPage,
-    meta: { requiresAuth: true, requiresGestorOrAdmin: true },
-  },
-  { 
-    path: '/dashboards',
-    component: DashboardLayout,
-    meta: { requiresAuth: true, requiresGestorOrAdmin: true },
-    children: [
-      { 
-        path: 'auditorias', 
-        name: 'auditorias',
-        component: DashboardAuditorias ,
-        meta: { requiresAuth: true, requiresGestorOrAdmin: true },
-      },
-      { 
-        path: 'ocorrencias', 
-        name: 'ocorrencias', 
-        component: DashboardOcorrencia ,
-        meta: { requiresAuth: true, requiresGestorOrAdmin: true },
-      },
-      { 
-        path: 'peritos', 
-        name: 'peritos', 
-        component: DashboardPeritos ,
-        meta: { requiresAuth: true, requiresGestorOrAdmin: true },
-      },
-      { 
-        path: 'materiais', 
-        name: 'materiais', 
-        component: DashboardMateriais ,
-        meta: { requiresAuth: true, requiresGestorOrAdmin: true },
-      }
-    ]
-  },
-  { 
-    path: '/GestaoAuditorias', 
-    name: 'GestaoAuditorias', 
-    component: GestaoAuditorias ,
-    meta: { requiresAuth: true, requiresGestorOrAdmin: true },
+    component: RegisterPage
   },
   {
-    path: '/GestaoOcorrencias',
-    name: 'GestaoOcorrencias',
-    component: GestaoOcorrencias,
-    meta: { requiresAuth: true, requiresGestorOrAdmin: true },
-  },
-  {
-    path: '/GestaoOcorrencias/AprovacaoOcorrencia', 
-    name: 'AprovacaoOcorrencia',
-    component: AprovacaoOcorrencia,
-    meta: { requiresAuth: true, requiresGestorOrAdmin: true },
-  },
-  { 
-    path: '/GestaoPeritos', 
-    name: 'GestaoPeritos', 
-    component: GestaoPeritos ,
-    meta: { requiresAuth: true, requiresGestorOrAdmin: true },
-  },
-  { 
-    path: '/GestaoMateriais', 
-    name: 'GestaoMateriais', 
-    component: GestaoMateriais ,
-    meta: { requiresAuth: true, requiresGestorOrAdmin: true },
-  },
-  { 
-    path: '/GestaoProfissionais', 
-    name: 'GestaoProfissionais', 
-    component: GestaoProfissionais ,
-    meta: { requiresAuth: true, requiresGestorOrAdmin: true },
+    path: '/pendente',
+    name: 'PendingValidation',
+    component: PendingValidation,
+    meta: { requiresAuth: true }
   },
   {
     path: '/profile',
     component: DashboardLayout,
-    meta: { requiresAuth: true, requiresGestorOrAdmin: true },
+    meta: { requiresAuth: true },
     children: [
       {
-        path: '', name: 'ProfileView', component: ProfileView,
-        meta: { requiresAuth: true, requiresGestorOrAdmin: true },
+        path: '',
+        name: 'ProfileView',
+        component: ProfileView
       },
       {
-        path: 'edit', name: 'EditProfile', component: EditProfile,
-        meta: { requiresAuth: true, requiresGestorOrAdmin: true },
+        path: 'edit',
+        name: 'EditProfile',
+        component: EditProfile
       }
     ]
   },
   {
+    path: '/dashboards',
+    component: DashboardLayout,
+    meta: { requiresAuth: true, requiresGestorOrAdmin: true },
+    children: [
+      { path: 'auditorias', component: DashboardAuditorias, name: 'auditorias' },
+      { path: 'ocorrencias', component: DashboardOcorrencia, name: 'ocorrencias' },
+      { path: 'peritos', component: DashboardPeritos, name: 'peritos' },
+      { path: 'materiais', component: DashboardMateriais, name: 'materiais' }
+    ]
+  },
+  { path: '/GestaoAuditorias', name: 'GestaoAuditorias', component: GestaoAuditorias, meta: { requiresAuth: true, requiresGestorOrAdmin: true } },
+  { path: '/GestaoOcorrencias', name: 'GestaoOcorrencias', component: GestaoOcorrencias, meta: { requiresAuth: true, requiresGestorOrAdmin: true } },
+  { path: '/GestaoOcorrencias/AprovacaoOcorrencia', name: 'AprovacaoOcorrencia', component: AprovacaoOcorrencia, meta: { requiresAuth: true, requiresGestorOrAdmin: true } },
+  { path: '/GestaoPeritos', name: 'GestaoPeritos', component: GestaoPeritos, meta: { requiresAuth: true, requiresGestorOrAdmin: true } },
+  { path: '/GestaoMateriais', name: 'GestaoMateriais', component: GestaoMateriais, meta: { requiresAuth: true, requiresGestorOrAdmin: true } },
+  { path: '/GestaoProfissionais', name: 'GestaoProfissionais', component: GestaoProfissionais, meta: { requiresAuth: true, requiresGestorOrAdmin: true } },
+  {
     path: '/GestaoUtilizadores',
     name: 'GestaoUtilizadores',
     component: GestaoUtilizadores,
-    meta: { requiresAuth: true, requiresGestorOrAdmin: true },
-  },
-];
+    meta: { requiresAuth: true, requiresGestorOrAdmin: true }
+  }
+]
+
+function getCurrentUser() {
+  return new Promise((resolve, reject) => {
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      user => {
+        unsubscribe()
+        resolve(user)
+      },
+      err => {
+        unsubscribe()
+        reject(err)
+      }
+    )
+  })
+}
 
 const router = createRouter({
   history: createWebHistory(),
   routes
-});
+})
 
 router.beforeEach(async (to, from, next) => {
   if (!to.meta.requiresAuth) {
     return next()
   }
 
-  const user = auth.currentUser
+  const savedUID = localStorage.getItem('userUID')
+  if (!savedUID) {
+    return next({ name: 'LoginPage' })
+  }
+
+  const user = await getCurrentUser()
   if (!user) {
+    localStorage.removeItem('userUID')
     return next({ name: 'LoginPage' })
   }
 
@@ -156,6 +130,6 @@ router.beforeEach(async (to, from, next) => {
   }
 
   next()
-});
+})
 
-export default router;
+export default router

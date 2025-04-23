@@ -62,7 +62,7 @@
       </span>
     </router-link>
 
-    <button @click="logOut" class="logout-button">
+    <button class="logout-button" @click="handleLogout">
       <span class="logout-text">LOG OUT</span>
       <div class="lock-icon">⏻</div>
     </button>
@@ -73,7 +73,7 @@
 import { computed, ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useCurrentUser } from '@/composables/useCurrentUser';
-import { auth, db } from '@/firebase'
+import { auth, db, logout  } from '@/firebase'
 import { onAuthStateChanged } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
 
@@ -87,8 +87,10 @@ export default {
     const { currentUser } = useCurrentUser();
     const defaultAvatar = 'https://i.pravatar.cc/40?u=placeholder';
 
-    const logOut = () => {
-      router.push('/');
+    const handleLogout = async () => {
+      await logout()
+      localStorage.removeItem('userUID')
+      router.push('/')
     };
 
     const isDashboardActive = computed(() => route.path.startsWith('/dashboards/'));
@@ -105,7 +107,7 @@ export default {
     return {
       currentUser,
       defaultAvatar,
-      logOut,
+      handleLogout,
       isDashboardActive,
       isGAActive,
       isAdmin,

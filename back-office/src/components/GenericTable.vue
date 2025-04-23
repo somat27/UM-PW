@@ -7,6 +7,9 @@
 
     <div class="table-responsive">
       <table class="generic-table" :class="tableClass">
+        <div v-if="loading" class="loading-message">
+          A Carregar Informações ...
+        </div>
         <thead>
           <tr>
             <th v-for="column in columns" :key="column.key">
@@ -17,17 +20,23 @@
         <tbody>
           <tr v-for="item in data" :key="item.id">
             <td v-for="column in columns" :key="`${item.id}-${column.key}`">
+
+              <!-- Nome & Email cell -->
               <template v-if="column.key === 'nameEmail'">
                 <div class="name-email-cell">
-                  <div class="name">{{ item.name }}</div>
+                  <div class="name">{{ item.displayName }}</div>
                   <div class="email">{{ item.email }}</div>
                 </div>
               </template>
+
+              <!-- Status badge -->
               <template v-else-if="column.key === 'status'">
                 <span class="status-badge" :data-status="item.status.toLowerCase()">
                   {{ item.status }}
                 </span>
               </template>
+
+              <!-- Action buttons -->
               <template v-else-if="column.key === 'actions'">
                 <div class="action-btn-group">
                   <button class="icon-btn" @click="$emit('view', item)">
@@ -41,9 +50,39 @@
                   </button>
                 </div>
               </template>
+
+              <template v-else-if="column.key === 'edit'">
+                <div class="action-btn-group">
+                  <button class="icon-btn" @click="$emit('edit', item)">
+                    <img src="@/assets/icons8-pencil-pastel-glyph/icons8-pencil-24.png" alt="Editar" />
+                  </button>
+                </div>
+              </template>
+
+              <!-- Add Perito action -->
+              <template v-else-if="column.key === 'add'">
+                <div class="action-btn-group">
+                  <button class="icon-btn" @click="$emit('add', item)">
+                    <img src="@/assets/icons8-plus/icons8-plus.png" alt="Adicionar" />
+                    <div class="registar-perito">Registar Perito</div>
+                  </button>
+                </div>
+              </template>
+
+              <!-- Lista de localidades como botões -->
+              <template v-else-if="column.key === 'localidades'">
+                <div class="localidades-list">
+                  <button v-for="loc in item.localidades" :key="loc" class="localidade-btn">
+                    {{ loc }}
+                  </button>
+                </div>
+              </template>
+
+              <!-- Default cell -->
               <template v-else>
                 {{ item[column.key] }}
               </template>
+
             </td>
           </tr>
         </tbody>
@@ -62,6 +101,10 @@ export default {
       type: Array,
       required: true
     },
+    loading: {
+      type: Boolean,
+      default: false
+    },
     columns: {
       type: Array,
       required: true,
@@ -75,8 +118,9 @@ export default {
   computed: {
     tableClass() {
       return {
-        'table-striped': this.type === 'striped',
-        'table-hover': this.type === 'hover'
+        striped: this.type === 'striped',
+        hover: this.type === 'hover',
+        plain: this.type === 'plain',
       };
     }
   }
@@ -84,14 +128,6 @@ export default {
 </script>
 
 <style scoped>
-.table-wrapper {
-  margin: 1.5rem 0;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
 .table-header {
   padding: 1rem 1.5rem 0;
 }
@@ -138,46 +174,11 @@ export default {
 .name-email-cell {
   display: flex;
   flex-direction: column;
-  gap: 4px;
 }
-
-.name {
-  font-weight: 500;
-  color: #333;
-}
-
-.email {
-  font-size: 0.85rem;
-  color: #6c757d;
-}
-
-.status-badge {
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  text-transform: capitalize;
-}
-
-.status-badge[data-status="mobilizado"] {
+/* Exemplo de estilos para status */
+.status-badge[data-status="Ativo"] {
   background-color: #e6f7e6;
   color: #28a745;
-}
-
-.status-badge[data-status="disponível"] {
-  background-color: #e6f7e6;
-  color: rgb(40, 112, 167);
-}
-
-.status-badge[data-status="em stock"] {
-  background-color: #e6f7e6;
-  color: #28a745;
-}
-
-.status-badge[data-status="fora de stock"] {
-  background-color: #fff1f0;
-  color: #f5222d;
 }
 
 .action-btn-group {
@@ -198,5 +199,34 @@ export default {
 .icon-btn img {
   width: 20px;
   height: 20px;
+}
+
+/* Novos estilos para localidades */
+.localidades-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.localidade-btn {
+  background: #e9ecef;
+  border: 1px solid #ced4da;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  cursor: default;
+}
+
+.localidade-btn:hover {
+  background: #dee2e6;
+}
+
+.loading-message {
+  padding: 1rem;
+  text-align: center;
+}
+
+.registar-perito {
+  margin-left: 2px;
 }
 </style>

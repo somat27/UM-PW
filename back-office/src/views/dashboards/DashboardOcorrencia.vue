@@ -11,7 +11,6 @@
       <main class="main-content">
         <div class="content-wrapper">
 
-          <!-- Navigation tabs -->
           <nav class="navigation-tabs">
             <router-link
               to="/dashboards/auditorias"
@@ -47,7 +46,6 @@
             </router-link>
           </nav>
 
-          <!-- filtros: cidade + semana -->
           <div class="filters-row">
             <select v-model="selectedCity" class="filter-select">
               <option v-for="loc in localities" :key="loc" :value="loc">
@@ -64,10 +62,8 @@
             </div>
           </div>
 
-          <!-- cards dinâmicos -->
           <StatisticsGridOcorrencia :cards="weeklyCards" />
 
-          <!-- gráfico de área -->
           <div id="chart">
             <apexchart
               type="area"
@@ -231,7 +227,10 @@ export default {
 <style scoped>
 .dashboard-layout    { display: flex; gap: 20px; }
 .sidebar-column      { width: 20%; }
-.main-content        { flex: 1; }
+.main-content        { 
+  flex: 1;
+  margin-right: 10px;
+}
 .content-wrapper     { margin-top: 40px; }
 
 /* Mesmos estilos de DashboardOcorrencia.vue */

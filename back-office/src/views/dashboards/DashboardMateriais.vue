@@ -11,7 +11,6 @@
       <main class="main-content">
         <div class="content-wrapper">
 
-          <!-- Navigation tabs -->
           <nav class="navigation-tabs">
             <router-link
               to="/dashboards/auditorias"
@@ -47,10 +46,8 @@
             </router-link>
           </nav>
 
-          <!-- Statistics Grid -->
           <StatisticsGridMateriais :cards="materialCards" />
 
-          <!-- RadialBar Chart -->
           <div class="radial-chart">
             <apexchart
               type="radialBar"
@@ -108,7 +105,10 @@ const radialOptions = {
 .dashboard-container { background: #fff; }
 .dashboard-layout    { display: flex; gap: 20px; }
 .sidebar-column      { width: 20%; }
-.main-content        { flex: 1; }
+.main-content        { 
+  flex: 1;
+  margin-right: 10px;
+}
 .content-wrapper     { margin-top: 40px; }
 
 .navigation-tabs {
