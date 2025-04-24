@@ -86,6 +86,7 @@ export default {
       sortColumns: [            // opções do dropdown
         { key: "nome", label: "Nome" },
         { key: "area", label: "Área/Especialidade" },
+        { key: 'preco', label: 'Preço/Hora' },
         { key: "quantidade", label: "Quantidade" }
       ],
       showAddModal: false,
@@ -93,6 +94,7 @@ export default {
       profissionalColumns: [
         { key: 'nome', label: 'Nome' },
         { key: 'area', label: 'Área/Especialidade' },
+        { key: 'preco', label: 'Preço/Hora' },
         { key: 'quantidade', label: 'Quantidade' }
       ],
       editColumn: { key: 'edit', label: 'Editar' }

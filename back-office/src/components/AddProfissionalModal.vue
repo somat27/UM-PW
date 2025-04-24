@@ -12,6 +12,10 @@
                     <input v-model="form.area" type="text" required />
                 </div>
                 <div class="form-group">
+                    <label>Preço/Hora</label>
+                    <input v-model.number="form.preco" type="number" required />
+                </div>
+                <div class="form-group">
                     <label>Quantidade</label>
                     <input v-model.number="form.quantidade" type="number" required />
                 </div>

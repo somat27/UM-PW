@@ -75,7 +75,7 @@ export default {
     return {
       materiais: [],         // lista que vamos popular da Firestore
       novoMaterial: {        // modelo para o formulário de adicionar
-        detalhes: "",
+        nome: "",
         categoria: "",
         preco: 0,
         quantidade: 0
@@ -86,15 +86,15 @@ export default {
       sortKey: "",              // campo por onde ordenar
       sortOrder: "asc",         // ordem: asc ou desc
       sortColumns: [            // opções do dropdown
-        { key: "detalhes", label: "Detalhes" },
+        { key: "nome", label: "Nome" },
         { key: "categoria", label: "Categoria" },
-        { key: "preco", label: "Preço" },
+        { key: "preco", label: "Preço/Unidade" },
         { key: "quantidade", label: "Quantidade" }
       ],
       materialColumns: [
-        { key: "detalhes", label: "Detalhes" },
+        { key: "nome", label: "Nome" },
         { key: "categoria", label: "Categoria" },
-        { key: "preco", label: "Preço", formatter: val => `${val}€` },
+        { key: "preco", label: "Preço/Unidade" },
         { key: "quantidade", label: "Quantidade", slot: "quantidade" }
       ],
       editColumn: { key: "edit", label: "Editar" },
@@ -126,7 +126,7 @@ export default {
       this.loading = true;
       try {
         const ref = await addDoc(collection(db, "materiais"), {
-          detalhes: this.novoMaterial.detalhes,
+          nome: this.novoMaterial.nome,
           categoria: this.novoMaterial.categoria,
           preco: this.novoMaterial.preco,
           quantidade: this.novoMaterial.quantidade
@@ -134,7 +134,7 @@ export default {
         // adiciona imediatamente à lista local
         this.materiais.push({ id: ref.id, ...this.novoMaterial });
         // limpa o formulário
-        this.novoMaterial = { detalhes: "", categoria: "", preco: 0, quantidade: 0 };
+        this.novoMaterial = { nome: "", categoria: "", preco: 0, quantidade: 0 };
       } catch (e) {
         this.erro = "Não foi possível adicionar o material.";
         console.error(e);
@@ -173,11 +173,11 @@ export default {
     filteredMateriais() {
       let list = this.materiais;
 
-      // 1) filtrar pela pesquisa (detalhes OU categoria)
+      // 1) filtrar pela pesquisa (nome OU categoria)
       if (this.searchQuery) {
         const q = this.searchQuery.toLowerCase();
         list = list.filter(mat =>
-          mat.detalhes.toLowerCase().includes(q) ||
+          mat.nome.toLowerCase().includes(q) ||
           mat.categoria.toLowerCase().includes(q)
         );
       }

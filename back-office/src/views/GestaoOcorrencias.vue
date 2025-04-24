@@ -9,108 +9,211 @@
         </nav>
       </aside>
 
-
       <main class="main-content">
         <div class="content-wrapper">
 
+          <!-- Cabeçalho -->
           <div class="page-header">
             <h2>Gestão de Ocorrências</h2>
           </div>
 
-          <div class="content-section">
-            <AuditTable title="Tabela de Ocorrências" subTitle="Lista completa de registros de ocorrências"
-              :columns="tableColumns" :data="tableData" type="striped">
-              <template #column-salary="{ value }">
-                <span class="text-success">{{ value }}</span>
-              </template>
-            </AuditTable>
+          <!-- Controles de pesquisa e ordenação -->
+          <div class="controls">
+            <input v-model="searchQuery" type="text" placeholder="Procurar Ocorrências..." class="search-input" />
+            <select v-model="sortKey" class="sort-select">
+              <option value="">Ordenar por</option>
+              <option v-for="col in sortColumns" :key="col.key" :value="col.key">{{ col.label }}</option>
+            </select>
+            <button @click="toggleSortOrder" class="sort-button">{{ sortOrder === 'asc' ? '↑' : '↓' }}</button>
           </div>
-          <div class="details-down">
-            <div class="details-wrapper">
-              <DetailsOco datetime="19/03/2024, 18:00" category="Infraestruturas" priority="Alta"
-                description="Queda de muro devido ao mau tempo, bloqueando parcialmente a via." />
-            </div>
-            <div class="buttons-container">
-              <div class="buttons-column">
-                <router-link to="/GestaoOcorrencias/AprovacaoOcorrencia" class="tab-link">
-                  <button class="btn-approve">Aprovar</button>
-                </router-link>
 
-                <button class="btn-reject">Rejeitar</button>
+          <!-- Tabela de Ocorrências Pendentes -->
+          <div class="table-section">
+            <h3>Pendentes</h3>
+            <GenericTable :columns="columnsPending" :data="pendingOccurrences" :loading="loading" @view="openDetail" />
+          </div>
+
+          <!-- Tabela de Outras Ocorrências -->
+          <div class="table-section">
+            <h3>Outras Ocorrências</h3>
+            <GenericTable :columns="columnsOther" :data="otherOccurrences" :loading="loading" @view="openDetail" />
+          </div>
+
+          <!-- Modal de Detalhes -->
+          <div v-if="showDetailModal" class="modal-overlay large">
+            <div class="modal-content">
+              <h3>Detalhes da Ocorrência</h3>
+              <ul class="detail-list">
+                <li><strong>Tipo:</strong> {{ selected.tipoOcorrencia }}</li>
+                <li><strong>Estado:</strong> {{ selected.status }}</li>
+                <li><strong>Submetido em:</strong> {{ selected.dataSubmissao }}</li>
+                <li><strong>Endereço:</strong> {{ selected.endereco }}</li>
+                <li><strong>Descrição:</strong> {{ selected.descricao }}</li>
+                <li v-if="selected.motivoRejeicao"><strong>Motivo da Rejeição:</strong> {{ selected.motivoRejeicao }}</li>
+              </ul>
+
+              <!-- Carrossel de mídia -->
+              <div v-if="selected.imagemVideo?.length" class="media-carousel">
+                <button @click="prevMedia">‹</button>
+                <div class="media-item">
+                  <img v-if="selected.imagemVideo[mediaIndex].includes('/image/')"
+                    :src="selected.imagemVideo[mediaIndex]" />
+                  <video v-else controls :src="selected.imagemVideo[mediaIndex]"></video>
+                </div>
+                <button @click="nextMedia">›</button>
+              </div>
+
+              <!-- Mapa -->
+              <iframe v-if="selected.coordenadas"
+                :src="`https://www.google.com/maps?q=${selected.coordenadas.latitude},${selected.coordenadas.longitude}&output=embed`"
+                width="100%" height="300" frameborder="0" style="border:0; margin-top:10px;"></iframe>
+
+              <div class="modal-actions">
+                <button v-if="selected.status.toLowerCase() === 'pendente'" class="btn-approve"
+                  @click="handleApprove(selected)">Aprovar</button>
+                <button v-if="selected.status.toLowerCase() === 'pendente'" class="btn-reject"
+                  @click="handleReject(selected)">Rejeitar</button>
+                <button class="btn-cancel" @click="closeModals">Fechar</button>
               </div>
             </div>
-            <div class="search-section inline">
-              <div class="search-input">
-                <input type="text" v-model="searchQuery" placeholder="Pesquisar Localidade..."
-                  class="search-container" />
+          </div>
+
+          <!-- Modal de Motivo de Rejeição -->
+          <div v-if="showRejectModal" class="modal-overlay">
+            <div class="modal-content">
+              <h3>Motivo da Rejeição</h3>
+              <textarea v-model="rejectReason" rows="4" placeholder="Insere a razão..."></textarea>
+              <div class="modal-actions">
+                <button class="btn-submit" @click="submitReject">Enviar</button>
+                <button class="btn-cancel" @click="closeModals">Cancelar</button>
               </div>
             </div>
-
           </div>
+
         </div>
       </main>
     </div>
   </div>
 </template>
 
-<script>
-import NavigationList from "@/components/NavigationList.vue";
-import AuditTable from "@/components/AuditTables.vue";
-import DetailsOco from "@/components/DetailsOco.vue";
+<script setup>
+import { ref, onMounted, computed } from 'vue';
+import { useRouter } from 'vue-router';
+import NavigationList from '@/components/NavigationList.vue';
+import GenericTable from '@/components/GenericTable.vue';
+import { db } from '@/firebase.js';
+import { collection, getDocs, updateDoc, doc } from 'firebase/firestore';
 
-export default {
-  name: "GestaoAuditorias",
-  components: {
-    NavigationList,
-    AuditTable,
-    DetailsOco
-  },
-  data() {
+// Estado e rótulos
+const occurrences = ref([]);
+const loading = ref(false);
+const selected = ref(null);
+const showDetailModal = ref(false);
+const showRejectModal = ref(false);
+const rejectReason = ref('');
+const mediaIndex = ref(0);
+const searchQuery = ref('');
+const sortKey = ref('');
+const sortOrder = ref('asc');
 
-    return {
-      tableColumns: [
-        { key: 'id', label: 'ID', headerClass: 'col-id' },
-        { key: 'morada', label: 'Morada' },
-        { key: 'localidade', label: 'Localidade', cellClass: 'text-right' },
-        { key: 'coordenadas', label: 'Coordenadas' }
-      ],
-      tableData: [
-        {
-          id: 1,
-          morada: "Rua das Flores, nº45",
-          localidade: "Lisboa",
-          coordenadas: "função mapa?"
-        },
-        {
-          id: 2,
-          morada: "Avenida da Liberdade, nº100",
-          localidade: "Lisboa",
-          coordenadas: "função mapa?"
-        },
-        {
-          id: 3,
-          morada: "Rua Jõao dos Santos, nº12",
-          localidade: "Porto",
-          coordenadas: "função mapa?"
-        },
-        {
-          id: 4,
-          morada: "Rua Gil Vicente, nº67",
-          localidade: "Guimarães",
-          coordenadas: "função mapa?"
-        },
-        {
-          id: 5,
-          morada: "Rua de Santo António, nº45",
-          localidade: "Guimarães",
-          coordenadas: "função mapa?"
-        }
-      ]
-    };
-  },
+const tipoLabels = { sinals: 'Sinalização em Falta', roads: 'Vias e Passeios', lights: 'Iluminação Pública' };
+const sortColumns = [
+  { key: 'id', label: 'ID' },
+  { key: 'tipoOcorrencia', label: 'Tipo' },
+  { key: 'status', label: 'Estado' }
+];
 
-};
+// Colunas para cada tabela (usam 'view' para abrir modal)
+const columnsPending = [
+  { key: 'id', label: 'ID' },
+  { key: 'tipoOcorrencia', label: 'Tipo' },
+  { key: 'status', label: 'Estado' },
+  { key: 'actions', label: 'Ver Detalhes' }
+];
+const columnsOther = [
+  { key: 'id', label: 'ID' },
+  { key: 'tipoOcorrencia', label: 'Tipo' },
+  { key: 'status', label: 'Estado' },
+  { key: 'actions', label: 'Ver Detalhes' }
+];
 
+// Filtrar e ordenar em comum
+const filtered = computed(() => {
+  let arr = occurrences.value;
+  if (searchQuery.value) {
+    const q = searchQuery.value.toLowerCase();
+    arr = arr.filter(i =>
+      i.id.includes(q) || i.tipoOcorrencia.toLowerCase().includes(q) || i.status.toLowerCase().includes(q)
+    );
+  }
+  if (sortKey.value) {
+    arr = [...arr].sort((a, b) => {
+      const aVal = a[sortKey.value], bVal = b[sortKey.value];
+      if (typeof aVal === 'string') return sortOrder.value === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+      return sortOrder.value === 'asc' ? aVal - bVal : bVal - aVal;
+    });
+  }
+  return arr;
+});
+const pendingOccurrences = computed(() => filtered.value.filter(i => i.status.toLowerCase() === 'pendente'));
+const otherOccurrences = computed(() => filtered.value.filter(i => i.status.toLowerCase() !== 'pendente'));
+
+// Carregar dados
+async function loadOccurrences() {
+  loading.value = true;
+  try {
+    const snap = await getDocs(collection(db, 'ocorrencias'));
+    occurrences.value = snap.docs.map(d => {
+      const data = d.data();
+      const raw = data.dataSubmissao;
+      const formatted = raw?.toDate ? raw.toDate().toLocaleString('pt-PT') : (raw || '');
+      return { id: d.id, ...data, dataSubmissao: formatted, tipoOcorrencia: tipoLabels[data.tipoOcorrencia] || data.tipoOcorrencia };
+    });
+  } catch (e) { console.error('Erro ao carregar ocorrências:', e); } finally { loading.value = false; }
+}
+
+// Ações e modal
+const router = useRouter();
+function openDetail(item) {
+  selected.value = item;
+  mediaIndex.value = 0;
+  showDetailModal.value = true;
+}
+function handleApprove(item) {
+  router.push({ name: 'AprovacaoOcorrencia', query: { id: item.id } });
+}
+function handleReject(item) {
+  selected.value = item;
+  showRejectModal.value = true;
+}
+function closeModals() {
+  showDetailModal.value = false;
+  showRejectModal.value = false;
+  rejectReason.value = '';
+}
+async function submitReject() {
+  if (selected.value) {
+    await updateDoc(doc(db, 'ocorrencias', selected.value.id),
+      { status: 'Rejeitado', motivoRejeicao: rejectReason.value });
+    closeModals();
+    loadOccurrences();
+  }
+}
+function toggleSortOrder() {
+  sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+}
+function nextMedia() {
+  if (!selected.value?.imagemVideo)
+    return;
+  mediaIndex.value = (mediaIndex.value + 1) % selected.value.imagemVideo.length;
+}
+function prevMedia() {
+  if (!selected.value?.imagemVideo)
+    return;
+  mediaIndex.value = (mediaIndex.value - 1 + selected.value.imagemVideo.length) % selected.value.imagemVideo.length;
+}
+
+onMounted(loadOccurrences);
 </script>
 
 <style scoped>
@@ -132,132 +235,145 @@ export default {
   margin-top: 40px;
 }
 
-.tab-link {
-  text-decoration: none;
-  color: #6c757d;
-  font-size: 14px;
-  line-height: 1.5;
-  padding: 10px 16px;
-  border-radius: 6px;
-  transition: all 0.3s ease;
-  position: relative;
-  font-weight: 500;
-  letter-spacing: 0.2px;
-  white-space: nowrap;
-}
-
-.tab-link:hover {
-  background-color: #f8f9fa;
-  color: #495057;
-}
-
-.tab-link.active {
-  color: #1890ff;
-  background-color: rgba(24, 144, 255, 0.08);
-  font-weight: 600;
-}
-
-.tab-link.active::after {
-  content: '';
-  position: absolute;
-  bottom: -9px;
-  left: 16px;
-  right: 16px;
-  height: 2px;
-  background-color: #1890ff;
-  border-radius: 2px 2px 0 0;
-}
-
-.tab-link::after {
-  content: '';
-  position: absolute;
-  bottom: -9px;
-  left: 50%;
-  right: 50%;
-  height: 2px;
-  background-color: #1890ff;
-  transition: all 0.3s ease;
-  border-radius: 2px 2px 0 0;
-}
-
-.search-section {
+.controls {
   display: flex;
-  justify-content: flex-end;
-  margin-bottom: 20px;
-  position: relative;
-  top: -450px;
-  left: -900px;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
 }
 
 .search-input {
-  position: relative;
+  flex: 1;
+  padding: 0.5rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 0.375rem;
+  font-size: 1rem;
 }
 
-.search-container {
-  padding: 8px 40px 8px 12px;
-  border: 1px solid #13c2c2;
-  border-radius: 4px;
-  width: 200px;
+.sort-select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 0.375rem;
+  background: #fff;
+  font-size: 0.875rem;
 }
 
-.search-button {
-  position: absolute;
-  right: 4px;
-  top: 50%;
-  transform: translateY(-50%);
+.sort-button {
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
   border: none;
   background: none;
   cursor: pointer;
 }
 
+.table-section {
+  margin-bottom: 30px;
+}
 
-.buttons-container {
+.modal-overlay.large .modal-content {
+  width: 800px;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 600px;
+  max-width: 95%;
+  max-height: 95%;
+  overflow-y: auto;
+}
+
+.detail-list {
+  list-style: none;
+  padding: 0;
+}
+
+.detail-list li {
+  margin-bottom: 8px;
+}
+
+.media-carousel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.media-carousel button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.media-item img,
+.media-item video {
+  max-width: 600px;
+  max-height: 300px;
+  border-radius: 4px;
+}
+
+.modal-actions {
   display: flex;
   justify-content: flex-end;
-  padding: 10px 0;
-  position: relative;
-  top: -220px;
-  left: -120px;
+  gap: 10px;
+  margin-top: 10px;
 }
 
-.buttons-column {
-  display: flex;
-  flex-direction: column;
-  gap: 50px;
-  width: fit-content;
-}
-
-.btn-approve,
-.btn-reject {
-  padding: 15px 20px;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  color: white;
-  cursor: pointer;
-  width: 120px;
+textarea {
+  width: 100%;
+  padding: 8px;
+  resize: vertical;
 }
 
 .btn-approve {
-  background-color: #28a745;
-}
-
-.btn-approve:hover {
-  background-color: #218838;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  cursor: pointer;
+  border-radius: 4px;
 }
 
 .btn-reject {
   background-color: #f44336;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  cursor: pointer;
+  border-radius: 4px;
 }
 
-.btn-reject:hover {
-  background-color: #d32f2f;
+.btn-cancel {
+  background-color: #ccc;
+  color: #333;
+  border: none;
+  padding: 8px 16px;
+  cursor: pointer;
+  border-radius: 4px;
 }
 
-
-.AuditTable {
-  position: relative;
-  left: -100px;
+.btn-submit {
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  cursor: pointer;
+  border-radius: 4px;
 }
 </style>

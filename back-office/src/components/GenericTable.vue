@@ -29,6 +29,10 @@
                 </div>
               </template>
 
+              <template v-if="$slots['column-' + column.key]">
+                <slot :name="'column-' + column.key" :item="item" />
+              </template>
+
               <!-- Status badge -->
               <template v-else-if="column.key === 'status'">
                 <span class="status-badge" :data-status="item.status.toLowerCase()">
@@ -41,12 +45,6 @@
                 <div class="action-btn-group">
                   <button class="icon-btn" @click="$emit('view', item)">
                     <img src="@/assets/icons8-eye-forma-light/icons8-eye-24.png" alt="Ver" />
-                  </button>
-                  <button class="icon-btn" @click="$emit('edit', item)">
-                    <img src="@/assets/icons8-pencil-pastel-glyph/icons8-pencil-24.png" alt="Editar" />
-                  </button>
-                  <button class="icon-btn" @click="$emit('delete', item)">
-                    <img src="@/assets/icons8-trash-ink/icons8-trash-24.png" alt="Eliminar" />
                   </button>
                 </div>
               </template>
@@ -175,10 +173,42 @@ export default {
   display: flex;
   flex-direction: column;
 }
+
 /* Exemplo de estilos para status */
-.status-badge[data-status="Ativo"] {
-  background-color: #e6f7e6;
-  color: #28a745;
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-transform: capitalize;
+}
+
+.status-badge[data-status="resolvido"] {
+  background: #4caf50;
+  color: white;
+}
+
+.status-badge[data-status="analise"] {
+  background: goldenrod;
+  color: white;
+}
+
+.status-badge[data-status="pendente"] {
+  background: #36bef4;
+  color: white;
+}
+
+.status-badge[data-status="rejeitado"] {
+  background: #f44336;
+  color: white;
+}
+
+.status-badge[data-status="ativo"] {
+  background: #4caf50;
+  color: white;
+}
+
+.status-badge[data-status="inativo"] {
+  background: #f44336;
+  color: white;
 }
 
 .action-btn-group {

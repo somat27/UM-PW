@@ -4,8 +4,8 @@
             <h3>{{ materialProp ? 'Editar Material' : 'Adicionar Material' }}</h3>
             <form @submit.prevent="saveMaterial">
                 <div class="form-group">
-                    <label>Detalhes</label>
-                    <input v-model="form.detalhes" type="text" required />
+                    <label>Nome</label>
+                    <input v-model="form.nome" type="text" required />
                 </div>
 
                 <div class="form-group">
@@ -14,7 +14,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Preço (€)</label>
+                    <label>Preço/Unidade (€)</label>
                     <input v-model.number="form.preco" type="number" step="0.01" required />
                 </div>
 
@@ -53,7 +53,7 @@ const material = toRef(props, 'material');
 
 // inicializa o form, ou com os valores existentes (edit), ou vazio (add)
 const form = ref({
-  detalhes:   '',
+  nome:   '',
   categoria:  '',
   preco:      0,
   quantidade: 0
@@ -63,13 +63,13 @@ const form = ref({
 watch(material, novo => {
   if (novo) {
     form.value = {
-      detalhes:   novo.detalhes,
+      nome:   novo.nome,
       categoria:  novo.categoria,
       preco:      novo.preco,
       quantidade: novo.quantidade
     };
   } else {
-    form.value = { detalhes:'', categoria:'', preco:0, quantidade:0 };
+    form.value = { nome:'', categoria:'', preco:0, quantidade:0 };
   }
 }, { immediate: true });
 
