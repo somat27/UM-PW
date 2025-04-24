@@ -18,8 +18,12 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="item in data" :key="item.id">
-            <td v-for="column in columns" :key="`${item.id}-${column.key}`">
+          <tr v-for="(item, rowIndex) in data" :key="item.id || item.uid || rowIndex">
+            <td v-for="column in columns" :key="column.key">
+              <!-- Scoped slot for custom cell -->
+              <template v-if="$slots['cell-' + column.key]">
+                <slot :name="'cell-' + column.key" :row="item" />
+              </template>
 
               <!-- Nome & Email cell -->
               <template v-if="column.key === 'nameEmail'">
@@ -77,7 +81,7 @@
               </template>
 
               <!-- Default cell -->
-              <template v-else>
+              <template v-else-if="column.key !== 'qtd'">
                 {{ item[column.key] }}
               </template>
 

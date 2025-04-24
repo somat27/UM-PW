@@ -13,305 +13,165 @@
           <div class="page-header">
             <h2>Plano de Auditoria</h2>
           </div>
-
           <div class="audit-form">
-            <div class="breadcrumb"> Criar Plano de Auditoria / Registo</div>
+            <div class="form-group">
+              <label>Descrição</label>
+              <textarea v-model="ocorrencia.descricao" disabled class="input"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Tipo de Ocorrência</label>
+              <input v-model="ocorrencia.tipoOcorrencia" disabled class="input" />
+            </div>
+            <div class="form-group">
+              <label>Endereço</label>
+              <input v-model="ocorrencia.endereco" disabled class="input" />
+            </div>
+            <!-- Mapa embutido via iframe -->
+            <div class="map-container">
+              <iframe :src="mapUrl" width="100%" height="100%" frameborder="0" style="border:0;" allowfullscreen
+                loading="lazy"></iframe>
+            </div>
 
-            <form class="form-grid">
-              <div class="form-row">
-                <label for="nome">Nome da auditoria :</label>
-                <input id="nome" type="text" />
-              </div>
+            <h3>Seleção de Perito</h3>
+            <GenericTable :columns="columnsPeritos" :data="peritosList" class="table-scroll">
+              <template #cell-select="{ row }">
+                <input type="radio" name="perito" :value="row.uid" v-model="selectedPerito" />
+              </template>
+            </GenericTable>
 
-              <div class="form-row">
-                <label for="origem">Origem :</label>
-                <input id="origem" type="text" />
-              </div>
+            <h3>Seleção de Materiais</h3>
+            <GenericTable :columns="columnsMateriais" :data="materiaisList" class="table-scroll">
+              <template #cell-qtd="{ row }">
+                <input type="number" min="0" :max="row.quantidade" v-model.number="row.qtd" class="input" />
+              </template>
+            </GenericTable>
 
-              <div class="form-row">
-                <label for="descricao">Descrição :</label>
-                <input id="descricao" type="text" />
-              </div>
+            <h3>Seleção de Profissionais</h3>
+            <GenericTable :columns="columnsProfissionais" :data="profissionaisList" class="table-scroll">
+              <template #cell-qtd="{ row }">
+                <input type="number" min="0" :max="row.quantidade" v-model.number="row.qtd" class="input" />
+              </template>
+            </GenericTable>
 
-              <div class="form-row">
-                <label for="tipo">Tipo :</label>
-                <input id="tipo" type="text" />
-              </div>
-            </form>
-          </div>
-          <div class="audit-form">
-            <div class="breadcrumb"> Criar Plano de Auditoria / Associar Perito</div>
-
-            <GenericTable :columns="columns" :data="peritos" type="striped" @view="handleView" @edit="handleEdit"
-              @delete="handleDelete" />
-          </div>
-          <div class="audit-form">
-            <div class="breadcrumb"> Criar Plano de Auditoria / Associar Materiais</div>
-            <GenericTable1 :data="materiais" :columns="columns1" :type="'striped'" @action="handlePeritoAction" />
-          </div>
-          <div class="audit-form">
-            <div class="breadcrumb1">Criar Plano de Auditoria / Duração Estimada</div>
-            <form class="form-grid">
-              <div class="form-row duration-row">
-                <label for="duracao">Duração estimada:</label>
-                <input id="duracao" type="text" class="small-input" />
-                <span class="days-text">dias.</span>
-              </div>
-            </form>
-          </div>
-          <div class="audit-form">
-            <router-link to="/GestaoAuditorias" class="tab-link">
-              <button class="btn-primary">Criar Plano</button>
-            </router-link>
+            <div class="form-group">
+              <label>Data de Fim de Obra</label>
+              <input type="date" v-model="deadline" class="input" />
+            </div>
+            <div class="form-group">
+              <label>Tempo Estimado (horas)</label>
+              <input type="number" v-model.number="estimatedTime" class="input" />
+            </div>
+            <button @click="submitAuditoria" class="btn">Aprovar Ocorrência</button>
           </div>
         </div>
-
       </main>
-
     </div>
   </div>
 </template>
-<script>
-import NavigationList from "../components/NavigationList.vue";
-import GenericTable from "../components/GenericTable.vue";
-import GenericTable1 from "../components/GenericTable.vue";
 
-export default {
-  name: "AprovacaoOcorrencia",
-  components: {
-    NavigationList,
-    GenericTable,
-    GenericTable1
-  },
-  setup() {
+<script setup>
+import { ref, computed, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import NavigationList from '@/components/NavigationList.vue';
+import GenericTable from '@/components/GenericTable.vue';
+import { doc, getDoc, collection, getDocs, setDoc } from 'firebase/firestore';
+import { db } from '@/firebase';
 
-    return {
+const route = useRoute();
+const router = useRouter();
+const ocorrencia = ref({ descricao: '', tipoOcorrencia: '', endereco: '', coordenadas: { latitude: 0, longitude: 0 } });
+const peritosList = ref([]);
+const materiaisList = ref([]);
+const profissionaisList = ref([]);
+const selectedPerito = ref(null);
+const deadline = ref('');
+const estimatedTime = ref(0);
 
-      columns: [
-        { key: 'nameEmail', label: 'Nome' },
-        { key: 'address', label: 'Morada' },
-        { key: 'specialty', label: 'Especialidade' },
+const columnsPeritos = [
+  { key: 'select', label: '' },
+  { key: 'displayName', label: 'Nome' },
+  { key: 'specialty', label: 'Especialidade' },
+  { key: 'address', label: 'Localidade' }
+];
+const columnsMateriais = [
+  { key: 'nome', label: 'Nome' },
+  { key: 'categoria', label: 'Categoria' },
+  { key: 'quantidade', label: 'Disponível' },
+  { key: 'qtd', label: 'Qtd Requerida' }
+];
+const columnsProfissionais = [
+  { key: 'nome', label: 'Nome' },
+  { key: 'area', label: 'Área' },
+  { key: 'quantidade', label: 'Disponível' },
+  { key: 'qtd', label: 'Qtd Requerida' }
+];
 
-      ],
-      columns1: [
-        { key: 'details', label: 'Detalhes do Material' },
-        { key: 'category', label: 'Categoria' },
-        { key: 'qtd', label: 'Quantidade' },
+const mapUrl = computed(() => {
+  const { latitude, longitude } = ocorrencia.value.coordenadas;
+  return `https://www.google.com/maps?q=${latitude},${longitude}&hl=pt&z=15&output=embed`;
+});
 
+async function loadData() {
+  const id = route.params.id;
+  // Ocorrência
+  const ocRef = doc(db, 'ocorrencias', id);
+  const ocSnap = await getDoc(ocRef);
+  if (ocSnap.exists()) ocorrencia.value = ocSnap.data();
 
-      ],
-      peritos: [
-        {
-          id: 1,
-          name: "Joana Silva",
-          email: "joana@sapo.pt",
-          address: "Porto",
-          specialty: "Engenheira Civil",
+  // Peritos
+  const peritosSnap = await getDocs(collection(db, 'peritos'));
+  peritosList.value = peritosSnap.docs.map(d => ({ uid: d.id, ...d.data() }));
 
-        },
-        {
-          id: 2,
-          name: "Carlos Pinto",
-          email: "carlos@sapo.pt",
-          address: "Lisboa",
-          specialty: "Pedreiro",
+  // Materiais
+  const matSnap = await getDocs(collection(db, 'materiais'));
+  materiaisList.value = matSnap.docs.map(d => ({ id: d.id, ...d.data()}));
 
-        },
-        {
-          id: 2,
-          name: "Carlos Pinto",
-          email: "carlos@sapo.pt",
-          address: "Lisboa",
-          specialty: "Pedreiro",
+  // Profissionais
+  const profSnap = await getDocs(collection(db, 'profissionais'));
+  profissionaisList.value = profSnap.docs.map(d => ({ id: d.id, ...d.data()}));
+}
 
-        }
-      ],
-      materiais: [
-        {
-          details: "Asfalto",
-          category: "Materiais de construção",
-          qtd: "3",
-        },
+async function submitAuditoria() {
+  const id = route.params.id;
 
-        {
-          details: "Câmeras",
-          category: "Equipamento de segurança",
-          qtd: "70",
-        }
-      ],
+  // 1) Constroi o objecto sem undefined
+  const auditoria = {
+    descricao: ocorrencia.value.descricao || '',
+    tipo: ocorrencia.value.tipoOcorrencia || '',
+    endereco: ocorrencia.value.endereco || '',
+    coordenadas: ocorrencia.value.coordenadas || { latitude: 0, longitude: 0 },
+    perito: selectedPerito.value || null,
+    dataInicio: new Date(),
+    tempoEstimado: typeof estimatedTime.value === 'number' ? estimatedTime.value : 0
+  };
 
-    };
+  // 2) Só adiciona dataFim se houver deadline
+  if (deadline.value) {
+    auditoria.dataFim = new Date(deadline.value);
   }
-};
+
+  // 3) Garantir quantidade sempre numérico
+  auditoria.materiais = materiaisList.value.map(m => ({
+    id: m.id,
+    nome: m.nome,
+    quantidade: typeof m.qtd === 'number' ? m.qtd : 0
+  }));
+  auditoria.profissionais = profissionaisList.value.map(p => ({
+    id: p.id,
+    nome: p.nome,
+    quantidade: typeof p.qtd === 'number' ? p.qtd : 0
+  }));
+
+  // 4) Agora podes gravar sem undefined
+  await setDoc(doc(db, 'auditorias', id), auditoria);
+  router.push('/GestaoOcorrencias');
+}
+
+
+onMounted(loadData);
 </script>
 
-
 <style scoped>
-.tab-link {
-  text-decoration: none;
-  color: #6c757d;
-  font-size: 14px;
-  line-height: 1.5;
-  padding: 10px 16px;
-  border-radius: 6px;
-  transition: all 0.3s ease;
-  position: relative;
-  font-weight: 500;
-  letter-spacing: 0.2px;
-  white-space: nowrap;
-}
-
-.tab-link:hover {
-  background-color: #f8f9fa;
-  color: #495057;
-}
-
-.tab-link.active {
-  color: #1890ff;
-  background-color: rgba(24, 144, 255, 0.08);
-  font-weight: 600;
-}
-
-.tab-link.active::after {
-  content: '';
-  position: absolute;
-  bottom: -9px;
-  left: 16px;
-  right: 16px;
-  height: 2px;
-  background-color: #1890ff;
-  border-radius: 2px 2px 0 0;
-}
-
-.tab-link::after {
-  content: '';
-  position: absolute;
-  bottom: -9px;
-  left: 50%;
-  right: 50%;
-  height: 2px;
-  background-color: #1890ff;
-  transition: all 0.3s ease;
-  border-radius: 2px 2px 0 0;
-}
-
-.btn-primary {
-  background-color: #4a6cf7;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.btn-primary:hover {
-  background-color: #3a5ce4;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-.btn-primary:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
-}
-
-
-.btn-primary::before {
-  content: "+";
-  font-weight: bold;
-  font-size: 16px;
-}
-
-.audit-form {
-  background-color: #fff;
-  padding: 32px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
-  margin-top: 24px;
-}
-
-.breadcrumb {
-  font-size: 14px;
-  color: #6c757d;
-  margin-bottom: 24px;
-  margin-right: 850px;
-}
-
-.breadcrumb1 {
-  font-size: 14px;
-  color: #6c757d;
-  margin-bottom: 24px;
-  margin-right: 850px;
-}
-
-.duration-input-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.duration-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: nowrap;
-}
-
-.duration-row label {
-  width: auto;
-  margin-right: 0;
-  white-space: nowrap;
-}
-
-.small-input {
-  width: 60px !important;
-  padding: 6px 8px !important;
-  margin-right: 0;
-}
-
-.days-text {
-  font-size: 14px;
-  color: #6c757d;
-  white-space: nowrap;
-}
-
-.form-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.form-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.form-row label {
-  width: 200px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #212529;
-}
-
-.form-row input {
-  flex: 1;
-  padding: 10px 14px;
-  font-size: 14px;
-  border: 1px solid #dcdcdc;
-  border-radius: 6px;
-  background-color: #f9f9f9;
-}
-
 .dashboard-layout {
   display: flex;
   gap: 20px;
@@ -328,5 +188,55 @@ export default {
 
 .content-wrapper {
   margin-top: 40px;
+}
+
+.page-header h2 {
+  margin: 0 0 1em;
+}
+
+.audit-form {
+  background: #fff;
+  padding: 1em;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+}
+
+.map-container {
+  width: 100%;
+  height: 300px;
+  margin-bottom: 1em;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.input {
+  width: 100%;
+  padding: .5em;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.form-group {
+  margin-bottom: 1em;
+}
+
+.btn {
+  padding: .75em 1.5em;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.table-scroll {
+  margin-bottom: 1.5em;
+}
+
+.table-scroll .generic-table-wrapper {
+  max-height: 200px;
+  overflow-y: auto;
 }
 </style>

@@ -29,8 +29,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { loginWithEmail, auth } from '@/firebase'
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth'
+import { loginWithEmail, loginWithGoogle, auth } from '@/firebase'
 
 // Estados
 const email = ref('')
@@ -92,9 +91,8 @@ const handleGoogleLogin = async () => {
   googleLoading.value = true
   errorMsg.value = ''
   try {
-    const provider = new GoogleAuthProvider()
-    const result = await signInWithPopup(auth, provider)
-    localStorage.setItem('userUID', result.user.uid)
+    const user = await loginWithGoogle()
+    localStorage.setItem('userUID', user.uid)
     router.push('/dashboards/auditorias')
   } catch (err) {
     const ignoreCodes = [
@@ -102,9 +100,7 @@ const handleGoogleLogin = async () => {
       'auth/popup-closed-by-user',
       'auth/popup-blocked'
     ]
-    if (ignoreCodes.includes(err.code)) {
-      console.warn('Google login interrompido:', err.code)
-    } else {
+    if (!ignoreCodes.includes(err.code)) {
       errorMsg.value = 'Erro: ' + err.message
     }
   } finally {

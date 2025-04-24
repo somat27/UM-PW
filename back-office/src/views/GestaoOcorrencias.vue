@@ -49,7 +49,8 @@
                 <li><strong>Submetido em:</strong> {{ selected.dataSubmissao }}</li>
                 <li><strong>Endereço:</strong> {{ selected.endereco }}</li>
                 <li><strong>Descrição:</strong> {{ selected.descricao }}</li>
-                <li v-if="selected.motivoRejeicao"><strong>Motivo da Rejeição:</strong> {{ selected.motivoRejeicao }}</li>
+                <li v-if="selected.motivoRejeicao"><strong>Motivo da Rejeição:</strong> {{ selected.motivoRejeicao }}
+                </li>
               </ul>
 
               <!-- Carrossel de mídia -->
@@ -69,8 +70,10 @@
                 width="100%" height="300" frameborder="0" style="border:0; margin-top:10px;"></iframe>
 
               <div class="modal-actions">
-                <button v-if="selected.status.toLowerCase() === 'pendente'" class="btn-approve"
-                  @click="handleApprove(selected)">Aprovar</button>
+                <router-link v-if="selected.status.toLowerCase() === 'pendente'" :to="{ name: 'AprovacaoOcorrencia', params: { id: selected.id } }"
+                  class="btn-approve">
+                  Aprovar
+                </router-link>
                 <button v-if="selected.status.toLowerCase() === 'pendente'" class="btn-reject"
                   @click="handleReject(selected)">Rejeitar</button>
                 <button class="btn-cancel" @click="closeModals">Fechar</button>
@@ -98,7 +101,6 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import { useRouter } from 'vue-router';
 import NavigationList from '@/components/NavigationList.vue';
 import GenericTable from '@/components/GenericTable.vue';
 import { db } from '@/firebase.js';
@@ -173,14 +175,10 @@ async function loadOccurrences() {
 }
 
 // Ações e modal
-const router = useRouter();
 function openDetail(item) {
   selected.value = item;
   mediaIndex.value = 0;
   showDetailModal.value = true;
-}
-function handleApprove(item) {
-  router.push({ name: 'AprovacaoOcorrencia', query: { id: item.id } });
 }
 function handleReject(item) {
   selected.value = item;

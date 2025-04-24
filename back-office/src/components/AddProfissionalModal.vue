@@ -45,17 +45,18 @@ import { db } from '@/firebase.js'
 import { addDoc, collection, doc, updateDoc } from 'firebase/firestore'
 
 const profissionalProp = toRef(props, 'profissional')
-const form = ref({ nome: '', area: '', quantidade: 0 })
+const form = ref({ nome: '', area: '', preco: '', quantidade: 0 })
 
 watch(profissionalProp, novo => {
     if (novo) {
         form.value = {
             nome: novo.nome,
             area: novo.area,
+            preco: novo.preco,
             quantidade: novo.quantidade
         }
     } else {
-        form.value = { nome: '', area: '', quantidade: 0 }
+        form.value = { nome: '', area: '', preco: '', quantidade: 0 }
     }
 }, { immediate: true })
 

@@ -73,19 +73,19 @@ export default {
   },
   data() {
     return {
-      materiais: [],         // lista que vamos popular da Firestore
-      novoMaterial: {        // modelo para o formulário de adicionar
+      materiais: [],         
+      novoMaterial: {        
         nome: "",
         categoria: "",
         preco: 0,
         quantidade: 0
       },
-      loading: false,        // indicador de loading
+      loading: false,        
       erro: null,
-      searchQuery: "",          // texto da pesquisa
-      sortKey: "",              // campo por onde ordenar
-      sortOrder: "asc",         // ordem: asc ou desc
-      sortColumns: [            // opções do dropdown
+      searchQuery: "",       
+      sortKey: "",           
+      sortOrder: "asc",      
+      sortColumns: [         
         { key: "nome", label: "Nome" },
         { key: "categoria", label: "Categoria" },
         { key: "preco", label: "Preço/Unidade" },

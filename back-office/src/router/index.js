@@ -67,12 +67,58 @@ const routes = [
       { path: 'materiais', component: DashboardMateriais, name: 'materiais' }
     ]
   },
-  { path: '/GestaoAuditorias', name: 'GestaoAuditorias', component: GestaoAuditorias, meta: { requiresAuth: true, requiresGestorOrAdmin: true } },
-  { path: '/GestaoOcorrencias', name: 'GestaoOcorrencias', component: GestaoOcorrencias, meta: { requiresAuth: true, requiresGestorOrAdmin: true } },
-  { path: '/GestaoOcorrencias/AprovacaoOcorrencia', name: 'AprovacaoOcorrencia', component: AprovacaoOcorrencia, meta: { requiresAuth: true, requiresGestorOrAdmin: true } },
-  { path: '/GestaoPeritos', name: 'GestaoPeritos', component: GestaoPeritos, meta: { requiresAuth: true, requiresGestorOrAdmin: true } },
-  { path: '/GestaoMateriais', name: 'GestaoMateriais', component: GestaoMateriais, meta: { requiresAuth: true, requiresGestorOrAdmin: true } },
-  { path: '/GestaoProfissionais', name: 'GestaoProfissionais', component: GestaoProfissionais, meta: { requiresAuth: true, requiresGestorOrAdmin: true } },
+  {
+    path: '/GestaoAuditorias',
+    name: 'GestaoAuditorias',
+    component: GestaoAuditorias,
+    meta: {
+      requiresAuth: true,
+      requiresGestorOrAdmin: true
+    }
+  },
+  {
+    path: '/GestaoOcorrencias',
+    name: 'GestaoOcorrencias',
+    component: GestaoOcorrencias,
+    meta: {
+      requiresAuth: true,
+      requiresGestorOrAdmin: true
+    }
+  },
+  {
+    path: '/GestaoOcorrencias/AprovacaoOcorrencia/:id',
+    name: 'AprovacaoOcorrencia',
+    component: AprovacaoOcorrencia,
+    props: true,
+    meta: { requiresAuth: true, requiresGestorOrAdmin: true }
+  },
+  {
+    path: '/GestaoPeritos',
+    name: 'GestaoPeritos',
+    component: GestaoPeritos,
+    meta: {
+      requiresAuth: true,
+      requiresGestorOrAdmin: true
+    }
+  },
+  {
+    path: '/GestaoMateriais',
+    name: 'GestaoMateriais',
+    component: GestaoMateriais,
+    meta: {
+      requiresAuth: true,
+      requiresGestorOrAdmin: true
+    }
+  },
+  {
+    path: '/GestaoProfissionais',
+    name: 'GestaoProfissionais',
+    component: GestaoProfissionais,
+    meta: {
+      requiresAuth: true,
+      requiresGestorOrAdmin: true
+    }
+  },
   {
     path: '/GestaoUtilizadores',
     name: 'GestaoUtilizadores',
