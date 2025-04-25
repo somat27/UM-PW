@@ -18,7 +18,7 @@
 
           <!-- Loading / Erro -->
           <div v-if="loading">A carregar…</div>
-            <div v-else>
+          <div v-else>
             <div v-if="erro" class="error">{{ erro }}</div>
 
             <!-- Cabeçalho -->
@@ -47,12 +47,6 @@
             <!-- Tabela genérica -->
             <GenericTable :data="profissionais" :columns="[...profissionalColumns, editColumn]" :loading="loading"
               type="striped" @edit="openEditModal">
-
-              <template #cell-quantidade="{ row }">
-                <input type="number" v-model.number="row.quantidade" @change="atualizarQuantidade(row.id, row.quantidade)"
-                  class="quant-input" />
-              </template>
-
             </GenericTable>
           </div>
         </div>
@@ -147,9 +141,16 @@ export default {
 </script>
 
 <style scoped>
+html, body, #app, .dashboard-container, .dashboard-layout {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 .dashboard-layout {
   display: flex;
   gap: 20px;
+  height: 100%;
 }
 
 .sidebar-column {
@@ -158,11 +159,13 @@ export default {
 
 .main-content {
   flex: 1;
-  margin-right: 10px;
+  margin-right: 10px; 
+  overflow-y: auto;
 }
 
 .content-wrapper {
   margin-top: 40px;
+  min-height: 100%;
 }
 
 .tab-link {

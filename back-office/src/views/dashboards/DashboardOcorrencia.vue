@@ -12,36 +12,20 @@
         <div class="content-wrapper">
 
           <nav class="navigation-tabs">
-            <router-link
-              to="/dashboards/auditorias"
-              class="tab-link"
-              :class="{ active: activeTab === 'auditorias' }"
-              @click="activeTab = 'auditorias'"
-            >
+            <router-link to="/dashboards/auditorias" class="tab-link" :class="{ active: activeTab === 'auditorias' }"
+              @click="activeTab = 'auditorias'">
               Auditorias por região
             </router-link>
-            <router-link
-              to="/dashboards/ocorrencias"
-              class="tab-link"
-              :class="{ active: activeTab === 'ocorrencias' }"
-              @click="activeTab = 'ocorrencias'"
-            >
+            <router-link to="/dashboards/ocorrencias" class="tab-link" :class="{ active: activeTab === 'ocorrencias' }"
+              @click="activeTab = 'ocorrencias'">
               Ocorrências resolvidas
             </router-link>
-            <router-link
-              to="/dashboards/peritos"
-              class="tab-link"
-              :class="{ active: activeTab === 'peritos' }"
-              @click="activeTab = 'peritos'"
-            >
+            <router-link to="/dashboards/peritos" class="tab-link" :class="{ active: activeTab === 'peritos' }"
+              @click="activeTab = 'peritos'">
               Peritos mobilizados e no aguardo
             </router-link>
-            <router-link
-              to="/dashboards/materiais"
-              class="tab-link"
-              :class="{ active: activeTab === 'materiais' }"
-              @click="activeTab = 'materiais'"
-            >
+            <router-link to="/dashboards/materiais" class="tab-link" :class="{ active: activeTab === 'materiais' }"
+              @click="activeTab = 'materiais'">
               Materiais expedidos
             </router-link>
           </nav>
@@ -54,23 +38,14 @@
             </select>
 
             <div class="filter-week-wrapper">
-              <input
-                type="week"
-                v-model="selectedWeek"
-                class="filter-week"
-              />
+              <input type="week" v-model="selectedWeek" class="filter-week" />
             </div>
           </div>
 
           <StatisticsGridOcorrencia :cards="weeklyCards" />
 
           <div id="chart">
-            <apexchart
-              type="area"
-              height="350"
-              :options="chartOptions"
-              :series="series"
-            />
+            <apexchart type="area" height="350" :options="chartOptions" :series="series" />
           </div>
 
         </div>
@@ -108,10 +83,10 @@ function isoWeekDates(weekString) {
   const start = new Date(week1Start);
   start.setUTCDate(start.getUTCDate() + (wk - 1) * 7);
   // gera 7 dias
-  return Array.from({length:7}, (_, i) => {
+  return Array.from({ length: 7 }, (_, i) => {
     const d = new Date(start);
     d.setUTCDate(d.getUTCDate() + i);
-    return d.toISOString().slice(0,10);
+    return d.toISOString().slice(0, 10);
   });
 }
 
@@ -142,9 +117,9 @@ export default {
     apexchart: VueApexCharts
   },
   setup() {
-    const activeTab   = ref('ocorrencias');
+    const activeTab = ref('ocorrencias');
 
-    const localities = ['Lisboa','Porto','Coimbra','Faro','Braga'];
+    const localities = ['Lisboa', 'Porto', 'Coimbra', 'Faro', 'Braga'];
     const selectedCity = ref(localities[0]);
     const selectedWeek = ref(getCurrentISOWeek());
 
@@ -165,50 +140,52 @@ export default {
     const weeklyCards = computed(() => {
       if (!weeklyData.value.length) {
         return [
-          { title:'Total Confirmadas', value:0 },
-          { title:'Total Resolvidas',  value:0 },
-          { title:'Maior taxa (dia)',  value:'–' },
-          { title:'Menor taxa (dia)',  value:'–' }
+          { title: 'Total Confirmadas', value: 0 },
+          { title: 'Total Resolvidas', value: 0 },
+          { title: 'Maior taxa (dia)', value: '–' },
+          { title: 'Menor taxa (dia)', value: '–' }
         ];
       }
-      const total = weeklyData.value.reduce((sum,d)=> sum + d.total, 0);
-      const resolved = weeklyData.value.reduce((sum,d)=> sum + d.resolved, 0);
+      const total = weeklyData.value.reduce((sum, d) => sum + d.total, 0);
+      const resolved = weeklyData.value.reduce((sum, d) => sum + d.resolved, 0);
       // calcula taxa diária e encontra max/min
       const rates = weeklyData.value.map(d => ({
         date: d.date,
-        pct: Math.round(d.resolved/d.total*100)
+        pct: Math.round(d.resolved / d.total * 100)
       }));
-      const max = rates.reduce((a,b)=> b.pct>a.pct?b:a);
-      const min = rates.reduce((a,b)=> b.pct<a.pct?b:a);
+      const max = rates.reduce((a, b) => b.pct > a.pct ? b : a);
+      const min = rates.reduce((a, b) => b.pct < a.pct ? b : a);
       return [
-        { title:'Total de Ocorrências Confirmadas', value: total },
-        { title:'Total de Ocorrências Resolvidas',  value: resolved },
-        { title:'Dia com a maior taxa de resolução', value:`${max.date} (${max.pct}%)` },
-        { title:'Dia com a menor taxa de resolução',  value:`${min.date} (${min.pct}%)` }
+        { title: 'Total de Ocorrências Confirmadas', value: total },
+        { title: 'Total de Ocorrências Resolvidas', value: resolved },
+        { title: 'Dia com a maior taxa de resolução', value: `${max.date} (${max.pct}%)` },
+        { title: 'Dia com a menor taxa de resolução', value: `${min.date} (${min.pct}%)` }
       ];
     });
 
     // gráfico: duas séries ao longo dos dias da semana
     const series = computed(() => [
-      { name:'Total',     data: weekDates.value.map(d => {
-          const rec = weeklyData.value.find(x=>x.date===d);
+      {
+        name: 'Total', data: weekDates.value.map(d => {
+          const rec = weeklyData.value.find(x => x.date === d);
           return rec ? rec.total : 0;
         })
       },
-      { name:'Resolvidas', data: weekDates.value.map(d => {
-          const rec = weeklyData.value.find(x=>x.date===d);
+      {
+        name: 'Resolvidas', data: weekDates.value.map(d => {
+          const rec = weeklyData.value.find(x => x.date === d);
           return rec ? rec.resolved : 0;
         })
       }
     ]);
 
     const chartOptions = computed(() => ({
-      chart:{type:'area',height:350},
-      stroke:{curve:'smooth'},
-      xaxis:{ categories: weekDates.value },
-      dataLabels:{enabled:false},
-      legend:{position:'top'},
-      tooltip:{x:{format:'dd/MM'}}
+      chart: { type: 'area', height: 350 },
+      stroke: { curve: 'smooth' },
+      xaxis: { categories: weekDates.value },
+      dataLabels: { enabled: false },
+      legend: { position: 'top' },
+      tooltip: { x: { format: 'dd/MM' } }
     }));
 
     return {
@@ -225,13 +202,26 @@ export default {
 </script>
 
 <style scoped>
-.dashboard-layout    { display: flex; gap: 20px; }
-.sidebar-column      { width: 20%; }
-.main-content        { 
+.dashboard-layout {
+  display: flex;
+  gap: 20px;
+  height: 100%;
+}
+
+.sidebar-column {
+  width: 20%;
+}
+
+.main-content {
   flex: 1;
   margin-right: 10px;
+  overflow-y: auto;
 }
-.content-wrapper     { margin-top: 40px; }
+
+.content-wrapper {
+  margin-top: 40px;
+  min-height: 100%;
+}
 
 /* Mesmos estilos de DashboardOcorrencia.vue */
 .navigation-tabs {
@@ -295,8 +285,16 @@ export default {
   border-radius: 2px 2px 0 0;
 }
 
-.search-section { display: flex; justify-content: flex-end; margin-bottom: 20px; }
-.search-input   { position: relative; }
+.search-section {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+}
+
+.search-input {
+  position: relative;
+}
+
 .search-container {
   padding: 8px 12px;
   border: 1px solid #13c2c2;
@@ -321,6 +319,7 @@ export default {
   cursor: pointer;
   transition: border-color 0.2s;
 }
+
 .filter-select:hover,
 .filter-select:focus {
   border-color: #1890ff;
@@ -332,6 +331,7 @@ export default {
   display: flex;
   flex-direction: column;
 }
+
 .filter-week-label {
   font-size: 12px;
   color: #6c757d;
@@ -350,12 +350,15 @@ export default {
   /* forçar largura consistente */
   width: 160px;
 }
+
 .filter-week:hover,
 .filter-week:focus {
   border-color: #1890ff;
   outline: none;
 }
-select, input[type="week"] {
+
+select,
+input[type="week"] {
   padding: 6px 12px;
   border: 1px solid #ccc;
   border-radius: 4px;

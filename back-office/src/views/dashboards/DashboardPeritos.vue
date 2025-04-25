@@ -12,53 +12,33 @@
         <div class="content-wrapper">
 
           <nav class="navigation-tabs">
-            <router-link
-              to="/dashboards/auditorias"
-              class="tab-link"
-              :class="{ active: activeTab === 'auditorias' }"
-              @click="activeTab = 'auditorias'"
-            >
+            <router-link to="/dashboards/auditorias" class="tab-link" :class="{ active: activeTab === 'auditorias' }"
+              @click="activeTab = 'auditorias'">
               Auditorias por região
             </router-link>
-            <router-link
-              to="/dashboards/ocorrencias"
-              class="tab-link"
-              :class="{ active: activeTab === 'ocorrencias' }"
-              @click="activeTab = 'ocorrencias'"
-            >
+            <router-link to="/dashboards/ocorrencias" class="tab-link" :class="{ active: activeTab === 'ocorrencias' }"
+              @click="activeTab = 'ocorrencias'">
               Ocorrências resolvidas
             </router-link>
-            <router-link
-              to="/dashboards/peritos"
-              class="tab-link"
-              :class="{ active: activeTab === 'peritos' }"
-              @click="activeTab = 'peritos'"
-            >
+            <router-link to="/dashboards/peritos" class="tab-link" :class="{ active: activeTab === 'peritos' }"
+              @click="activeTab = 'peritos'">
               Peritos mobilizados e no aguardo
             </router-link>
-            <router-link
-              to="/dashboards/materiais"
-              class="tab-link"
-              :class="{ active: activeTab === 'materiais' }"
-              @click="activeTab = 'materiais'"
-            >
+            <router-link to="/dashboards/materiais" class="tab-link" :class="{ active: activeTab === 'materiais' }"
+              @click="activeTab = 'materiais'">
               Materiais expedidos
             </router-link>
           </nav>
 
-          <StatisticsGridPeritos
-            :labels="filteredIndices.map(i => localities[i])"
-            :mobilized-data="mobilizedData"
-            :waiting-data="waitingData"
-          />
+          <StatisticsGridPeritos>
+            <StatisticsCard title="Peritos Totais" :value="totalPeritos" icon="users" />
+            <StatisticsCard title="Cidades sobre vigia" :value="cidadesVigia" icon="map-marker-alt" />
+            <StatisticsCard title="Peritos ativos" :value="countAtivos" icon="check-circle" />
+            <StatisticsCard title="Peritos em espera" :value="countAguardando" icon="clock" />
+          </StatisticsGridPeritos>
 
           <div id="chart">
-            <apexchart
-              type="bar"
-              height="350"
-              :options="chartOptions"
-              :series="series"
-            />
+            <apexchart type="bar" :options="chartOptions" :series="chartSeries" height="350" />
           </div>
 
         </div>
@@ -68,48 +48,179 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import apexchart from 'vue3-apexcharts';
 import NavigationList from '@/components/NavigationList.vue';
 import StatisticsGridPeritos from '@/components/StatisticsGridPeritos.vue';
+import StatisticsCard from '@/components/StatisticsCard.vue';
+import {
+  collection,
+  onSnapshot,
+} from 'firebase/firestore';
+import {db} from "@/firebase"
 
 const activeTab = ref('peritos');
-const localities = ['Lisboa', 'Porto', 'Coimbra', 'Faro', 'Braga'];
-const mobilizedData = [100, 80, 45, 60, 30];
-const waitingData = [20, 15, 10, 12, 8];
 
-const filteredIndices = computed(() => {
-  return localities.map((_, i) => i);
+// Refs para dados
+const peritos = ref([]);
+const auditorias = ref([]);
+
+// Contadores por localidade (ativos assíncrono)
+const regioes = ['Norte', 'Centro', 'Lisboa e Vale do Tejo', 'Alentejo', 'Algarve'];
+const ativosPorLocalidade = ref({
+  Norte: 0,
+  Centro: 0,
+  'Lisboa e Vale do Tejo': 0,
+  Alentejo: 0,
+  Algarve: 0
 });
 
-const series = computed(() => [
-  { name: 'Mobilizados', data: filteredIndices.value.map(i => mobilizedData[i]) },
-  { name: 'Aguardando', data: filteredIndices.value.map(i => waitingData[i]) }
-]);
+// Mapeamento de distritos para regiões
+const distritoRegiaoMap = {
+  Porto: 'Norte', 'Viana do Castelo': 'Norte', Braga: 'Norte', 'Vila Real': 'Norte', Bragança: 'Norte',
+  Aveiro: 'Centro', Coimbra: 'Centro', Leiria: 'Centro', 'Castelo Branco': 'Centro', Guarda: 'Centro', Viseu: 'Centro',
+  Santarém: 'Lisboa e Vale do Tejo', Lisboa: 'Lisboa e Vale do Tejo', Setúbal: 'Lisboa e Vale do Tejo',
+  Évora: 'Alentejo', Beja: 'Alentejo', Portalegre: 'Alentejo', Faro: 'Algarve'
+};
 
+// Cache para geocodificação de regiões
+const cacheRegiao = {};
+async function buscarRegiao(lat, lon) {
+  const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&addressdetails=1&accept-language=pt`;
+  const res = await fetch(url, {
+    headers: { 'User-Agent': 'MeuAppUniversidade/1.0 (email@exemplo.com)' }
+  });
+  if (!res.ok) throw new Error(`Erro HTTP ${res.status}`);
+  const data = await res.json();
+  const addr = data.address || {};
+  const district = addr.state || addr.county || addr.region || '';
+  return distritoRegiaoMap[district] || 'Desconhecida';
+}
+
+async function buscarRegiaoComCache(lat, lon) {
+  const key = `${lat},${lon}`;
+  if (cacheRegiao[key]) return cacheRegiao[key];
+  try {
+    const regiao = await buscarRegiao(lat, lon);
+    cacheRegiao[key] = regiao;
+    return regiao;
+  } catch (err) {
+    console.error('Erro geocodificação região', err);
+    return 'Desconhecida';
+  }
+}
+
+// Computed para peritos mobilizados e em espera
+const mobilizadosUids = computed(() => {
+  const set = new Set();
+  auditorias.value.forEach(a => {
+    if (a.perito) set.add(a.perito);
+  });
+  return set;
+});
+
+const peritosMobilizados = computed(() =>
+  peritos.value.filter(p => mobilizadosUids.value.has(p.uid))
+);
+const peritosAguardando = computed(() =>
+  peritos.value.filter(p => !mobilizadosUids.value.has(p.uid))
+);
+
+// Contagem de peritos em espera por localidade (síncrono)
+const esperaPorLocalidade = computed(() => {
+  const counts = { Norte: 0, Centro: 0, 'Lisboa e Vale do Tejo': 0, Alentejo: 0, Algarve: 0 };
+  peritosAguardando.value.forEach(p => {
+    if (Array.isArray(p.localidades)) {
+      p.localidades.forEach(loc => {
+        if (counts[loc] !== undefined) counts[loc]++;
+      });
+    }
+  });
+  return counts;
+});
+
+// Subscrever coleções e atualizar ativosPorLocalidade
+let unsubPeritos, unsubAud;
+onMounted(() => {
+  unsubPeritos = onSnapshot(
+    collection(db, 'peritos'),
+    snap => { peritos.value = snap.docs.map(d => d.data()); },
+    err => console.error('Erro peritos:', err)
+  );
+  
+  unsubAud = onSnapshot(
+    collection(db, 'auditorias'),
+    async snap => {
+      auditorias.value = snap.docs.map(d => d.data());
+      // Recalcular ativos por localidade
+      const counts = { Norte: 0, Centro: 0, 'Lisboa e Vale do Tejo': 0, Alentejo: 0, Algarve: 0 };
+      for (const a of auditorias.value) {
+        if (a.perito && a.coordenadas) {
+          const { latitude, longitude } = a.coordenadas;
+          const reg = await buscarRegiaoComCache(latitude, longitude);
+          if (counts[reg] !== undefined) counts[reg]++;
+        }
+      }
+      ativosPorLocalidade.value = counts;
+    },
+    err => console.error('Erro auditorias:', err)
+  );
+});
+
+onUnmounted(() => {
+  if (unsubPeritos) unsubPeritos();
+  if (unsubAud) unsubAud();
+});
+
+// Métricas para cartões
+const totalPeritos = computed(() => peritos.value.length);
+const cidadesVigia = computed(() => new Set(auditorias.value.map(a => {
+  if (a.coordenadas) return `${a.coordenadas.latitude},${a.coordenadas.longitude}`;
+  return ''; })).size
+);
+const countAtivos = computed(() => peritosMobilizados.value.length);
+const countAguardando = computed(() => peritosAguardando.value.length);
+
+// Configuração do gráfico com duas séries
 const chartOptions = computed(() => ({
-  chart: { type: 'bar', height: 350 },
-  plotOptions: { bar: { columnWidth: '45%', distributed: true } },
+  chart: { id: 'peritos-chart' },
+  xaxis: { categories: regioes },
   dataLabels: { enabled: false },
-  xaxis: { categories: filteredIndices.value.map(i => localities[i]) }
+  title: { text: 'Peritos Ativos vs Em Espera por Região' },
+  legend: { position: 'top' },
+  tooltip: { y: { title: { formatter: seriesName => seriesName } } }
 }));
+const chartSeries = computed(() => [
+  {
+    name: 'Ativos',
+    data: regioes.map(loc => ativosPorLocalidade.value[loc])
+  },
+  {
+    name: 'Em Espera',
+    data: regioes.map(loc => esperaPorLocalidade.value[loc])
+  }
+]);
 </script>
 
 <style scoped>
 .dashboard-container {
   background: #fff;
 }
+
 .dashboard-layout {
   display: flex;
   gap: 20px;
 }
+
 .sidebar-column {
   width: 20%;
 }
+
 .main-content {
   flex: 1;
   margin-right: 10px;
 }
+
 .content-wrapper {
   margin-top: 40px;
 }
@@ -127,6 +238,7 @@ const chartOptions = computed(() => ({
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
+
 .tab-link {
   text-decoration: none;
   color: #6c757d;

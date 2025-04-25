@@ -98,6 +98,7 @@ export default {
 .dashboard-layout {
     display: flex;
     gap: 20px;
+    height: 100%;
 }
 
 .sidebar-column {
@@ -107,10 +108,12 @@ export default {
 .main-content {
     flex: 1;
     margin-right: 10px;
+    overflow-y: auto;
 }
 
 .content-wrapper {
     margin-top: 40px;
+    min-height: 100%;
 }
 
 .page-header h2 {

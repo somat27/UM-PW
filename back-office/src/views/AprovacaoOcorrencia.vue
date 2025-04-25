@@ -20,13 +20,13 @@
             </div>
             <div class="form-group">
               <label>Tipo de Ocorrência</label>
-              <input v-model="ocorrencia.tipoOcorrencia" disabled class="input" />
+              <input :value="tipoLabels[ocorrencia.tipoOcorrencia] || ocorrencia.tipoOcorrencia" disabled
+                class="input" />
             </div>
             <div class="form-group">
               <label>Endereço</label>
               <input v-model="ocorrencia.endereco" disabled class="input" />
             </div>
-            <!-- Mapa embutido via iframe -->
             <div class="map-container">
               <iframe :src="mapUrl" width="100%" height="100%" frameborder="0" style="border:0;" allowfullscreen
                 loading="lazy"></iframe>
@@ -42,14 +42,16 @@
             <h3>Seleção de Materiais</h3>
             <GenericTable :columns="columnsMateriais" :data="materiaisList" class="table-scroll">
               <template #cell-qtd="{ row }">
-                <input type="number" min="0" :max="row.quantidade" v-model.number="row.qtd" class="input" />
+                <input type="number" min="0" :max="row.quantidade" v-model.number="row.qtd"
+                  @input="row.qtd = row.qtd > row.quantidade ? row.quantidade : row.qtd" class="input" />
               </template>
             </GenericTable>
 
             <h3>Seleção de Profissionais</h3>
             <GenericTable :columns="columnsProfissionais" :data="profissionaisList" class="table-scroll">
               <template #cell-qtd="{ row }">
-                <input type="number" min="0" :max="row.quantidade" v-model.number="row.qtd" class="input" />
+                <input type="number" min="0" :max="row.quantidade" v-model.number="row.qtd"
+                  @input="row.qtd = row.qtd > row.quantidade ? row.quantidade : row.qtd" class="input" />
               </template>
             </GenericTable>
 
@@ -74,7 +76,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import NavigationList from '@/components/NavigationList.vue';
 import GenericTable from '@/components/GenericTable.vue';
-import { doc, getDoc, collection, getDocs, setDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, setDoc, updateDoc  } from 'firebase/firestore';
 import { db } from '@/firebase';
 
 const route = useRoute();
@@ -87,11 +89,17 @@ const selectedPerito = ref(null);
 const deadline = ref('');
 const estimatedTime = ref(0);
 
+const tipoLabels = {
+  sinals: 'Sinalização em Falta',
+  roads: 'Vias e Passeios',
+  lights: 'Iluminação Pública'
+};
+
 const columnsPeritos = [
   { key: 'select', label: '' },
   { key: 'displayName', label: 'Nome' },
   { key: 'specialty', label: 'Especialidade' },
-  { key: 'address', label: 'Localidade' }
+  { key: 'localidades', label: 'Localidade' }
 ];
 const columnsMateriais = [
   { key: 'nome', label: 'Nome' },
@@ -124,17 +132,19 @@ async function loadData() {
 
   // Materiais
   const matSnap = await getDocs(collection(db, 'materiais'));
-  materiaisList.value = matSnap.docs.map(d => ({ id: d.id, ...d.data()}));
+  materiaisList.value = matSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
   // Profissionais
   const profSnap = await getDocs(collection(db, 'profissionais'));
-  profissionaisList.value = profSnap.docs.map(d => ({ id: d.id, ...d.data()}));
+  profissionaisList.value = profSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
 async function submitAuditoria() {
   const id = route.params.id;
 
-  // 1) Constroi o objecto sem undefined
+  const ocRef = doc(db, 'ocorrencias', id);
+  await updateDoc(ocRef, { status: 'Analise' });
+
   const auditoria = {
     descricao: ocorrencia.value.descricao || '',
     tipo: ocorrencia.value.tipoOcorrencia || '',
@@ -142,27 +152,29 @@ async function submitAuditoria() {
     coordenadas: ocorrencia.value.coordenadas || { latitude: 0, longitude: 0 },
     perito: selectedPerito.value || null,
     dataInicio: new Date(),
-    tempoEstimado: typeof estimatedTime.value === 'number' ? estimatedTime.value : 0
+    tempoEstimado: typeof estimatedTime.value === 'number' ? estimatedTime.value : 0,
+    status: "Pendente"
   };
 
-  // 2) Só adiciona dataFim se houver deadline
   if (deadline.value) {
     auditoria.dataFim = new Date(deadline.value);
   }
 
-  // 3) Garantir quantidade sempre numérico
-  auditoria.materiais = materiaisList.value.map(m => ({
-    id: m.id,
-    nome: m.nome,
-    quantidade: typeof m.qtd === 'number' ? m.qtd : 0
-  }));
-  auditoria.profissionais = profissionaisList.value.map(p => ({
-    id: p.id,
-    nome: p.nome,
-    quantidade: typeof p.qtd === 'number' ? p.qtd : 0
-  }));
+  auditoria.materiais = materiaisList.value
+    .filter(m => Number(m.qtd) > 0)
+    .map(m => ({
+      id: m.id,
+      nome: m.nome,
+      quantidade: Number(m.qtd)
+    }));
+  auditoria.profissionais = profissionaisList.value
+    .filter(p => Number(p.qtd) > 0)
+    .map(p => ({
+      id: p.id,
+      nome: p.nome,
+      quantidade: Number(p.qtd)
+    }));
 
-  // 4) Agora podes gravar sem undefined
   await setDoc(doc(db, 'auditorias', id), auditoria);
   router.push('/GestaoOcorrencias');
 }
@@ -175,6 +187,7 @@ onMounted(loadData);
 .dashboard-layout {
   display: flex;
   gap: 20px;
+  height: 100%;
 }
 
 .sidebar-column {
@@ -184,10 +197,12 @@ onMounted(loadData);
 .main-content {
   flex: 1;
   margin-right: 10px;
+  overflow-y: auto;
 }
 
 .content-wrapper {
   margin-top: 40px;
+  min-height: 100%;
 }
 
 .page-header h2 {

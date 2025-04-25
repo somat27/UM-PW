@@ -12,36 +12,20 @@
         <div class="content-wrapper">
 
           <nav class="navigation-tabs">
-            <router-link
-              to="/dashboards/auditorias"
-              class="tab-link"
-              :class="{ active: activeTab === 'auditorias' }"
-              @click="activeTab = 'auditorias'"
-            >
+            <router-link to="/dashboards/auditorias" class="tab-link" :class="{ active: activeTab === 'auditorias' }"
+              @click="activeTab = 'auditorias'">
               Auditorias por região
             </router-link>
-            <router-link
-              to="/dashboards/ocorrencias"
-              class="tab-link"
-              :class="{ active: activeTab === 'ocorrencias' }"
-              @click="activeTab = 'ocorrencias'"
-            >
+            <router-link to="/dashboards/ocorrencias" class="tab-link" :class="{ active: activeTab === 'ocorrencias' }"
+              @click="activeTab = 'ocorrencias'">
               Ocorrências resolvidas
             </router-link>
-            <router-link
-              to="/dashboards/peritos"
-              class="tab-link"
-              :class="{ active: activeTab === 'peritos' }"
-              @click="activeTab = 'peritos'"
-            >
+            <router-link to="/dashboards/peritos" class="tab-link" :class="{ active: activeTab === 'peritos' }"
+              @click="activeTab = 'peritos'">
               Peritos mobilizados e no aguardo
             </router-link>
-            <router-link
-              to="/dashboards/materiais"
-              class="tab-link"
-              :class="{ active: activeTab === 'materiais' }"
-              @click="activeTab = 'materiais'"
-            >
+            <router-link to="/dashboards/materiais" class="tab-link" :class="{ active: activeTab === 'materiais' }"
+              @click="activeTab = 'materiais'">
               Materiais expedidos
             </router-link>
           </nav>
@@ -49,12 +33,8 @@
           <StatisticsGridMateriais :cards="materialCards" />
 
           <div class="radial-chart">
-            <apexchart
-              type="radialBar"
-              height="350"
-              :series="[totalDispensed, totalAvailable]"
-              :options="radialOptions"
-            />
+            <apexchart type="radialBar" height="350" :series="[totalDispensed, totalAvailable]"
+              :options="radialOptions" />
           </div>
 
         </div>
@@ -102,14 +82,30 @@ const radialOptions = {
 </script>
 
 <style scoped>
-.dashboard-container { background: #fff; }
-.dashboard-layout    { display: flex; gap: 20px; }
-.sidebar-column      { width: 20%; }
-.main-content        { 
+.dashboard-container {
+  background: #fff;
+}
+
+.dashboard-layout {
+  display: flex;
+  gap: 20px;
+  height: 100%;
+}
+
+.sidebar-column {
+  width: 20%;
+}
+
+.main-content {
   flex: 1;
   margin-right: 10px;
+  overflow-y: auto;
 }
-.content-wrapper     { margin-top: 40px; }
+
+.content-wrapper {
+  margin-top: 40px;
+  min-height: 100%;
+}
 
 .navigation-tabs {
   margin-top: -15px;
@@ -123,6 +119,7 @@ const radialOptions = {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
+
 .tab-link {
   text-decoration: none;
   color: #6c757d;
@@ -174,6 +171,7 @@ const radialOptions = {
 .stats-only-grid {
   margin-top: 16px;
 }
+
 .radial-chart {
   margin-top: 32px;
   display: flex;

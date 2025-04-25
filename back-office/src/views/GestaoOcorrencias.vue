@@ -218,6 +218,7 @@ onMounted(loadOccurrences);
 .dashboard-layout {
   display: flex;
   gap: 20px;
+  height: 100%;
 }
 
 .sidebar-column {
@@ -227,10 +228,12 @@ onMounted(loadOccurrences);
 .main-content {
   flex: 1;
   margin-right: 10px;
+  overflow-y: auto;
 }
 
 .content-wrapper {
   margin-top: 40px;
+  min-height: 100%;
 }
 
 .controls {

@@ -1,26 +1,12 @@
 <template>
     <section class="statistics-grid" :space="62">
       <div class="statistics-layout">
-        <StatisticsCard title="Peritos Totais" value="100" />
-        <StatisticsCard title="Cidades sobre vigia" value="23" />
-        <StatisticsCard
-          title="Peritos-Ativos"
-          value="9"
-        />
-        <StatisticsCard title="Peritos-Aguardo"  value="91" />
+        <slot />
       </div>
     </section>
   </template>
   
   <script>
-  import StatisticsCard from "./StatisticsCard.vue";
-  
-  export default {
-    name: "StatisticsGrid",
-    components: {
-      StatisticsCard,
-    },
-  };
   </script>
   
   <style scoped>

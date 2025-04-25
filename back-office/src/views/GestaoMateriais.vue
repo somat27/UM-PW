@@ -37,12 +37,8 @@
                 Adicionar Material
               </button>
             </div>
-            <GenericTable @edit="openEditModal" :data="filteredMateriais" :columns="[...materialColumns, editColumn]" :loading="loading"
-              type="striped">
-              <template #cell-quantidade="{ row }">
-                <input type="number" v-model.number="row.quantidade"
-                  @change="atualizarQuantidade(row.id, row.quantidade)" class="quant-input" />
-              </template>
+            <GenericTable @edit="openEditModal" :data="filteredMateriais" :columns="[...materialColumns, editColumn]"
+              :loading="loading" type="striped">
             </GenericTable>
           </div>
         </div>
@@ -73,19 +69,19 @@ export default {
   },
   data() {
     return {
-      materiais: [],         
-      novoMaterial: {        
+      materiais: [],
+      novoMaterial: {
         nome: "",
         categoria: "",
         preco: 0,
         quantidade: 0
       },
-      loading: false,        
+      loading: false,
       erro: null,
-      searchQuery: "",       
-      sortKey: "",           
-      sortOrder: "asc",      
-      sortColumns: [         
+      searchQuery: "",
+      sortKey: "",
+      sortOrder: "asc",
+      sortColumns: [
         { key: "nome", label: "Nome" },
         { key: "categoria", label: "Categoria" },
         { key: "preco", label: "Preço/Unidade" },
@@ -95,7 +91,7 @@ export default {
         { key: "nome", label: "Nome" },
         { key: "categoria", label: "Categoria" },
         { key: "preco", label: "Preço/Unidade" },
-        { key: "quantidade", label: "Quantidade", slot: "quantidade" }
+        { key: "quantidade", label: "Quantidade" }
       ],
       editColumn: { key: "edit", label: "Editar" },
       showAddModal: false,
@@ -208,6 +204,7 @@ export default {
 .dashboard-layout {
   display: flex;
   gap: 20px;
+  height: 100%;
 }
 
 .sidebar-column {
@@ -217,10 +214,12 @@ export default {
 .main-content {
   flex: 1;
   margin-right: 10px;
+  overflow-y: auto;
 }
 
 .content-wrapper {
   margin-top: 40px;
+  min-height: 100%;
 }
 
 .tab-link {

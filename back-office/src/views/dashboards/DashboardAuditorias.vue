@@ -31,8 +31,7 @@
           </nav>
 
           <div class="stats-search-row">
-            <StatisticsGridAuditorias :labels="filteredIndices.map(i => localities[i])"
-              :values="filteredIndices.map(i => dataValues[i])" />
+            <StatisticsGridAuditorias :labels="filteredLabels" :values="filteredValues" />
             <div class="search-section inline">
               <div class="search-input">
                 <input type="text" v-model="searchQuery" placeholder="Pesquisar Localidade..."
@@ -42,7 +41,7 @@
           </div>
 
           <div id="chart">
-            <apexchart type="bar" height="350" :options="chartOptions" :series="series" />
+            <apexchart type="bar" :options="chartOptions" :series="series" height="350" />
           </div>
         </div>
       </main>
@@ -50,65 +49,93 @@
   </div>
 </template>
 
-<script>
-import { ref, computed } from 'vue';
-import VueApexCharts from 'vue3-apexcharts';
-import NavigationList from '@/components/NavigationList.vue';
+<script setup>
+import { ref, computed, onMounted } from 'vue';
+import { collection, onSnapshot } from 'firebase/firestore';
+import { db } from '@/firebase.js';
 import StatisticsGridAuditorias from '@/components/StatisticsGridAuditorias.vue';
+import NavigationList from '@/components/NavigationList.vue';
 
-export default {
-  components: {
-    NavigationList,
-    StatisticsGridAuditorias,
-    apexchart: VueApexCharts
-  },
-  setup() {
-    const activeTab = ref('auditorias');
-    const searchQuery = ref('');
+const activeTab = ref('auditorias');
 
-    const localities = ['Lisboa', 'Porto', 'Coimbra', 'Faro', 'Braga'];
-    const dataValues = [21, 22, 10, 28, 16];
+const searchQuery = ref('');
+const contagem = ref({});
+const cache = {};
 
-    const filteredIndices = computed(() => {
-      if (!searchQuery.value) return localities.map((_, i) => i);
-      return localities
-        .map((loc, idx) => ({ loc, idx }))
-        .filter(item =>
-          item.loc.toLowerCase().includes(searchQuery.value.toLowerCase())
-        )
-        .map(item => item.idx);
-    });
+async function buscarCidade(lat, lon) {
+  const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&addressdetails=1`;
+  const res = await fetch(url, {
+    headers: { 'User-Agent': 'MeuAppUniversidade/1.0 (email@exemplo.com)' }
+  });
+  if (!res.ok) throw new Error(`Erro HTTP ${res.status}`);
+  const data = await res.json();
+  console.log(data)
+  const address = data.address || {};
+  return address.city || address.town || address.village || 'Desconhecida';
+}
 
-    const series = computed(() => [
-      { data: filteredIndices.value.map(i => dataValues[i]) }
-    ]);
-    const chartOptions = computed(() => ({
-      chart: { height: 350, type: 'bar' },
-      plotOptions: { bar: { columnWidth: '45%', distributed: true } },
-      dataLabels: { enabled: false },
-      xaxis: { categories: filteredIndices.value.map(i => localities[i]) }
-    }));
-
-    const onSearch = () => { };
-
-    return {
-      activeTab,
-      searchQuery,
-      localities,
-      dataValues,
-      filteredIndices,
-      series,
-      chartOptions,
-      onSearch
-    };
+async function buscarCidadeComCache(lat, lon) {
+  const key = `${lat},${lon}`;
+  if (cache[key]) return cache[key];
+  try {
+    const city = await buscarCidade(lat, lon);
+    cache[key] = city;
+    return city;
+  } catch (err) {
+    console.error('Erro geocodificação', err);
+    return 'Desconhecida';
   }
-};
+}
+
+onMounted(() => {
+  const colRef = collection(db, 'auditorias');
+  onSnapshot(colRef, async snapshot => {
+    const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    const novo = {};
+    for (const doc of docs) {
+      const lat = doc.coordenadas.latitude;
+      const lon = doc.coordenadas.longitude;
+      const cidade = await buscarCidadeComCache(lat, lon);
+      novo[cidade] = (novo[cidade] || 0) + 1;
+    }
+    contagem.value = novo;
+  });
+});
+
+const localities = computed(() => Object.keys(contagem.value));
+const dataValues = computed(() => Object.values(contagem.value));
+
+const filteredIndices = computed(() => {
+  return localities.value
+    .map((loc, idx) => ({ loc, idx }))
+    .filter(item =>
+      !searchQuery.value ||
+      item.loc.toLowerCase().includes(searchQuery.value.toLowerCase())
+    )
+    .map(item => item.idx);
+});
+
+const filteredLabels = computed(() => filteredIndices.value.map(i => localities.value[i]));
+const filteredValues = computed(() => filteredIndices.value.map(i => dataValues.value[i]));
+
+const series = computed(() => [
+  {
+    name: 'Auditorias',
+    data: filteredValues.value
+  }
+]);
+const chartOptions = computed(() => ({
+  xaxis: { categories: filteredLabels.value },
+  chart: { id: 'auditorias-por-cidade' },
+  dataLabels: { enabled: false }
+}));
 </script>
 
 <style scoped>
 .dashboard-layout {
   display: flex;
   gap: 20px;
+  height: 100%;
 }
 
 .sidebar-column {
@@ -118,10 +145,12 @@ export default {
 .main-content {
   flex: 1;
   margin-right: 10px;
+  overflow-y: auto;
 }
 
 .content-wrapper {
   margin-top: 40px;
+  min-height: 100%;
 }
 
 .navigation-tabs {
@@ -227,5 +256,12 @@ export default {
   /* remove margin-bottom original */
   margin-right: 16px;
   /* margem extra à direita do input */
+}
+
+input {
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  border: 1px solid #ccc;
 }
 </style>
