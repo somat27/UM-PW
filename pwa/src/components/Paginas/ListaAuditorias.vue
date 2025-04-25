@@ -31,11 +31,11 @@
     <button class="flex-coluna margem painel item-ponta" id="auditoria" v-for="audit in auditoriasVisiveis" :key="audit.id" @click="goToPaginaDetalhe(audit)">
         <div class="flex-linha centro item-ponta">
             <h1>{{ audit.nome }}</h1>
-            <h2 :class="corEstado(audit.estado)" id="estado">{{ audit.estado }}</h2>
+            <h2 :class="corEstado(audit.status)" id="estado">{{ audit.status }}</h2>
         </div>
 
         <div class="flex-coluna">
-            <h3><i class="bi bi-geo-alt"></i> {{ audit.local }}</h3>
+            <h3><i class="bi bi-geo-alt"></i> {{ audit.endereco }}</h3>
             <h3><i class="bi bi-clock"></i> {{audit.dataInicio.toDate().toLocaleDateString()}}</h3>
         </div>
     </button>

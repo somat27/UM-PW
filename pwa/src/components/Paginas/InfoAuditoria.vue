@@ -10,10 +10,10 @@
 
         <div class="flex-linha centro item-ponta">
             <h1>{{ auditoria.nome }}</h1>
-            <h2 :class="corEstado(auditoria.estado)" id="estado">{{ auditoria.estado }}</h2>
+            <h2 :class="corEstado(auditoria.status)" id="estado">{{ auditoria.status }}</h2>
         </div>
 
-        <h3 class="margem-cima"><i class="bi bi-geo-alt"></i> {{ auditoria.local }}</h3>
+        <h3 class="margem-cima"><i class="bi bi-geo-alt"></i> {{ auditoria.endereco }}</h3>
         <h3><i class="bi bi-clock"></i> {{ auditoria.dataInicio.toDate().toLocaleDateString() }}</h3>
 
         <div class="painel fundo-cinza margem-cima">
@@ -22,15 +22,15 @@
         </div>
 
 
-        <button class="flex-linha transparente" @click="popUpEquipa = !popUpEquipa">
-            <h2><i class='bi bi-people'></i> Equipa</h2>
-            <PopUpPresente v-if="popUpEquipa && auditoria.peritos.length > 0" :dados="this.auditoria.peritos" :texto="`<i class='bi bi-people'></i> Equipa`"/>
+        <button class="flex-linha transparente" @click="popUpProfissionais = !popUpProfissionais">
+            <h2><i class='bi bi-people'></i> Profissionais</h2>
+            <PopUpPresente v-if="popUpProfissionais && auditoria.profissionais.length > 0" :dados="this.auditoria.profissionais" :texto="`<i class='bi bi-people'></i> Profissionais`"/>
         </button>
 
 
-        <button class="flex-linha transparente" @click="popUpEquipamento = !popUpEquipamento">
-            <h2><i class='bi bi-file-earmark-text'></i> Equipamento</h2>
-            <PopUpPresente v-if="popUpEquipamento && auditoria.equipamento.length > 0" :dados="this.auditoria.equipamento" :texto="`<i class='bi bi-file-earmark-text'></i> Equipamento`"/>
+        <button class="flex-linha transparente" @click="popUpMateriais = !popUpMateriais">
+            <h2><i class='bi bi-file-earmark-text'></i> Materiais</h2>
+            <PopUpPresente v-if="popUpMateriais && auditoria.materiais.length > 0" :dados="this.auditoria.materiais" :texto="`<i class='bi bi-file-earmark-text'></i> Materiais`"/>
         </button>
 
 
@@ -60,8 +60,8 @@
         data() {
             return {
                 auditoria: {},
-                popUpEquipa: false,
-                popUpEquipamento: false,
+                popUpProfissionais: false,
+                popUpMateriais: false,
             }
         },
         async mounted() {

@@ -53,24 +53,30 @@
             id="caixa-texto"></textarea>
         
 
-        <div v-for="dados in popUp" :key="dados" class="margem-cima">
-            <button class="flex-linha transparente" @click="dados.estado = !dados.estado">
-                <h2 v-html="dados.texto"/>
+        <button class="flex-linha transparente margem-cima" @click="popUpProfissionais = !popUpProfissionais">
+            <h2><i class='bi bi-people icon'></i> Profissionais</h2>
+            <PopUpInfo v-if="popUpProfissionais && auditoria.profissionais.length > 0" :dados="this.auditoria.profissionais" :texto="`<i class='bi bi-people icon'></i> Profissionais`" :lista="listaProfissionais" @alteracoes="atualizarListaAlteracaoProfissionais"/>
+        </button>
 
-                <PopUpInfo v-if="dados.estado" :dados="dados"/>
-            </button>
-        </div>
+
+        <button class="flex-linha transparente" @click="popUpMateriais = !popUpMateriais">
+            <h2><i class='bi bi-file-earmark-text icon'></i> Materiais</h2>
+            <PopUpInfo v-if="popUpMateriais && auditoria.materiais.length > 0" :dados="this.auditoria.materiais" :texto="`<i class='bi bi-file-earmark-text icon'></i> Materiais`" :lista="listaMateriais" @alteracoes="atualizarListaAlteracaoEquipamento"/>
+        </button>
 
 
         <button class="flex-linha transparente centro fundo-azul margem-cima" id="iniciar" @click="guardarAuditoria">
             <h2><i class="bi bi-save"></i> Guardar Auditoria</h2>
         </button>
+
+        <h1> Equipa {{ listaAlteracaoProfissionais }}</h1>
+        <h1> Equipamento{{ listaAlteracaoEquipamento }}</h1>
     </div>
 </template>
 
 
 <script>
-    import { doc, getDoc, setDoc } from 'firebase/firestore';
+    import { doc, getDoc, setDoc, collection, getDocs, updateDoc } from 'firebase/firestore';
     import { db, uploadToCloudinary } from '@/firebase/firebase.js';
     import AppHeader from '../AppHeader.vue';
     import PainelImagens from './Extra/PainelImagens.vue';
@@ -88,66 +94,44 @@
         data() {
             return {
                 auditoria: {},
+                listaProfissionais: [],
+                listaMateriais: [],
+
                 mediaRecorder: null,
                 chunks: [],
                 isGravando: false,
 
+                popUpProfissionais: false,
+                popUpMateriais: false,
+
                 carregarFicheiro: false,
                 percentagemUpload: 0,
-                popUp: [
-                    {
-                        "texto": "<i class='bi bi-people icon'></i> Equipa",
-                        "estado": false,
-                        "lista": [
-                            {
-                                "item": "Engenheiro Civil",
-                                "quantidade": 0,
-                            },
-                            {
-                                "item": "Engenheiro Eletricista",
-                                "quantidade": 0,
-                            },
-                            {
-                                "item": "Auditor de Infraestruturas",
-                                "quantidade": 0,
-                            },
-                            {
-                                "item": "Fiscal de Obras Públicas",
-                                "quantidade": 0,
-                            },
-                            {
-                                "item": "Policia",
-                                "quantidade": 0,
-                            },
-                        ]
-                    },
-                    {
-                        "texto": "<i class='bi bi-file-earmark-text icon'></i> Equipamento",
-                        "estado": false,
-                        "lista": [
-                            {
-                                "item": "Madeira",
-                                "quantidade": 0,
-                            },
-                            {
-                                "item": "Metal",
-                                "quantidade": 0,
-                            },
-                            {
-                                "item": "Cimento",
-                                "quantidade": 0,
-                            },
-                        ]
-                    }
-                ],
+
+                listaAlteracaoProfissionais: [],
+                listaAlteracaoEquipamento: [],
             }
         },
         async mounted() {
             const id = this.$route.params.id;
             const docSnap = await getDoc(doc(db, "auditorias", id));
             if (docSnap.exists()) {
+
                 const dados = docSnap.data();
                 this.auditoria = { id: docSnap.id, ...dados };
+
+
+                const querySnapshotProfissionais = await getDocs(collection(db, "profissionais"));
+                this.listaProfissionais = querySnapshotProfissionais.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+
+                const querySnapshotMateriais = await getDocs(collection(db, "materiais"));
+                this.listaMateriais = querySnapshotMateriais.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+
             } else {
                 this.auditoria = {};
             }
@@ -179,17 +163,70 @@
             },
             async guardarAuditoria() {
                 try {
-                    this.auditoria.estado = "Pendente";
+                    // Primeiro, busque os valores atualizados na Firebase para profissionais e materiais
+                    const querySnapshotProfissionais = await getDocs(collection(db, "profissionais"));
+                    const profissionaisAtualizados = querySnapshotProfissionais.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
 
-                    const auditoriaId = this.$route.params.id;
-                    await setDoc(doc(db, "auditorias", auditoriaId), {
-                    ...this.auditoria
+                    const querySnapshotMateriais = await getDocs(collection(db, "materiais"));
+                    const materiaisAtualizados = querySnapshotMateriais.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
+
+                    // Verifique se as quantidades nas listas de alterações são possíveis de serem retiradas
+                    const profissionaisValidados = this.listaAlteracaoProfissionais.every(alteracao => {
+                        const profissional = profissionaisAtualizados.find(p => p.nome === alteracao.nome);
+                        return profissional && profissional.quantidade >= -alteracao.quantidade;
                     });
-                    console.log("Dados da auditoria salvos com sucesso!");
-                    this.$router.push({
-                        name: "InfoAuditoria",
-                        params: { id: this.auditoria.id },
+
+                    const materiaisValidados = this.listaAlteracaoEquipamento.every(alteracao => {
+                        const material = materiaisAtualizados.find(m => m.nome === alteracao.nome);
+                        return material && material.quantidade >= -alteracao.quantidade;
                     });
+
+                    // Se todas as quantidades forem válidas, atualize a Firebase e guarde a auditoria
+                    if (profissionaisValidados && materiaisValidados) {
+                        // Atualizar a quantidade dos profissionais na Firebase
+                        for (const alteracao of this.listaAlteracaoProfissionais) {
+                            const profissional = profissionaisAtualizados.find(p => p.nome === alteracao.nome);
+                            if (profissional) {
+                                await updateDoc(doc(db, "profissionais", profissional.id), {
+                                    quantidade: profissional.quantidade + alteracao.quantidade
+                                });
+                            }
+                        }
+
+                        // Atualizar a quantidade dos materiais na Firebase
+                        for (const alteracao of this.listaAlteracaoEquipamento) {
+                            const material = materiaisAtualizados.find(m => m.nome === alteracao.nome);
+                            if (material) {
+                                await updateDoc(doc(db, "materiais", material.id), {
+                                    quantidade: material.quantidade + alteracao.quantidade
+                                });
+                            }
+                        }
+
+                        // Agora, guarde a auditoria
+                        this.auditoria.status = "Pendente";
+                        const auditoriaId = this.$route.params.id;
+                        await setDoc(doc(db, "auditorias", auditoriaId), {
+                            ...this.auditoria
+                        });
+                        console.log("Dados da auditoria salvos com sucesso!");
+
+                        // Redirecionar para a página de informações da auditoria
+                        this.$router.push({
+                            name: "InfoAuditoria",
+                            params: { id: this.auditoria.id }
+                        });
+
+                    } else {
+                        // Se alguma quantidade não for válida, avise o usuário
+                        alert("Não há quantidade suficiente para realizar a alteração.");
+                    }
                 } catch (error) {
                     console.error("Erro ao salvar os dados:", error);
                 }
@@ -239,6 +276,44 @@
             pararGravacao() {
                 if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
                     this.mediaRecorder.stop();
+                }
+            },
+            atualizarListaAlteracaoProfissionais(dados) {
+                const elemento = dados.elemento;
+                const quantidade = dados.quantidade;
+
+                const item = this.listaAlteracaoProfissionais.find(item => item.nome === elemento.nome)
+                if(item) {
+                    item.quantidade += quantidade
+
+                    if (item.quantidade === 0) {
+                        this.listaAlteracaoProfissionais = this.listaAlteracaoProfissionais.filter(i => i.nome !== elemento.nome);
+                    }
+                }
+                else {
+                    this.listaAlteracaoProfissionais.push({
+                        "nome": elemento.nome,
+                        "quantidade": quantidade,
+                    })
+                }
+            },
+            atualizarListaAlteracaoEquipamento(dados) {
+                const elemento = dados.elemento;
+                const quantidade = dados.quantidade;
+
+                const item = this.listaAlteracaoEquipamento.find(item => item.nome === elemento.nome)
+                if(item) {
+                    item.quantidade += quantidade
+
+                    if (item.quantidade === 0) {
+                        this.listaAlteracaoEquipamento = this.listaAlteracaoEquipamento.filter(i => i.nome !== elemento.nome);
+                    }
+                }
+                else {
+                    this.listaAlteracaoEquipamento.push({
+                        "nome": elemento.nome,
+                        "quantidade": quantidade,
+                    })
                 }
             }
         }
