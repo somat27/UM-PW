@@ -13,9 +13,12 @@ export async function obterSugestaoAuditoria(dados) {
       );
     }
 
-    // Improved Prompt
+    const hoje = new Date().toISOString().split("T")[0];
+
     const prompt = `
       You are an assistant specialized in audit planning and municipal resource management.
+
+      Today's date is ${hoje}.
 
       Based on the following data, evaluate critically whether an audit is necessary.
       If yes, propose a detailed audit plan.
@@ -111,12 +114,6 @@ export async function obterSugestaoAuditoria(dados) {
 
     try {
       const sugestaoJSON = JSON.parse(sugestaoStr);
-
-      console.log(
-        "Sugestão de Auditoria:\n",
-        JSON.stringify(sugestaoJSON, null, 2),
-        "\n\n"
-      );
 
       return sugestaoJSON;
     } catch (parseError) {
