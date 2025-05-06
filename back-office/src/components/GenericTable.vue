@@ -200,6 +200,16 @@ export default {
   color: white;
 }
 
+.status-badge[data-status="concluido"] {
+  background: #4caf50;
+  color: white;
+}
+
+.status-badge[data-status="resolvido"] {
+  background: #4caf50;
+  color: white;
+}
+
 .status-badge[data-status="rejeitado"] {
   background: #f44336;
   color: white;
