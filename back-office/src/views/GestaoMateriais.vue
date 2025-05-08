@@ -11,35 +11,49 @@
 
       <main class="main-content">
         <div class="content-wrapper">
+
           <AddMaterialModal v-if="showAddModal" :material="materialParaEditar" @close="showAddModal = false"
             @saved="handleMaterialSaved" />
+
+          <div v-if="showAddQuantidadeModal" class="modal-overlay">
+            <div class="modal-content">
+              <h3>Adicionar {{ materialParaAdicionarQtd.nome }}</h3>
+              <input type="number" v-model.number="quantidadeParaAdicionar" min="1" class="input-quantidade" />
+              <div class="modal-actions">
+                <button @click="showAddQuantidadeModal = false" class="btn-secondary">Cancelar</button>
+                <button @click="confirmarAdicionarQuantidade" class="btn-primary">Confirmar</button>
+              </div>
+            </div>
+          </div>
+
           <div v-if="loading">A carregar…</div>
           <div v-else>
-            <div v-if="erro" class="mensagem-erro">{{ erro }}</div>
+            <div v-if="erro" class="error">{{ erro }}</div>
+
+            <!-- Cabeçalho -->
             <div class="page-header">
               <h2>Gestão de Materiais</h2>
             </div>
+
             <div class="controls">
               <input v-model="searchQuery" type="text" placeholder="Procurar Materiais..." class="search-input" />
-
               <select v-model="sortKey" class="sort-select">
                 <option value="">Ordenar por</option>
                 <option v-for="col in sortColumns" :key="col.key" :value="col.key">
                   {{ col.label }}
                 </option>
               </select>
-
               <button @click="toggleSortOrder" class="sort-button">
                 {{ sortOrder === 'asc' ? '↑' : '↓' }}
               </button>
-
               <button @click="openAddMaterialModal" class="btn-add-material">
                 Adicionar Material
               </button>
             </div>
-            <GenericTable @edit="openEditModal" :data="filteredMateriais" :columns="[...materialColumns, editColumn]"
-              :loading="loading" type="striped">
-            </GenericTable>
+
+            <!-- Tabela genérica com colunas e ações -->
+            <GenericTable :data="filteredMateriais" :columns="[...materialColumns, editColumn]"
+              :loading="loading" type="striped" @edit="openEditModal" @add="openAddQuantidadeModal" />
           </div>
         </div>
       </main>
@@ -48,156 +62,125 @@
 </template>
 
 <script>
-import NavigationList from "../components/NavigationList.vue";
-import GenericTable from "@/components/GenericTable.vue";
-import AddMaterialModal from "@/components/AddMaterialModal.vue";
-import { db } from "@/firebase.js";
-import {
-  collection,
-  getDocs,
-  addDoc,
-  updateDoc,
-  doc
-} from "firebase/firestore";
+import NavigationList from '@/components/NavigationList.vue'
+import GenericTable from '@/components/GenericTable.vue'
+import AddMaterialModal from '@/components/AddMaterialModal.vue'
+import { db } from '@/firebase.js'
+import { collection, getDocs, updateDoc, doc } from 'firebase/firestore'
 
 export default {
-  name: "GestaoPeritos",
+  name: 'GestaoMateriais',
   components: {
     NavigationList,
     GenericTable,
-    AddMaterialModal,
+    AddMaterialModal
   },
   data() {
     return {
       materiais: [],
-      novoMaterial: {
-        nome: "",
-        categoria: "",
-        preco: 0,
-        quantidade: 0
-      },
       loading: false,
       erro: null,
-      searchQuery: "",
-      sortKey: "",
-      sortOrder: "asc",
+      searchQuery: '',       // pesquisa por nome apenas
+      sortKey: '',
+      sortOrder: 'asc',
       sortColumns: [
-        { key: "nome", label: "Nome" },
-        { key: "categoria", label: "Categoria" },
-        { key: "preco", label: "Preço/Unidade" },
-        { key: "quantidade", label: "Quantidade" }
+        { key: 'nome', label: 'Nome' },
+        { key: 'categoria', label: 'Categoria' },
+        { key: 'preco', label: 'Preço/Unidade' },
+        { key: 'quantidade', label: 'Quantidade' }
       ],
       materialColumns: [
-        { key: "nome", label: "Nome" },
-        { key: "categoria", label: "Categoria" },
-        { key: "preco", label: "Preço/Unidade" },
-        { key: "quantidade", label: "Quantidade" }
+        { key: 'nome', label: 'Nome' },
+        { key: 'categoria', label: 'Categoria' },
+        { key: 'preco', label: 'Preço/Unidade' },
+        { key: 'quantidade', label: 'Quantidade' }
       ],
-      editColumn: { key: "edit", label: "Editar" },
+      editColumn: { key: 'edit-materiais', label: 'Ações' },
       showAddModal: false,
-      materialParaEditar: null
-    };
-  },
-  mounted() {
-    this.fetchMateriais();
-  },
-  methods: {
-    async fetchMateriais() {
-      this.loading = true;
-      this.erro = null;
-      try {
-        const snapshot = await getDocs(collection(db, "materiais"));
-        this.materiais = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-      } catch (e) {
-        this.erro = "Não foi possível carregar os materiais.";
-        console.error(e);
-      } finally {
-        this.loading = false;
-      }
-    },
-    async adicionarMaterial() {
-      this.loading = true;
-      try {
-        const ref = await addDoc(collection(db, "materiais"), {
-          nome: this.novoMaterial.nome,
-          categoria: this.novoMaterial.categoria,
-          preco: this.novoMaterial.preco,
-          quantidade: this.novoMaterial.quantidade
-        });
-        // adiciona imediatamente à lista local
-        this.materiais.push({ id: ref.id, ...this.novoMaterial });
-        // limpa o formulário
-        this.novoMaterial = { nome: "", categoria: "", preco: 0, quantidade: 0 };
-      } catch (e) {
-        this.erro = "Não foi possível adicionar o material.";
-        console.error(e);
-      } finally {
-        this.loading = false;
-      }
-    },
-    async atualizarQuantidade(id, novaQtd) {
-      try {
-        const refDoc = doc(db, "materiais", id);
-        await updateDoc(refDoc, { quantidade: novaQtd });
-        // reflete a mudança na lista local
-        const item = this.materiais.find(m => m.id === id);
-        if (item) item.quantidade = novaQtd;
-      } catch (e) {
-        console.error("Erro ao atualizar quantidade:", e);
-      }
-    },
-    toggleSortOrder() {
-      this.sortOrder = this.sortOrder === "asc" ? "desc" : "asc";
-    },
-    openAddMaterialModal() {
-      this.materialParaEditar = null;
-      this.showAddModal = true;
-    },
-    openEditModal(mat) {
-      this.materialParaEditar = mat;
-      this.showAddModal = true;
-    },
-    handleMaterialSaved() {
-      this.showAddModal = false;
-      this.fetchMateriais();
+      materialParaEditar: null,
+      showAddQuantidadeModal: false,
+      materialParaAdicionarQtd: null,
+      quantidadeParaAdicionar: 1
     }
   },
   computed: {
     filteredMateriais() {
-      let list = this.materiais;
-
-      // 1) filtrar pela pesquisa (nome OU categoria)
+      let list = this.materiais
+      // filtrar apenas por nome
       if (this.searchQuery) {
-        const q = this.searchQuery.toLowerCase();
-        list = list.filter(mat =>
-          mat.nome.toLowerCase().includes(q) ||
-          mat.categoria.toLowerCase().includes(q)
-        );
+        const term = this.searchQuery.toLowerCase()
+        list = list.filter(m => m.nome.toLowerCase().includes(term))
       }
-
-      // 2) ordenar se houver chave definida
+      // ordenar
       if (this.sortKey) {
-        list = [...list].sort((a, b) => {
-          let A = a[this.sortKey];
-          let B = b[this.sortKey];
-
-          // converter strings para lower case
-          if (typeof A === "string") A = A.toLowerCase();
-          if (typeof B === "string") B = B.toLowerCase();
-
-          if (A < B) return this.sortOrder === "asc" ? -1 : 1;
-          if (A > B) return this.sortOrder === "asc" ? 1 : -1;
-          return 0;
-        });
+        list = list.slice().sort((a, b) => {
+          let valA = a[this.sortKey]
+          let valB = b[this.sortKey]
+          if (typeof valA === 'string') valA = valA.toLowerCase()
+          if (typeof valB === 'string') valB = valB.toLowerCase()
+          if (valA < valB) return this.sortOrder === 'asc' ? -1 : 1
+          if (valA > valB) return this.sortOrder === 'asc' ? 1 : -1
+          return 0
+        })
       }
-
-      return list;
+      return list
+    }
+  },
+  mounted() {
+    this.fetchMateriais()
+  },
+  methods: {
+    async fetchMateriais() {
+      this.loading = true
+      this.erro = null
+      try {
+        const snap = await getDocs(collection(db, 'materiais'))
+        this.materiais = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      } catch (e) {
+        this.erro = 'Não foi possível carregar os materiais.'
+        console.error(e)
+      } finally {
+        this.loading = false
+      }
+    },
+    toggleSortOrder() {
+      this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc'
+    },
+    openAddMaterialModal() {
+      this.materialParaEditar = null
+      this.showAddModal = true
+    },
+    openEditModal(item) {
+      this.materialParaEditar = item
+      this.showAddModal = true
+    },
+    openAddQuantidadeModal(item) {
+      this.materialParaAdicionarQtd = item
+      this.quantidadeParaAdicionar = 1
+      this.showAddQuantidadeModal = true
+    },
+    async confirmarAdicionarQuantidade() {
+      const novaQtd = this.materialParaAdicionarQtd.quantidade + this.quantidadeParaAdicionar
+      await this.atualizarQuantidade(this.materialParaAdicionarQtd.id, novaQtd)
+      this.showAddQuantidadeModal = false
+      this.fetchMateriais()
+    },
+    async handleMaterialSaved() {
+      this.showAddModal = false
+      this.fetchMateriais()
+    },
+    async atualizarQuantidade(id, novaQtd) {
+      try {
+        const refDoc = doc(db, 'materiais', id)
+        await updateDoc(refDoc, { quantidade: novaQtd })
+        const item = this.materiais.find(m => m.id === id)
+        if (item) item.quantidade = novaQtd
+      } catch (e) {
+        console.error('Erro ao atualizar quantidade:', e)
+      }
     }
   }
-};
+}
 </script>
 
 <style scoped>
@@ -339,5 +322,61 @@ export default {
 
 .btn-add-material:hover {
   background-color: #167ac6;
+}
+
+.btn-primary {
+  background: #1890ff;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background: #167ac6;
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 1px solid #ccc;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background: #f5f5f5;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 300px;
+}
+
+.modal-content h3 {
+  margin-top: 0;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 15px;
 }
 </style>

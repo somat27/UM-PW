@@ -19,30 +19,33 @@
 
           <!-- Controles de pesquisa e ordenação -->
           <div class="controls">
-            <input v-model="searchQuery" type="text" placeholder="Procurar Ocorrências..." class="search-input" />
+            <input v-model="searchQuery" type="text" placeholder="Procurar por ID..." class="search-input" />
             <select v-model="sortKey" class="sort-select">
               <option value="">Ordenar por</option>
               <option v-for="col in sortColumns" :key="col.key" :value="col.key">{{ col.label }}</option>
             </select>
-            <button @click="toggleSortOrder" class="sort-button">{{ sortOrder === 'asc' ? '↑' : '↓' }}</button>
+            <button @click="toggleSortOrder" class="sort-button">
+              {{ sortOrder === 'asc' ? '↑' : '↓' }}
+            </button>
           </div>
 
-          <!-- Tabela de Ocorrências Pendentes -->
+          <!-- Tabela de Ocorrências -->
           <div class="table-section">
-            <h3>Pendentes</h3>
-            <GenericTable :columns="columnsPending" :data="pendingOccurrences" :loading="loading" @view="openDetail" />
-          </div>
-
-          <!-- Tabela de Outras Ocorrências -->
-          <div class="table-section">
-            <h3>Outras Ocorrências</h3>
-            <GenericTable :columns="columnsOther" :data="otherOccurrences" :loading="loading" @view="openDetail" />
+            <GenericTable :columns="columns" :data="filteredOccurrences" :loading="loading" @view="openDetail" />
           </div>
 
           <!-- Modal de Detalhes -->
-          <div v-if="showDetailModal" class="modal-overlay large">
+          <div v-if="showDetailModal" @click.self="closeModals" class="modal-overlay large">
             <div class="modal-content">
-              <h3>Detalhes da Ocorrência</h3>
+              <header class="modal-header">
+                <h3>Ocorrência: {{ selected.id }}</h3>
+                <button class="modal-close" @click="closeModals" aria-label="Fechar">×</button>
+              </header>
+              <!-- Mapa -->
+              <iframe v-if="selected.coordenadas"
+                :src="`https://www.google.com/maps?q=${selected.coordenadas.latitude},${selected.coordenadas.longitude}&output=embed`"
+                width="100%" height="300" frameborder="0" style="border:0; margin-top:10px;"></iframe>
+
               <ul class="detail-list">
                 <li><strong>Tipo:</strong> {{ selected.tipoOcorrencia }}</li>
                 <li><strong>Estado:</strong> {{ selected.status }}</li>
@@ -64,19 +67,15 @@
                 <button @click="nextMedia">›</button>
               </div>
 
-              <!-- Mapa -->
-              <iframe v-if="selected.coordenadas"
-                :src="`https://www.google.com/maps?q=${selected.coordenadas.latitude},${selected.coordenadas.longitude}&output=embed`"
-                width="100%" height="300" frameborder="0" style="border:0; margin-top:10px;"></iframe>
-
               <div class="modal-actions">
-                <router-link v-if="selected.status.toLowerCase() === 'pendente'" :to="{ name: 'AprovacaoOcorrencia', params: { id: selected.id } }"
-                  class="btn-approve">
+                <router-link v-if="selected.status.toLowerCase() === 'pendente'"
+                  :to="{ name: 'AprovacaoOcorrencia', params: { id: selected.id } }" class="btn-approve">
                   Aprovar
                 </router-link>
                 <button v-if="selected.status.toLowerCase() === 'pendente'" class="btn-reject"
-                  @click="handleReject(selected)">Rejeitar</button>
-                <button class="btn-cancel" @click="closeModals">Fechar</button>
+                  @click="handleReject(selected)">
+                  Rejeitar
+                </button>
               </div>
             </div>
           </div>
@@ -85,7 +84,7 @@
           <div v-if="showRejectModal" class="modal-overlay">
             <div class="modal-content">
               <h3>Motivo da Rejeição</h3>
-              <textarea v-model="rejectReason" rows="4" placeholder="Insere a razão..."></textarea>
+              <textarea v-model="rejectReason" rows="4" placeholder="Insira a razão..."></textarea>
               <div class="modal-actions">
                 <button class="btn-submit" @click="submitReject">Enviar</button>
                 <button class="btn-cancel" @click="closeModals">Cancelar</button>
@@ -99,14 +98,13 @@
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted, computed } from 'vue';
+<script setup>import { ref, onMounted, computed } from 'vue';
 import NavigationList from '@/components/NavigationList.vue';
 import GenericTable from '@/components/GenericTable.vue';
 import { db } from '@/firebase.js';
 import { collection, getDocs, updateDoc, doc } from 'firebase/firestore';
 
-// Estado e rótulos
+// Estado
 const occurrences = ref([]);
 const loading = ref(false);
 const selected = ref(null);
@@ -118,6 +116,7 @@ const searchQuery = ref('');
 const sortKey = ref('');
 const sortOrder = ref('asc');
 
+// Rótulos e opções de ordenação
 const tipoLabels = { sinals: 'Sinalização em Falta', roads: 'Vias e Passeios', lights: 'Iluminação Pública' };
 const sortColumns = [
   { key: 'id', label: 'ID' },
@@ -125,28 +124,20 @@ const sortColumns = [
   { key: 'status', label: 'Estado' }
 ];
 
-// Colunas para cada tabela (usam 'view' para abrir modal)
-const columnsPending = [
+// Colunas para a tabela única
+const columns = [
   { key: 'id', label: 'ID' },
   { key: 'tipoOcorrencia', label: 'Tipo' },
   { key: 'status', label: 'Estado' },
-  { key: 'actions', label: 'Ver Detalhes' }
-];
-const columnsOther = [
-  { key: 'id', label: 'ID' },
-  { key: 'tipoOcorrencia', label: 'Tipo' },
-  { key: 'status', label: 'Estado' },
-  { key: 'actions', label: 'Ver Detalhes' }
+  { key: 'actions', label: 'Ações' }
 ];
 
-// Filtrar e ordenar em comum
-const filtered = computed(() => {
+// Filtrar e ordenar apenas por ID
+const filteredOccurrences = computed(() => {
   let arr = occurrences.value;
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase();
-    arr = arr.filter(i =>
-      i.id.includes(q) || i.tipoOcorrencia.toLowerCase().includes(q) || i.status.toLowerCase().includes(q)
-    );
+    arr = arr.filter(i => i.id.toLowerCase().includes(q));
   }
   if (sortKey.value) {
     arr = [...arr].sort((a, b) => {
@@ -157,8 +148,6 @@ const filtered = computed(() => {
   }
   return arr;
 });
-const pendingOccurrences = computed(() => filtered.value.filter(i => i.status.toLowerCase() === 'pendente'));
-const otherOccurrences = computed(() => filtered.value.filter(i => i.status.toLowerCase() !== 'pendente'));
 
 // Carregar dados
 async function loadOccurrences() {
@@ -174,14 +163,13 @@ async function loadOccurrences() {
   } catch (e) { console.error('Erro ao carregar ocorrências:', e); } finally { loading.value = false; }
 }
 
-// Ações e modal
+// Ações de modal
 function openDetail(item) {
   selected.value = item;
   mediaIndex.value = 0;
   showDetailModal.value = true;
 }
-function handleReject(item) {
-  selected.value = item;
+function handleReject() {
   showRejectModal.value = true;
 }
 function closeModals() {
@@ -191,23 +179,19 @@ function closeModals() {
 }
 async function submitReject() {
   if (selected.value) {
-    await updateDoc(doc(db, 'ocorrencias', selected.value.id),
-      { status: 'Rejeitado', motivoRejeicao: rejectReason.value });
-    closeModals();
-    loadOccurrences();
+    await updateDoc(doc(db, 'ocorrencias', selected.value.id), { status: 'Rejeitado', motivoRejeicao: rejectReason.value });
+    closeModals(); loadOccurrences();
   }
 }
 function toggleSortOrder() {
   sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
 }
 function nextMedia() {
-  if (!selected.value?.imagemVideo)
-    return;
+  if (!selected.value?.imagemVideo) return;
   mediaIndex.value = (mediaIndex.value + 1) % selected.value.imagemVideo.length;
 }
 function prevMedia() {
-  if (!selected.value?.imagemVideo)
-    return;
+  if (!selected.value?.imagemVideo) return;
   mediaIndex.value = (mediaIndex.value - 1 + selected.value.imagemVideo.length) % selected.value.imagemVideo.length;
 }
 
@@ -376,5 +360,28 @@ textarea {
   padding: 8px 16px;
   cursor: pointer;
   border-radius: 4px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #333;
+}
+
+.modal-close {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #666;
+  transition: color 0.2s;
 }
 </style>

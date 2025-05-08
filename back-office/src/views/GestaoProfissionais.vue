@@ -16,6 +16,17 @@
           <AddProfissionalModal v-if="showAddModal" :profissional="profissionalParaEditar" @close="showAddModal = false"
             @saved="handleProfissionalSaved" />
 
+          <div v-if="showAddQuantidadeModal" class="modal-overlay">
+            <div class="modal-content">
+              <h3>Adicionar {{ profissionalParaAdicionarQtd.nome }}</h3>
+              <input type="number" v-model.number="quantidadeParaAdicionar" min="1" class="input-quantidade" />
+              <div class="modal-actions">
+                <button @click="showAddQuantidadeModal = false" class="btn-secondary">Cancelar</button>
+                <button @click="confirmarAdicionarQuantidade" class="btn-primary">Confirmar</button>
+              </div>
+            </div>
+          </div>
+
           <!-- Loading / Erro -->
           <div v-if="loading">A carregar…</div>
           <div v-else>
@@ -45,9 +56,8 @@
             </div>
 
             <!-- Tabela genérica -->
-            <GenericTable :data="profissionais" :columns="[...profissionalColumns, editColumn]" :loading="loading"
-              type="striped" @edit="openEditModal">
-            </GenericTable>
+            <GenericTable :data="processedProfissionais" :columns="[...profissionalColumns, editColumn]"
+              :loading="loading" type="striped" @edit="openEditModal" @add="openAddQuantidadeModal" />
           </div>
         </div>
       </main>
@@ -74,24 +84,50 @@ export default {
       profissionais: [],
       loading: false,
       erro: null,
-      searchQuery: "",          // texto da pesquisa
-      sortKey: "",              // campo por onde ordenar
-      sortOrder: "asc",         // ordem: asc ou desc
+      searchQuery: '',          // pesquisa por nome
+      sortKey: '',              // campo por onde ordenar
+      sortOrder: 'asc',         // ordem: asc ou desc
       sortColumns: [            // opções do dropdown
-        { key: "nome", label: "Nome" },
-        { key: "area", label: "Área/Especialidade" },
+        { key: 'nome', label: 'Nome' },
+        { key: 'area', label: 'Área/Especialidade' },
         { key: 'preco', label: 'Preço/Hora' },
-        { key: "quantidade", label: "Quantidade" }
+        { key: 'quantidade', label: 'Quantidade' }
       ],
       showAddModal: false,
       profissionalParaEditar: null,
+      showAddQuantidadeModal: false,
+      profissionalParaAdicionarQtd: null,
+      quantidadeParaAdicionar: 1,
       profissionalColumns: [
         { key: 'nome', label: 'Nome' },
         { key: 'area', label: 'Área/Especialidade' },
         { key: 'preco', label: 'Preço/Hora' },
         { key: 'quantidade', label: 'Quantidade' }
       ],
-      editColumn: { key: 'edit', label: 'Editar' }
+      editColumn: { key: 'edit-profissionais', label: 'Ações' }
+    }
+  },
+  computed: {
+    processedProfissionais() {
+      let result = this.profissionais
+      // filtrar apenas por nome
+      if (this.searchQuery) {
+        const term = this.searchQuery.toLowerCase()
+        result = result.filter(p => p.nome.toLowerCase().includes(term))
+      }
+      // ordenar se necessário
+      if (this.sortKey) {
+        result = result.slice().sort((a, b) => {
+          let valA = a[this.sortKey]
+          let valB = b[this.sortKey]
+          if (typeof valA === 'string') valA = valA.toLowerCase()
+          if (typeof valB === 'string') valB = valB.toLowerCase()
+          if (valA < valB) return this.sortOrder === 'asc' ? -1 : 1
+          if (valA > valB) return this.sortOrder === 'asc' ? 1 : -1
+          return 0
+        })
+      }
+      return result
     }
   },
   mounted() {
@@ -122,6 +158,17 @@ export default {
       this.profissionalParaEditar = item
       this.showAddModal = true
     },
+    openAddQuantidadeModal(item) {
+      this.profissionalParaAdicionarQtd = item
+      this.quantidadeParaAdicionar = 1
+      this.showAddQuantidadeModal = true
+    },
+    async confirmarAdicionarQuantidade() {
+      const novaQtd = this.profissionalParaAdicionarQtd.quantidade + this.quantidadeParaAdicionar
+      await this.atualizarQuantidade(this.profissionalParaAdicionarQtd.id, novaQtd)
+      this.showAddQuantidadeModal = false
+      await this.fetchProfissionais()
+    },
     async handleProfissionalSaved() {
       this.showAddModal = false
       await this.fetchProfissionais()
@@ -141,7 +188,11 @@ export default {
 </script>
 
 <style scoped>
-html, body, #app, .dashboard-container, .dashboard-layout {
+html,
+body,
+#app,
+.dashboard-container,
+.dashboard-layout {
   height: 100%;
   margin: 0;
   padding: 0;
@@ -159,7 +210,7 @@ html, body, #app, .dashboard-container, .dashboard-layout {
 
 .main-content {
   flex: 1;
-  margin-right: 10px; 
+  margin-right: 10px;
   overflow-y: auto;
 }
 
@@ -285,5 +336,96 @@ html, body, #app, .dashboard-container, .dashboard-layout {
 
 .btn-add:hover {
   background-color: #167ac6;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 300px;
+}
+
+.modal-content h3 {
+  margin-top: 0;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.btn-confirm,
+.btn-cancel {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-confirm {
+  background: #4caf50;
+  color: #fff;
+}
+
+.btn-cancel {
+  background: #f44336;
+  color: #fff;
+}
+
+.btn-primary {
+  background: #1890ff;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background: #167ac6;
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 1px solid #ccc;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background: #f5f5f5;
+}
+
+.form-group {
+    margin-bottom: 0.75rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 0.375rem;
 }
 </style>

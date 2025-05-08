@@ -28,54 +28,119 @@
           </GenericTable>
 
           <!-- Modal de detalhes -->
-          <div v-if="selectedAuditoria" class="modal-overlay" @click.self="closeModal">
-            <div class="modal-box">
-              <h3>Auditoria: {{ selectedAuditoria.id }}</h3>
+          <transition name="modal">
+            <div v-if="selectedAuditoria" class="modal-overlay" @click.self="closeModal">
+              <div class="modal-container" role="dialog" aria-modal="true">
+                <!-- Header -->
+                <header class="modal-header">
+                  <h3>Auditoria: {{ selectedAuditoria.id }}</h3>
+                  <button class="modal-close" @click="closeModal" aria-label="Fechar">×</button>
+                </header>
 
-              <!-- Mapa -->
-              <div v-if="selectedAuditoria.coordenadas">
-                <iframe
-                  :src="`https://www.google.com/maps?q=${selectedAuditoria.coordenadas.latitude},${selectedAuditoria.coordenadas.longitude}&hl=pt&z=15&output=embed`"
-                  width="100%" height="200" frameborder="0" style="border:0;" allowfullscreen loading="lazy"></iframe>
+                <!-- Body (scroll se exceder altura) -->
+                <div class="modal-body">
+                  <!-- Mapa -->
+                  <div v-if="selectedAuditoria.coordenadas" class="map-wrapper">
+                    <iframe :src="`
+                https://www.google.com/maps?q=
+                ${selectedAuditoria.coordenadas.latitude},
+                ${selectedAuditoria.coordenadas.longitude}
+                &hl=pt&z=15&output=embed
+              `" class="map-iframe" allowfullscreen loading="lazy"></iframe>
+                  </div>
+
+                  <!-- Dados principais em grid -->
+                  <div class="info-grid">
+                    <div v-if="selectedAuditoria.dataInicio" class="info-item">
+                      <span>Data Início:</span>
+                      {{ formatDate(selectedAuditoria.dataInicio) }}
+                    </div>
+                    <div v-if="selectedAuditoria.dataFim" class="info-item">
+                      <span>Data Fim:</span>
+                      {{ formatDate(selectedAuditoria.dataFim) }}
+                    </div>
+                    <div class="info-item">
+                      <span>Tipo:</span> {{ selectedAuditoria.tipo }}
+                    </div>
+                    <div class="info-item">
+                      <span>Estado:</span> {{ selectedAuditoria.status }}
+                    </div>
+                  </div>
+
+                  <!-- Descrição -->
+                  <div v-if="selectedAuditoria.descricao" class="section">
+                    <p class="section-title">Descrição:</p>
+                    <p class="description-text">{{ selectedAuditoria.descricao }}</p>
+                  </div>
+
+                  <!-- === TABELA DE MATERIAIS === -->
+                  <div v-if="selectedAuditoria.materiais" class="section">
+                    <div class="section-header">
+                      <p class="section-title">Materiais</p>
+                      <div>
+                        <button class="add-button" @click="addMaterial">+ Novo</button>
+                        <button class="save-button" @click="saveMaterials"
+                          :disabled="materialsSaving || hasMaterialErrors">
+                          {{ materialsSaving ? 'A guardar…' : 'Salvar' }}
+                        </button>
+                      </div>
+                    </div>
+
+                    <table class="materials-table">
+                      <thead>
+                        <tr>
+                          <th>Nome</th>
+                          <th class="text-center">Qtd</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="m in selectedAuditoria.materiais" :key="m.id">
+                          <td>{{ m.nome }}</td>
+                          <td class="text-center">
+                            <input type="number" min="0" v-model.number="m.quantidade" @change="onMaterialQtyChange(m)"
+                              class="qty-input" />
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+
+                    <!-- Erros de stock por material -->
+                    <p v-for="(err, mid) in materialErrors" :key="mid" class="error-text">{{ err }}</p>
+                  </div>
+
+                  <!-- === TABELA DE PROFISSIONAIS === -->
+                  <div v-if="selectedAuditoria.profissionais" class="section">
+                    <div class="section-header">
+                      <p class="section-title">Profissionais</p>
+                      <div>
+                        <button class="add-button" @click="addProfissional">+ Novo</button>
+                        <button class="save-button" @click="saveProfissionais" :disabled="profsSaving">
+                          {{ profsSaving ? 'A guardar…' : 'Salvar' }}
+                        </button>
+                      </div>
+                    </div>
+
+                    <table class="professionals-table">
+                      <thead>
+                        <tr>
+                          <th>Nome</th>
+                          <th class="text-center">Qtd</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="p in selectedAuditoria.profissionais" :key="p.id">
+                          <td>{{ p.nome }}</td>
+                          <td class="text-center">
+                            <input type="number" min="0" v-model.number="p.quantidade" class="qty-input" />
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
-
-              <div class="modal-body">
-                <p v-if="selectedAuditoria.dataInicio">
-                  <strong>Data Início:</strong>
-                  {{ formatDate(selectedAuditoria.dataInicio) }}
-                </p>
-                <p v-if="selectedAuditoria.dataFim">
-                  <strong>Data Fim:</strong>
-                  {{ formatDate(selectedAuditoria.dataFim) }}
-                </p>
-                <p><strong>Descrição:</strong> {{ selectedAuditoria.descricao }}</p>
-                <p><strong>Endereço:</strong> {{ selectedAuditoria.endereco }}</p>
-                <p><strong>Tipo:</strong>
-                  {{ tipoLabels[selectedAuditoria.tipo] || selectedAuditoria.tipo }}
-                </p>
-                <p><strong>Estado:</strong> {{ selectedAuditoria.status }}</p>
-                <p><strong>Tempo Estimado (h):</strong> {{ selectedAuditoria.tempoEstimado }}</p>
-
-                <h4>Materiais</h4>
-                <ul>
-                  <li v-for="m in selectedAuditoria.materiais" :key="m.id">
-                    {{ m.nome }} — Qtd: {{ m.quantidade }}
-                  </li>
-                </ul>
-
-                <h4>Profissionais</h4>
-                <ul>
-                  <li v-for="p in selectedAuditoria.profissionais" :key="p.id">
-                    {{ p.nome }} — Qtd: {{ p.quantidade }}
-                  </li>
-                </ul>
-
-                <p><strong>Perito (ID):</strong> {{ selectedAuditoria.perito }}</p>
-              </div>
-
-              <button class="btn-close" @click="closeModal">Fechar</button>
             </div>
-          </div>
+          </transition>
         </div>
       </main>
     </div>
@@ -159,6 +224,22 @@ function formatDate(ts) {
     dateStyle: 'long',
     timeStyle: 'medium'
   }).format(date) + ` UTC${date.toString().match(/GMT([+-]\d+)/)[1]}`;
+}
+
+function addMaterial() {
+  this.selectedAuditoria.materiais.push({
+    id: Date.now().toString(),
+    nome: '',
+    quantidade: 0,
+    presente: true
+  });
+}
+function addProfissional() {
+  this.selectedAuditoria.profissionais.push({
+    id: Date.now().toString(),
+    nome: '',
+    quantidade: 0
+  });
 }
 </script>
 
@@ -254,21 +335,6 @@ function formatDate(ts) {
   }
 }
 
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(2px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  animation: fadeIn 0.2s ease-out;
-}
-
 .modal-box {
   background: #fff;
   border-radius: 8px;
@@ -287,18 +353,6 @@ function formatDate(ts) {
   font-weight: 600;
 }
 
-.modal-body p,
-.modal-body h4 {
-  margin: 0.7em 0;
-  line-height: 1.4;
-}
-
-.modal-body ul {
-  list-style: disc inside;
-  margin: 0.5em 0 1em;
-  padding-left: 1.2em;
-}
-
 .btn-close {
   display: inline-block;
   margin-top: 1.5em;
@@ -315,5 +369,221 @@ function formatDate(ts) {
 .btn-close:hover {
   background: #0056b3;
   transform: translateY(-2px);
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-container {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  width: 100%;
+  max-width: 600px;
+  margin: 0 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh;
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #333;
+}
+
+.modal-close {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #666;
+  transition: color 0.2s;
+}
+
+.modal-close:hover {
+  color: #000;
+}
+
+.modal-body {
+  overflow-y: auto;
+  flex: 1;
+  margin-bottom: 16px;
+}
+
+.map-wrapper {
+  margin-bottom: 16px;
+}
+
+.map-iframe {
+  width: 100%;
+  height: 200px;
+  border: 0;
+  border-radius: 8px;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.info-item {
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.info-item span {
+  font-weight: 600;
+}
+
+.section-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.materials-list,
+.profissionais-list {
+  list-style: disc inside;
+  margin: 0;
+  padding: 0;
+}
+
+.materials-list li,
+.profissionais-list li {
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.primary-button {
+  background: #0069d9;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.primary-button:hover {
+  background: #0053ba;
+}
+
+/* Transições suaves */
+.modal-enter-active,
+.modal-leave-active {
+  transition: all 0.3s ease;
+}
+
+.modal-enter,
+.modal-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+.description-text {
+  font-size: 0.9rem;
+  color: #333;
+  line-height: 1.4;
+  margin: 0 0 8px;
+}
+
+.materials-table,
+.professionals-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+}
+
+.materials-table th,
+.materials-table td,
+.professionals-table th,
+.professionals-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+.materials-table th,
+.professionals-table th {
+  background: #f5f5f5;
+  font-weight: 600;
+  text-align: left;
+}
+
+.materials-table td.text-center,
+.professionals-table td.text-center {
+  text-align: center;
+}
+
+.section-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+@media (max-width: 480px) {
+
+  .materials-table th,
+  .materials-table td,
+  .professionals-table th,
+  .professionals-table td {
+    padding: 6px;
+    font-size: 0.8rem;
+  }
+}
+
+.qty-input {
+  width: 60px;
+  padding: 4px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.add-button {
+  background: transparent;
+  border: none;
+  font-size: 1rem;
+  color: #0069d9;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.add-button:hover {
+  color: #0053ba;
 }
 </style>

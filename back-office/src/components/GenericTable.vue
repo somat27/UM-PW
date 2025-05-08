@@ -61,6 +61,28 @@
                 </div>
               </template>
 
+              <template v-else-if="column.key === 'edit-profissionais'">
+                <div class="action-btn-group">
+                  <button class="icon-btn" @click="$emit('edit', item)">
+                    <img src="@/assets/icons8-pencil-pastel-glyph/icons8-pencil-24.png" alt="Editar" />
+                  </button>
+                  <button class="icon-btn" @click="$emit('add', item)">
+                    <img src="@/assets/icons8-plus/icons8-plus.png" alt="Adicionar" />
+                  </button>
+                </div>
+              </template>
+
+              <template v-else-if="column.key === 'edit-materiais'">
+                <div class="action-btn-group">
+                  <button class="icon-btn" @click="$emit('edit', item)">
+                    <img src="@/assets/icons8-pencil-pastel-glyph/icons8-pencil-24.png" alt="Editar" />
+                  </button>
+                  <button class="icon-btn" @click="$emit('add', item)">
+                    <img src="@/assets/icons8-plus/icons8-plus.png" alt="Adicionar" />
+                  </button>
+                </div>
+              </template>
+
               <!-- Add Perito action -->
               <template v-else-if="column.key === 'add'">
                 <div class="action-btn-group">

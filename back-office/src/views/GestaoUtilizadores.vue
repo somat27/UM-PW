@@ -28,7 +28,11 @@
                                     <td>{{ user.displayName }}</td>
                                     <td>{{ user.email }}</td>
                                     <td>
-                                        <select v-model="user.role" class="select-field">
+                                        <select
+                                            v-model="user.newRole"
+                                            class="select-field"
+                                            :disabled="isOtherAdmin(user)"
+                                        >
                                             <option value="usuario">Usuário</option>
                                             <option value="perito">Perito</option>
                                             <option value="gestor">Gestor</option>
@@ -36,7 +40,11 @@
                                         </select>
                                     </td>
                                     <td>
-                                        <button class="btn-apply" @click="changeRole(user)">Aplicar</button>
+                                        <button
+                                            class="btn-apply"
+                                            @click="changeRole(user)"
+                                            :disabled="isOtherAdmin(user)"
+                                        >Aplicar</button>
                                     </td>
                                 </tr>
                             </tbody>
@@ -50,21 +58,19 @@
 
 <script>
 import NavigationList from "../components/NavigationList.vue";
-
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { auth, db } from '@/firebase'
-import { onAuthStateChanged } from 'firebase/auth'
-import { collection, getDocs, doc, updateDoc, getDoc } from 'firebase/firestore'
+import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { auth, db } from '@/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { collection, getDocs, doc, updateDoc, getDoc } from 'firebase/firestore';
 
 export default {
     name: 'GestaoUtilizadores',
-    components: {
-        NavigationList
-    },
+    components: { NavigationList },
     setup() {
-        const users = ref([])
-        const router = useRouter()
+        const users = ref([]);
+        const currentUser = ref(null);
+        const router = useRouter();
 
         onMounted(() => {
             onAuthStateChanged(auth, async (user) => {
@@ -73,26 +79,55 @@ export default {
                 if (!(snapAdmin.exists() && snapAdmin.data().role === "admin")) {
                     return router.push("/");
                 }
+                // Guarda o utilizador atual
+                currentUser.value = {
+                    uid: user.uid,
+                    role: snapAdmin.data().role
+                };
+
+                // Carrega todos os utilizadores e inicializa newRole
                 const qs = await getDocs(collection(db, "users"));
-                users.value = qs.docs.map((d) => ({ uid: d.id, ...d.data() }));
+                users.value = qs.docs.map((d) => ({
+                    uid: d.id,
+                    displayName: d.data().displayName,
+                    email: d.data().email,
+                    role: d.data().role,
+                    newRole: d.data().role
+                }));
             });
         });
 
+        const isOtherAdmin = (user) => {
+            return user.role === 'admin' && user.uid !== currentUser.value.uid;
+        };
+
         const changeRole = async (user) => {
             try {
-                await updateDoc(doc(db, "users", user.uid), { role: user.role });
-                alert("Role atualizada para " + user.role);
+                const isSelfDemoting =
+                    user.uid === currentUser.value.uid && user.newRole !== 'admin';
+
+                await updateDoc(doc(db, "users", user.uid), { role: user.newRole });
+                alert("Role atualizada para " + user.newRole);
+                user.role = user.newRole;
+
+                if (isSelfDemoting) {
+                    // Se o próprio se demitiu de admin, redireciona
+                    router.push("/");
+                }
             } catch (err) {
                 console.error("Erro ao atualizar role:", err);
                 alert("Falha ao atualizar role");
             }
         };
 
-        return { users, changeRole }
+        return {
+            users,
+            changeRole,
+            isOtherAdmin
+        };
     }
-}
+};
 </script>
-
 
 <style scoped>
 .dashboard-layout {

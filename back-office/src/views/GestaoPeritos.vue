@@ -79,7 +79,7 @@ const completeColumns = [
   { key: 'specialty', label: 'Especialidade' },
   { key: 'localidades', label: 'Localidades' },
   { key: 'status', label: 'Status' },
-  { key: 'edit', label: 'Editar' }
+  { key: 'edit', label: 'Ações' }
 ];
 
 // pega todos os elementos até ao penúltimo

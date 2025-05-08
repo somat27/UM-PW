@@ -52,7 +52,7 @@
       <img
         src="https://cdn.builder.io/api/v1/image/assets/TEMP/2130c19d7d5c87c243ec6c2559e349da836493a5?placeholderIfAbsent=true&apiKey=98100b9ac2c544efa71903dc3e1eda07"
         alt="Profissionais" class="nav-icon" />
-      <span class="nav-text">GESTÃO DE USUARIOS</span>
+      <span class="nav-text">GESTÃO DE UTILIZADORES</span>
     </router-link>
 
     <router-link to="/profile" class="user-panel text-decoration-none" v-if="currentUser">
