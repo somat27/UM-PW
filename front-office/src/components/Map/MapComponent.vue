@@ -60,7 +60,6 @@
       <div v-else id="map" class="google-map"></div>
     </div>
 
-    <!-- Painel de detalhes da ocorrência selecionada - Agora centralizado -->
     <div v-if="selectedOcorrencia" class="modal-overlay">
       <transition name="fade">
         <div class="occurrence-details-modal">
@@ -99,7 +98,6 @@
               </div>
             </div>
 
-            <!-- Seção de descrição com estilo melhorado -->
             <div class="details-section">
               <h4>Descrição</h4>
               <div class="description-box">
@@ -111,7 +109,6 @@
               </div>
             </div>
 
-            <!-- Exibição de imagens melhorada -->
             <div
               v-if="
                 selectedOcorrencia.imagemVideo &&
@@ -142,7 +139,6 @@
 </template>
 
 <script>
-// Script permanece o mesmo
 import StatusBadge from "../OcurrencePage/StatusBadge.vue";
 import { getOcorrencias } from "@/services/firebase";
 
@@ -177,6 +173,12 @@ export default {
       googleMapsLoaded: false,
       ocorrenciasCarregadas: false,
       mapsInitCallback: null,
+
+      statusMarkerColors: {
+        Pendente: "#FF0000",
+        Analise: "#FFCC00",
+        Resolvido: "#33CC33",
+      },
     };
   },
   computed: {
@@ -390,24 +392,27 @@ export default {
 
         temCoordenadasValidas = true;
 
+        const markerColor =
+          this.statusMarkerColors[o.status] || this.statusMarkerColors.default;
+
+        const markerIcon = {
+          path: window.google.maps.SymbolPath.CIRCLE,
+          fillColor: markerColor,
+          fillOpacity: 1,
+          strokeWeight: 1,
+          strokeColor: "#FFFFFF",
+          scale: 10,
+        };
+
         const marker = new window.google.maps.Marker({
           position: pos,
           map: this.map,
           title: this.mapearTipoOcorrencia(o.tipoOcorrencia),
           animation: window.google.maps.Animation.DROP,
+          icon: markerIcon,
         });
 
-        const infoContent = `
-          <div style="padding: 10px;">
-            <strong>${this.mapearTipoOcorrencia(o.tipoOcorrencia)}</strong>
-            <div>${o.endereco || "Sem endereço"}</div>
-            <div>Status: ${o.status || "Indefinido"}</div>
-            <div style="color:#204c6d;">Clique para ver detalhes</div>
-          </div>
-        `;
-
         marker.addListener("click", () => {
-          this.infoWindow.setContent(infoContent);
           this.infoWindow.open(this.map, marker);
           this.selectedOcorrencia = o;
         });
@@ -603,7 +608,6 @@ export default {
   }
 }
 
-/* Estilos para o container do mapa */
 .map-container {
   width: 100%;
   height: 400px;
@@ -685,7 +689,6 @@ export default {
   font-weight: 500;
 }
 
-/* NOVOS ESTILOS PARA O MODAL CENTRALIZADO */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -730,7 +733,6 @@ export default {
   opacity: 0;
 }
 
-/* Estilos para o cabeçalho do modal */
 .details-header {
   display: flex;
   justify-content: space-between;
@@ -772,7 +774,6 @@ export default {
   transform: rotate(90deg);
 }
 
-/* Estilos para o conteúdo do modal */
 .details-content {
   padding: 25px;
 }
@@ -807,7 +808,6 @@ export default {
   font-size: 16px;
 }
 
-/* Estilos para a seção de detalhes */
 .details-section {
   margin-bottom: 25px;
   animation: fadeIn 0.5s ease-in-out;
@@ -843,7 +843,6 @@ export default {
   width: 120px;
 }
 
-/* Estilo para a caixa de descrição */
 .description-box {
   background-color: white;
   border-radius: 5px;
@@ -863,7 +862,6 @@ export default {
   font-size: 15px;
 }
 
-/* Estilos para a seção de imagens */
 .images-section {
   margin-top: 25px;
 }
@@ -902,7 +900,6 @@ export default {
   transform: scale(1.1);
 }
 
-/* Responsividade */
 @media (max-width: 991px) {
   .filters-row {
     flex-direction: column;

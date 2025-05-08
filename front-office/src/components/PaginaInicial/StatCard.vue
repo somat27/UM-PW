@@ -36,7 +36,7 @@ export default {
   methods: {
     animateValue() {
       const finalValue = parseInt(this.value) || 0;
-      const duration = 2000; // 2 segundos para a animação
+      const duration = 2000; // 2 seg
       const startTime = Date.now();
 
       const updateValue = () => {
@@ -44,14 +44,12 @@ export default {
         const elapsedTime = currentTime - startTime;
 
         if (elapsedTime < duration) {
-          // Calcula o valor atual com base no tempo decorrido
           const currentValue = Math.floor(
             (elapsedTime / duration) * finalValue
           );
           this.displayValue = currentValue.toString();
           requestAnimationFrame(updateValue);
         } else {
-          // Animação concluída, define o valor final
           this.displayValue = this.value;
         }
       };
@@ -63,7 +61,6 @@ export default {
         const element = this.$el;
         const position = element.getBoundingClientRect();
 
-        // Se o elemento estiver visível na tela
         if (position.top < window.innerHeight && position.bottom >= 0) {
           this.animationStarted = true;
           this.animateValue();
@@ -72,7 +69,6 @@ export default {
     },
   },
   mounted() {
-    // Inicia a verificação de visibilidade
     window.addEventListener("scroll", this.checkVisibility);
     this.checkVisibility();
   },

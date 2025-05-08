@@ -11,14 +11,12 @@
       ></div>
     </div>
 
-    <!-- Máscara de revelação -->
     <div
       class="reveal-mask"
       :style="{ transform: `scale(${revealScale})` }"
     ></div>
 
     <div class="hero-content">
-      <!-- Título com efeito de revelação -->
       <h1 class="hero-title">{{ titleText }}</h1>
 
       <Transition name="clip-reveal" appear>
@@ -27,7 +25,6 @@
         </p>
       </Transition>
 
-      <!-- Botão com efeito de ondulação -->
       <div
         class="button-container"
         @click="activateRipple"
@@ -96,7 +93,7 @@ export default {
   },
   computed: {
     titleChars() {
-      return this.titleText.split(""); // Retirado, pois não é necessário mais dividir o texto em caracteres.
+      return this.titleText.split("");
     },
   },
   mounted() {
@@ -206,7 +203,6 @@ export default {
   z-index: 4;
 }
 
-/* Máscara de revelação */
 .reveal-mask {
   position: absolute;
   top: 50%;
@@ -229,7 +225,6 @@ export default {
   z-index: 4;
 }
 
-/* Título com animação de revelação */
 .hero-title {
   color: #204c6d;
   font-size: 90px;
@@ -266,7 +261,6 @@ export default {
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
-/* Botão com efeito de luz e ondulação */
 .button-container {
   position: relative;
   margin-top: 20px;

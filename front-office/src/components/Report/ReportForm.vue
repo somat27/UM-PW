@@ -158,7 +158,6 @@ export default {
     },
   },
   mounted() {
-    // Add a global callback for Google Maps
     window.initGoogleCallback = this.initMapAfterLoad;
 
     // efeito suave
@@ -179,7 +178,6 @@ export default {
       }
     },
     initMapAfterLoad() {
-      // Store the google object locally
       if (window.google) {
         this.google = window.google;
         this.initMap();
@@ -204,15 +202,12 @@ export default {
           zoomControl: true,
         });
 
-        // Inicializar o geocoder
         this.geocoder = new this.google.maps.Geocoder();
 
-        // Adicionar evento de clique no mapa
         this.map.addListener("click", (e) => {
           this.onMapClick(e);
         });
 
-        // Efeito de zoom quando o mapa é carregado
         setTimeout(() => {
           this.map.setZoom(14);
         }, 500);
@@ -224,10 +219,10 @@ export default {
       const lat = e.latLng.lat();
       const lng = e.latLng.lng();
       this.updateMapMarker(lat, lng);
-      // Quando o usuário clica no mapa, atualizar o campo de endereço
+
       this.reverseGeocode(lat, lng);
     },
-    // Método para buscar endereço quando o usuário digita e pressiona enter ou clica no botão
+
     async searchAddress() {
       if (!this.address) return;
 
@@ -236,15 +231,12 @@ export default {
       this.searchError = null;
 
       try {
-        // Buscar coordenadas com base no endereço
         const result = await this.geocodeAddress(this.address);
 
         if (result) {
-          // Atualiza o marcador no mapa com as coordenadas encontradas
           this.updateMapMarker(result.lat, result.lng);
           this.lastSearchSuccess = true;
 
-          // Adiciona efeito de pulso ao campo para indicar sucesso
           const addressInput = document.querySelector(
             'input[v-model="address"]'
           );
@@ -265,7 +257,7 @@ export default {
         this.isSearching = false;
       }
     },
-    // Método para converter endereço em coordenadas (geocodificação)
+
     async geocodeAddress(address) {
       return new Promise((resolve) => {
         if (!this.geocoder) {
@@ -290,7 +282,7 @@ export default {
         });
       });
     },
-    // Método para obter endereço a partir de coordenadas (geocodificação reversa)
+
     async reverseGeocode(lat, lng) {
       try {
         if (!this.geocoder) return;
@@ -314,25 +306,22 @@ export default {
         this.isSearching = false;
       }
     },
-    // Método unificado para atualizar o marcador no mapa (agora usando marcadores padrão)
+
     updateMapMarker(lat, lng) {
       if (!this.google || !this.map) return;
 
-      // Remover marcador antigo se existir
       if (this.marker) {
         this.marker.setMap(null);
-        this.marker = null; // Importante: definir como null após a remoção
+        this.marker = null;
       }
 
       try {
-        // Criar configuração para o marcador padrão
         const markerOptions = {
           position: { lat, lng },
           map: this.map,
           title: "Localização selecionada",
         };
 
-        // Adicionar ícone personalizado se estiver definido
         if (process.env.VUE_APP_MARKER_ICON) {
           markerOptions.icon = {
             url: process.env.VUE_APP_MARKER_ICON,
@@ -342,14 +331,11 @@ export default {
           };
         }
 
-        // Criar o marcador padrão
         this.marker = new this.google.maps.Marker(markerOptions);
 
-        // Centralizar o mapa na nova localização
         this.map.setCenter({ lat, lng });
         this.map.setZoom(16);
 
-        // Atualizar a localização do usuário no estado
         this.userLocation = { lat, lng };
 
         console.log("Novo marcador padrão criado em:", lat, lng);
@@ -363,13 +349,11 @@ export default {
     handleFileUpload(event) {
       const newFiles = Array.from(event.target.files);
 
-      // Filtrar apenas imagens e vídeos
       const validTypes = ["image/", "video/"];
       const filteredFiles = newFiles.filter((file) =>
         validTypes.some((type) => file.type.startsWith(type))
       );
 
-      // Adicionar arquivos sem duplicar
       filteredFiles.forEach((file) => {
         const alreadyExists = this.uploadedFiles.some(
           (f) => f.name === file.name && f.size === file.size
@@ -379,7 +363,6 @@ export default {
         }
       });
 
-      // Limpar o input para permitir reescolher o mesmo arquivo
       event.target.value = "";
     },
     async submitForm() {
@@ -388,15 +371,12 @@ export default {
         return;
       }
 
-      // Indica que o envio está em andamento
       this.isSubmitting = true;
 
-      // Referência ao botão para gerenciar a animação
       const button = document.querySelector(".submit-button");
       button.classList.add("success-submit");
       button.innerHTML = '<i class="bi bi-hourglass-split"></i> Enviando...';
 
-      // Prepara os dados do formulário
       const formData = {
         selectedCategory: this.selectedCategory,
         address: this.address,
@@ -407,33 +387,28 @@ export default {
       console.log(formData.files);
 
       try {
-        // Chama o serviço Firebase para submeter a ocorrência
         const result = await submitOcorrencia(formData);
 
         if (result.success) {
           console.log("Ocorrência enviada com sucesso! ID:", result.id);
 
-          // Atualiza o botão para indicar sucesso
           button.innerHTML =
             '<i class="bi bi-check-lg"></i> Enviado com Sucesso!';
 
           setTimeout(() => {
-            // Redireciona para a página inicial
             this.$router.push("/");
-          }, 1500); // Aguarda 1.5 segundos
+          }, 1500); // 1.5 seg
         } else {
           throw new Error(result.error || "Erro ao enviar ocorrência");
         }
       } catch (error) {
         console.error("Erro ao processar formulário:", error);
 
-        // Atualiza o botão para indicar erro
         button.classList.remove("success-submit");
         button.classList.add("error-submit");
         button.innerHTML =
           '<i class="bi bi-exclamation-triangle"></i> Erro no envio!';
 
-        // Volta ao estado normal após alguns segundos
         setTimeout(() => {
           button.classList.remove("error-submit");
           button.innerHTML = '<i class="bi bi-send-fill"></i> Submeter';
@@ -469,18 +444,16 @@ export default {
       // Limpa os marcadores do mapa
       if (this.marker) {
         this.marker.setMap(null);
-        this.marker = null; // Importante limpar a referência ao remover
+        this.marker = null;
       }
     },
   },
-  // Clean up when component is destroyed
+
   beforeUnmount() {
-    // Remove the global callback
     if (window.initGoogleCallback) {
       delete window.initGoogleCallback;
     }
 
-    // Clean up marker and map
     if (this.marker) {
       this.marker.setMap(null);
       this.marker = null;
@@ -652,7 +625,6 @@ export default {
   }
 }
 
-/* Animação de validação */
 .shake-animation {
   animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
   border-color: #dc3545 !important;
@@ -664,7 +636,6 @@ export default {
   animation: fadeIn 0.3s ease-in-out;
 }
 
-/* Keyframes para animações */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -729,7 +700,6 @@ export default {
   }
 }
 
-/* Animações para o fade entre seções */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.5s ease, transform 0.5s ease;
@@ -741,7 +711,6 @@ export default {
   transform: translateY(-10px);
 }
 
-/* Ajuste do mapa para mais margem lateral */
 .map-container {
   max-width: 90%;
   margin: 0 auto;
@@ -750,10 +719,10 @@ export default {
 }
 
 #map {
-  width: 100%; /* Garante que o mapa ocupe toda a largura do contêiner */
-  height: 400px; /* Altura fixa */
-  border-radius: 12px; /* Bordas arredondadas */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra suave */
+  width: 100%;
+  height: 400px;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
 }
 
@@ -764,12 +733,12 @@ export default {
 /* Responsividade */
 @media (max-width: 768px) {
   .map-container {
-    max-width: 95%; /* Em telas menores, o mapa ocupa mais espaço */
-    padding: 10px; /* Reduz o espaçamento interno */
+    max-width: 95%;
+    padding: 10px;
   }
 
   #map {
-    height: 300px; /* Reduz a altura do mapa em telas pequenas */
+    height: 300px;
   }
 
   .fade-in-delay-1,
@@ -777,7 +746,7 @@ export default {
   .fade-in-delay-3,
   .fade-in-delay-4,
   .fade-in-delay-5 {
-    animation-delay: 0.2s; /* Reduz o atraso em dispositivos móveis para melhor UX */
+    animation-delay: 0.2s;
   }
 }
 

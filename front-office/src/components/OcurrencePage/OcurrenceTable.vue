@@ -94,7 +94,6 @@
                   class="details-dropdown"
                 >
                   <div class="details-content">
-                    <!-- Seção de descrição com estilo melhorado -->
                     <div class="details-section">
                       <h4>Descrição</h4>
                       <div class="description-box">
@@ -106,7 +105,6 @@
                       </div>
                     </div>
 
-                    <!-- Exibição de imagens melhorada -->
                     <div
                       v-if="
                         ocorrencia.imagemVideo &&
@@ -146,7 +144,7 @@
 
 <script>
 import StatusBadge from "./StatusBadge.vue";
-import { getOcorrencias } from "@/services/firebase"; // Ajuste o caminho conforme necessário
+import { getOcorrencias } from "@/services/firebase";
 
 export default {
   name: "OccurrencesTable",
@@ -203,7 +201,6 @@ export default {
         this.loading = true;
         this.ocorrencias = await getOcorrencias();
 
-        // Extrai os tipos únicos de ocorrência para o filtro
         this.tiposOcorrencia = [
           ...new Set(this.ocorrencias.map((o) => o.tipoOcorrencia)),
         ];
@@ -217,7 +214,7 @@ export default {
         this.loading = false;
       }
     },
-    // Função para mapear os tipos de ocorrência da base de dados para nomes de exibição
+
     mapearTipoOcorrencia(tipo) {
       return this.tiposMapeados[tipo] || tipo;
     },
@@ -229,12 +226,11 @@ export default {
         status: "",
         tipoOcorrencia: "",
       };
-      this.selectedOcorrenciaId = null; // Fecha qualquer dropdown aberto
+      this.selectedOcorrenciaId = null;
     },
     formatarData(timestamp) {
       if (!timestamp) return "Data não disponível";
 
-      // Verifica se timestamp é um objeto Date, se não for, converte
       const data = timestamp instanceof Date ? timestamp : timestamp.toDate();
 
       return data.toLocaleDateString("pt-PT", {
@@ -244,7 +240,7 @@ export default {
       });
     },
     mapearStatus(status) {
-      // Mapeia os status do Firebase para os status esperados pelo componente StatusBadge
+      //mapeamento com a firebase
       const mapeamentoStatus = {
         Pendente: "pending",
         Analise: "analyzing",
@@ -254,7 +250,6 @@ export default {
       return mapeamentoStatus[status];
     },
     toggleDetails(ocorrenciaId) {
-      // Se clicar no mesmo, fecha. Se clicar em outro, abre o novo
       if (this.selectedOcorrenciaId === ocorrenciaId) {
         this.selectedOcorrenciaId = null;
       } else {
@@ -379,12 +374,12 @@ export default {
 .occurrences-table-wrapper {
   width: 100%;
   overflow-x: auto;
-  -webkit-overflow-scrolling: touch; /* Para melhor rolagem em iOS */
+  -webkit-overflow-scrolling: touch;
 }
 
 .occurrences-table {
   width: 100%;
-  min-width: 500px; /* Garante largura mínima em dispositivos pequenos */
+  min-width: 500px;
   border-collapse: collapse;
   animation: slideInUp 0.5s ease-out;
 }
@@ -551,7 +546,6 @@ export default {
   width: 100px;
 }
 
-/* Estilo para a caixa de descrição */
 .description-box {
   background-color: white;
   border-radius: 4px;
@@ -570,7 +564,6 @@ export default {
   line-height: 1.5;
 }
 
-/* Estilos para a seção de imagens */
 .images-section {
   margin-top: 15px;
 }
@@ -666,7 +659,6 @@ export default {
   }
 }
 
-/* Media queries para responsividade */
 @media (max-width: 768px) {
   .filters-row {
     flex-direction: column;
@@ -692,9 +684,8 @@ export default {
     font-size: 14px;
   }
 
-  /* Ajustes específicos para visualização em dispositivos móveis */
   .location-cell {
-    flex: 1; /* Reduz proporcionalmente em dispositivos móveis */
+    flex: 1;
   }
 
   .type-cell {
@@ -726,26 +717,23 @@ export default {
     padding: 10px;
   }
 
-  /* Em telas muito pequenas, reduzir ainda mais os itens */
   .image-item {
     width: 70px;
     height: 70px;
   }
 
-  /* Melhorar visualização dos detalhes */
   .details-section h4 {
     font-size: 15px;
   }
 }
 
-/* Fix para iOS Safari */
 @supports (-webkit-touch-callout: none) {
   .occurrences-table-wrapper {
     -webkit-overflow-scrolling: touch;
   }
 
   .filter-select {
-    font-size: 16px; /* Evita zoom automático em inputs no iOS */
+    font-size: 16px;
   }
 }
 </style>

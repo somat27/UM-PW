@@ -33,6 +33,7 @@
         :imageSrc="cardObras"
         imageAlt="Construction icon"
         buttonText="Consultar"
+        :onClick="() => goToOcorrenciasPage()"
       />
     </section>
     <section class="statistics-section">
@@ -109,8 +110,8 @@ export default {
       // Estatísticas
       ocorrencias: 0,
       auditorias: 0,
-      tempoMedio: "—",
-      satisfacao: "-",
+      tempoMedio: 0,
+      satisfacao: 0,
     };
   },
   mounted() {
@@ -126,12 +127,18 @@ export default {
         window.scrollTo(0, 0);
       });
     },
+    goToOcorrenciasPage() {
+      this.$router.push("/ocorrencias");
+      this.$nextTick(() => {
+        window.scrollTo(0, 0);
+      });
+    },
     async carregarEstatisticas() {
       try {
         const stats = await getEstatisticas();
         this.ocorrencias = stats.ocorrenciasResolvidas;
         this.auditorias = stats.auditoriasRealizadas;
-        this.tempoMedio = `${stats.tempoMedioResolucao.toFixed(1)} dias`;
+        this.tempoMedio = `${stats.tempoMedioResolucao} dias`;
         this.satisfacao = `${stats.mediaAvaliacoes} %`;
       } catch (error) {
         console.error("Erro ao carregar estatísticas:", error);

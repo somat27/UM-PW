@@ -51,7 +51,6 @@ export default {
   padding: 40px 42px;
 }
 
-/* Estilo da imagem */
 .report-image {
   max-width: 100%;
   height: auto;
@@ -62,7 +61,6 @@ export default {
   width: 550px;
 }
 
-/* Estilo do container de texto */
 .about-container {
   display: flex;
   flex-direction: column;
@@ -71,7 +69,6 @@ export default {
   text-align: center;
 }
 
-/* Estilo do título */
 .about-title {
   color: #204c6d;
   font-size: 100px;
@@ -79,7 +76,6 @@ export default {
   font-family: Inter, sans-serif;
 }
 
-/* Estilo do texto */
 .about-description {
   color: #333;
   font-size: 30px;
@@ -88,7 +84,6 @@ export default {
 }
 
 /* Animações */
-/* Deslizamento e fade para a imagem */
 .slide-fade-enter-active {
   transition: all 0.8s ease;
 }
@@ -97,7 +92,6 @@ export default {
   opacity: 0;
 }
 
-/* Fade simples para o título */
 .fade-in-enter-active {
   transition: opacity 1s ease;
 }
@@ -105,7 +99,6 @@ export default {
   opacity: 0;
 }
 
-/* Fade com deslize para cima para os parágrafos */
 .fade-up-enter-active {
   transition: all 0.8s ease-out;
 }
@@ -114,7 +107,6 @@ export default {
   opacity: 0;
 }
 
-/* Responsividade para telas maiores */
 @media (min-width: 992px) {
   .content-section {
     flex-direction: row;
@@ -141,13 +133,11 @@ export default {
     font-size: 22px;
   }
 
-  /* Alteração da direção da animação em desktop */
   .slide-fade-enter-from {
     transform: translateX(-80px);
   }
 }
 
-/* Ajustes para telas menores */
 @media (max-width: 640px) {
   .content-section {
     padding: 16px;

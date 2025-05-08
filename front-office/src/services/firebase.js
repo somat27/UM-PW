@@ -11,8 +11,9 @@ import {
   serverTimestamp,
   query,
   where,
-  getCountFromServer,
 } from "firebase/firestore";
+
+import uploadToCloudinary from "./cloudinary";
 
 // Configuração do Firebase
 const firebaseConfig = {
@@ -28,13 +29,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/do5hfydb2/upload";
-const UPLOAD_PRESET = "EyesEveryWhere";
-
-// 🔹 Função para submeter ocorrência ao Firebase
 export async function submitOcorrencia(formData) {
   try {
-    // Prepara os dados para o Firebase
     const ocorrenciaData = {
       dataSubmissao: serverTimestamp(),
       descricao: formData.observations || "",
@@ -50,7 +46,6 @@ export async function submitOcorrencia(formData) {
         : { latitude: 0, longitude: 0 },
     };
 
-    // Adiciona o documento à coleção 'ocorrencias' e obtém o ID
     const docRef = await addDoc(collection(db, "ocorrencias"), ocorrenciaData);
     console.log("Ocorrência registrada com ID:", docRef.id);
 
@@ -74,30 +69,6 @@ export async function submitOcorrencia(formData) {
   } catch (error) {
     console.error("Erro ao registrar ocorrência:", error);
     return { success: false, error: error.message };
-  }
-}
-
-// Função para upload de imagens para o Cloudinary
-async function uploadToCloudinary(file) {
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("upload_preset", UPLOAD_PRESET);
-
-  try {
-    const response = await fetch(CLOUDINARY_URL, {
-      method: "POST",
-      body: formData,
-    });
-
-    if (!response.ok) {
-      throw new Error(`Erro no upload: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    return data.secure_url; // Retorna a URL do arquivo no Cloudinary
-  } catch (error) {
-    console.error("Erro ao enviar para Cloudinary:", error);
-    return null;
   }
 }
 
@@ -126,83 +97,152 @@ export async function getOcorrencias() {
 
 export async function getEstatisticas() {
   try {
-    // 🔸 Pega todas as auditorias
+    const estatisticas = {
+      ocorrenciasResolvidas: 0,
+      auditoriasRealizadas: 0,
+      tempoMedioResolucao: 0,
+      mediaAvaliacoes: 0,
+    };
+
+    try {
+      const ocorrenciasResolvidasQuery = query(
+        collection(db, "ocorrencias"),
+        where("status", "==", "Resolvido")
+      );
+      const resolvidasSnapshot = await getDocs(ocorrenciasResolvidasQuery);
+      estatisticas.ocorrenciasResolvidas = resolvidasSnapshot.size;
+    } catch (err) {
+      estatisticas.ocorrenciasResolvidas = 0;
+    }
+
     const auditoriasRef = collection(db, "auditorias");
     const auditoriasSnapshot = await getDocs(auditoriasRef);
+    estatisticas.auditoriasRealizadas = auditoriasSnapshot.size;
 
-    let totalAuditorias = 0;
+    let totalOcorrencias = 0;
     let totalTempoResolucao = 0;
 
     for (const docAuditoria of auditoriasSnapshot.docs) {
-      const auditoria = docAuditoria.data();
-      const dataFim = auditoria.dataFIM?.toDate?.();
-      const ocorrenciaId = auditoria.ocorrencia;
+      try {
+        const auditoria = docAuditoria.data();
+        const auditoriaId = docAuditoria.id;
 
-      if (dataFim && ocorrenciaId) {
-        // Busca a ocorrência associada
+        if (!auditoria.dataFim) {
+          continue;
+        }
+
+        let dataFim;
+        if (
+          auditoria.dataFim.toDate &&
+          typeof auditoria.dataFim.toDate === "function"
+        ) {
+          dataFim = auditoria.dataFim.toDate();
+        } else if (auditoria.dataFim instanceof Date) {
+          dataFim = auditoria.dataFim;
+        } else if (
+          typeof auditoria.dataFim === "number" ||
+          typeof auditoria.dataFim === "string"
+        ) {
+          dataFim = new Date(auditoria.dataFim);
+        } else {
+          continue;
+        }
+
+        if (!dataFim || isNaN(dataFim.getTime())) {
+          continue;
+        }
+
         const ocorrenciaSnap = await getDoc(
-          doc(db, "ocorrencias", ocorrenciaId)
+          doc(db, "ocorrencias", auditoriaId)
         );
 
-        if (ocorrenciaSnap.exists()) {
-          const ocorrencia = ocorrenciaSnap.data();
-          const dataSubmissao = ocorrencia.dataSubmissao?.toDate?.();
-
-          if (dataSubmissao) {
-            const diffMs = dataFim - dataSubmissao;
-            const diffDias = diffMs / (1000 * 60 * 60 * 24);
-            totalTempoResolucao += diffDias;
-            totalAuditorias++;
-          }
+        if (!ocorrenciaSnap.exists()) {
+          continue;
         }
+
+        const ocorrencia = ocorrenciaSnap.data();
+
+        // Verifica se a ocorrência está resolvida
+        if (ocorrencia.status !== "Resolvido") {
+          continue;
+        }
+
+        // Verifica se dataSubmissao existe
+        if (!ocorrencia.dataSubmissao) {
+          continue;
+        }
+
+        let dataSubmissao;
+        if (
+          ocorrencia.dataSubmissao.toDate &&
+          typeof ocorrencia.dataSubmissao.toDate === "function"
+        ) {
+          dataSubmissao = ocorrencia.dataSubmissao.toDate();
+        } else if (ocorrencia.dataSubmissao instanceof Date) {
+          dataSubmissao = ocorrencia.dataSubmissao;
+        } else if (
+          typeof ocorrencia.dataSubmissao === "number" ||
+          typeof ocorrencia.dataSubmissao === "string"
+        ) {
+          dataSubmissao = new Date(ocorrencia.dataSubmissao);
+        } else {
+          continue;
+        }
+
+        if (!dataSubmissao || isNaN(dataSubmissao.getTime())) {
+          continue;
+        }
+
+        const diffMs = dataFim.getTime() - dataSubmissao.getTime();
+
+        // Converte para dias
+        const diffDias = diffMs / (1000 * 60 * 60 * 24);
+
+        if (isNaN(diffDias) || diffDias < 0) {
+          continue;
+        }
+
+        totalTempoResolucao += diffDias;
+        totalOcorrencias++;
+      } catch (err) {
+        throw Error;
       }
     }
 
-    const tempoMedioResolucao =
-      totalAuditorias > 0
-        ? parseFloat((totalTempoResolucao / totalAuditorias).toFixed(2))
-        : 0;
+    // Calcula o tempo médio de resolução
+    if (totalOcorrencias > 0) {
+      estatisticas.tempoMedioResolucao = Math.round(
+        totalTempoResolucao / totalOcorrencias
+      );
+    } else {
+      estatisticas.tempoMedioResolucao = 0;
+    }
 
-    // 🔸 Contagem de auditorias e ocorrências resolvidas
-    const ocorrenciasResolvidasQuery = query(
-      collection(db, "ocorrencias"),
-      where("status", "==", "Resolvido")
-    );
-    const resolvidasSnapshot = await getCountFromServer(
-      ocorrenciasResolvidasQuery
-    );
-    const numResolvidas = resolvidasSnapshot.data().count;
+    // Cálculo da média de avaliações
+    try {
+      const feedbacksRef = collection(db, "feedback");
+      const feedbacksSnapshot = await getDocs(feedbacksRef);
 
-    const numAuditorias = auditoriasSnapshot.size;
+      let totalRating = 0;
+      let totalFeedbacks = 0;
 
-    const feedbacksRef = collection(db, "feedback");
-    const feedbacksSnapshot = await getDocs(feedbacksRef);
+      feedbacksSnapshot.forEach((doc) => {
+        const feedback = doc.data();
+        const avaliacao = Number(feedback.avaliacao);
+        if (!isNaN(avaliacao)) {
+          totalRating += avaliacao;
+          totalFeedbacks++;
+        }
+      });
 
-    let totalRating = 0;
-    let totalFeedbacks = 0;
+      estatisticas.mediaAvaliacoes =
+        totalFeedbacks > 0 ? Math.round(totalRating / totalFeedbacks) : 0;
+    } catch (err) {
+      estatisticas.mediaAvaliacoes = 0;
+    }
 
-    feedbacksSnapshot.forEach((doc) => {
-      const feedback = doc.data();
-      if (feedback.avaliacao !== undefined && feedback.avaliacao !== null) {
-        totalRating += Number(feedback.avaliacao);
-        totalFeedbacks++;
-      }
-    });
-
-    const mediaAvaliacoes =
-      totalFeedbacks > 0
-        ? parseFloat((totalRating / totalFeedbacks).toFixed(2))
-        : 0;
-
-
-    return {
-      ocorrenciasResolvidas: numResolvidas,
-      auditoriasRealizadas: numAuditorias,
-      tempoMedioResolucao, // em dias
-      mediaAvaliacoes, // média das avaliações (0-100)
-    };
+    return estatisticas;
   } catch (error) {
-    console.error("Erro ao buscar estatísticas:", error);
     return {
       ocorrenciasResolvidas: 0,
       auditoriasRealizadas: 0,
@@ -222,10 +262,7 @@ export const saveFeedback = async (feedbackData) => {
       data: serverTimestamp(),
     };
 
-    // Obtém referência da coleção 'feedback'
     const feedbackRef = collection(db, "feedback");
-
-    // Adiciona o documento à coleção
     const docRef = await addDoc(feedbackRef, dataToSave);
 
     console.log("Feedback salvo com sucesso com ID:", docRef.id);
