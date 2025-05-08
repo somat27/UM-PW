@@ -35,10 +35,8 @@
 export default {
   name: "AppFooter",
   mounted() {
-    // Seleciona todos os elementos com a classe animate-fade-in
     const elements = document.querySelectorAll(".animate-fade-in");
 
-    // Adiciona um pequeno atraso para cada elemento, criando um efeito escalonado
     elements.forEach((element, index) => {
       setTimeout(() => {
         element.classList.add("visible");

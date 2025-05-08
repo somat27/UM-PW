@@ -38,7 +38,7 @@
         :number="2"
         title="Passo 2: Criar uma Nova Ocorrência"
         :description="[
-          'No ecrã inicial, clique no botão ReportarIncidente',
+          'No ecrã inicial, clique no botão Reportar Incidente',
           'Identifique o tipo de Ocorrência',
         ]"
         :image="require('@/assets/HelpImages/step2.jpg')"
@@ -116,12 +116,11 @@ export default {
     handleScroll() {
       if (this.scrolling) return;
 
-      // Determinar qual step está mais visível
       for (let i = 1; i <= 6; i++) {
         const stepRef = this.$refs[`step${i}`];
         if (stepRef && stepRef.$el) {
           const rect = stepRef.$el.getBoundingClientRect();
-          // Se o elemento estiver majoritariamente visível na tela
+
           if (
             rect.top <= window.innerHeight * 0.5 &&
             rect.bottom >= window.innerHeight * 0.3
@@ -144,7 +143,6 @@ export default {
           block: "center",
         });
 
-        // Permitir scrolling após a animação terminar
         setTimeout(() => {
           this.scrolling = false;
         }, 1000);

@@ -90,9 +90,7 @@ export default {
       this.submitSuccess = true;
       this.buttonText = "Avaliação Submetida com Sucesso!";
 
-      // Aguardar alguns segundos para que o usuário veja a mensagem de sucesso
       setTimeout(() => {
-        // Redirecionar para a página principal
         this.$router.push("/");
       }, 2000);
     },
@@ -102,7 +100,6 @@ export default {
       this.submitError = true;
       this.buttonText = "Erro na submissão. Tente novamente.";
 
-      // Resetar o botão após alguns segundos
       setTimeout(() => {
         this.submitError = false;
         this.buttonText = "Submeter Avaliação";

@@ -4,13 +4,11 @@
       <img src="@/assets/logo.jpg" alt="Logo" class="logo" />
     </router-link>
 
-    <!-- Menu de navegação desktop -->
     <nav class="navigation desktop-nav">
       <router-link to="/ocorrencias" class="nav-link">Ocorrências</router-link>
       <router-link to="/mapa" class="nav-link">Mapa</router-link>
     </nav>
 
-    <!-- Botão menu mobile -->
     <button
       class="mobile-menu-button"
       @click="toggleMobileMenu"
@@ -21,7 +19,6 @@
       <span class="hamburger-line"></span>
     </button>
 
-    <!-- Menu mobile -->
     <div class="mobile-nav" :class="{ active: mobileMenuOpen }">
       <div class="mobile-nav-content">
         <router-link
@@ -51,7 +48,6 @@ export default {
     window.addEventListener("scroll", this.handleScroll);
     window.addEventListener("resize", this.handleResize);
 
-    // Adiciona uma pequena animação para os links aparecerem com atraso
     const navLinks = document.querySelectorAll(".nav-link");
     navLinks.forEach((link, index) => {
       setTimeout(() => {
@@ -59,7 +55,6 @@ export default {
       }, 200 * (index + 1));
     });
 
-    // Animar o logo após um pequeno atraso
     setTimeout(() => {
       const logo = document.querySelector(".logo-container");
       if (logo) logo.classList.add("visible");
@@ -75,7 +70,7 @@ export default {
     },
     toggleMobileMenu() {
       this.mobileMenuOpen = !this.mobileMenuOpen;
-      // Previne scroll do body quando o menu mobile estiver aberto
+
       if (this.mobileMenuOpen) {
         document.body.style.overflow = "hidden";
       } else {
@@ -87,7 +82,6 @@ export default {
       document.body.style.overflow = "";
     },
     handleResize() {
-      // Se redimensionar para uma tela maior e o menu mobile estiver aberto, feche-o
       if (window.innerWidth > 768 && this.mobileMenuOpen) {
         this.closeMobileMenu();
       }
@@ -339,7 +333,6 @@ body {
     max-width: 110px;
   }
 
-  /* Transformar o hambúrguer em X quando o menu estiver aberto */
   .mobile-menu-button.active .hamburger-line:nth-child(1) {
     transform: translateY(8px) rotate(45deg);
   }

@@ -82,7 +82,7 @@ export default {
   width: 104px;
   height: 104px;
   transition: transform 0.3s ease;
-  object-fit: cover; /* Garante que a imagem fique bem ajustada */
+  object-fit: cover;
 }
 
 .service-card:hover .card-icon {
