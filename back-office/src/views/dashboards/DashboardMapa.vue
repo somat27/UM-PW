@@ -445,26 +445,46 @@ function criarMarcador(lat, lng, titulo, categoria, dados) {
 
 // Função para limpar marcadores - REFORÇADA
 function limparMarcadores() {
-  console.log("Limpando", markers.value.length, "marcadores existentes");
+  console.log("Limpando", markers.value.length, "marcadores");
 
-  // Remover cada marcador do mapa e destruir todas as referências
-  if (markers.value && markers.value.length > 0) {
-    markers.value.forEach((marker) => {
-      if (marker) {
-        // Fechar janela de informação se estiver aberta
-        if (marker.infoWindow) {
-          marker.infoWindow.close();
-          marker.infoWindow = null; // Limpar referência
-        }
-
-        // Remover o marcador do mapa
-        marker.setMap(null);
-      }
-    });
+  // 1. Remover todos os marcadores do mapa
+  for (const marker of markers.value) {
+    if (marker.infoWindow) {
+      marker.infoWindow.close();
+      marker.infoWindow = null;
+    }
+    marker.setMap(null);
   }
 
-  // Limpar o array de marcadores
+  // 2. Limpar array de marcadores
   markers.value = [];
+
+  // 3. Recriar o mapa a partir do elemento DOM
+  const mapElement = document.getElementById("google-map");
+  if (!mapElement) {
+    console.warn("Elemento #google-map não encontrado");
+    return;
+  }
+
+  const centroInicial = { lat: 38.7223, lng: -9.1393 }; // Lisboa
+
+  map.value = new window.google.maps.Map(mapElement, {
+    center: centroInicial,
+    zoom: 7,
+    mapTypeControl: true,
+    streetViewControl: false,
+    fullscreenControl: true,
+    zoomControl: true,
+    styles: [
+      {
+        featureType: "poi",
+        elementType: "labels",
+        stylers: [{ visibility: "off" }],
+      },
+    ],
+  });
+
+  console.log("Mapa reiniciado com sucesso");
 }
 
 // Função para ajustar o zoom para mostrar todos os marcadores
