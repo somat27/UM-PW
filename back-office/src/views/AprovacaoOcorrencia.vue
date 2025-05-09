@@ -16,45 +16,25 @@
           <div class="audit-form">
             <div class="form-group">
               <label>Descrição</label>
-              <textarea
-                v-model="ocorrencia.descricao"
-                disabled
-                class="input"
-              ></textarea>
+              <textarea v-model="ocorrencia.descricao" disabled class="input"></textarea>
             </div>
             <div class="form-group">
               <label>Tipo de Ocorrência</label>
-              <input
-                :value="
-                  tipoLabels[ocorrencia.tipoOcorrencia] ||
-                  ocorrencia.tipoOcorrencia
-                "
-                disabled
-                class="input"
-              />
+              <input :value="tipoLabels[ocorrencia.tipoOcorrencia] ||
+                ocorrencia.tipoOcorrencia
+                " disabled class="input" />
             </div>
             <div class="form-group">
               <label>Endereço</label>
               <input v-model="ocorrencia.endereco" disabled class="input" />
             </div>
             <div class="map-container">
-              <iframe
-                :src="mapUrl"
-                width="100%"
-                height="100%"
-                frameborder="0"
-                style="border: 0"
-                allowfullscreen
-                loading="lazy"
-              ></iframe>
+              <iframe :src="mapUrl" width="100%" height="100%" frameborder="0" style="border: 0" allowfullscreen
+                loading="lazy"></iframe>
             </div>
 
             <div class="suggestion-section">
-              <button
-                @click="pedirSugestao"
-                class="btn btn-primary suggestion-btn"
-                :disabled="sugestaoLoading"
-              >
+              <button @click="pedirSugestao" class="btn btn-primary suggestion-btn" :disabled="sugestaoLoading">
                 <span v-if="!sugestaoLoading"> Pedir Sugestão </span>
                 <span v-else class="loading-spinner">
                   <span class="spinner"></span>
@@ -85,56 +65,28 @@
             <div class="section-divider"></div>
 
             <h3 class="section-title">Seleção de Perito</h3>
-            <GenericTable
-              :columns="columnsPeritos"
-              :data="peritosList"
-              class="table-scroll"
-            >
+            <GenericTable :columns="columnsPeritos" :data="peritosList" class="table-scroll">
               <template #cell-select="{ row }">
                 <div class="radio-container">
-                  <input
-                    type="radio"
-                    name="perito"
-                    :value="row.uid"
-                    v-model="selectedPerito"
-                    id="perito-radio-{{ row.uid }}"
-                  />
+                  <input type="radio" name="perito" :value="row.uid" v-model="selectedPerito"
+                    id="perito-radio-{{ row.uid }}" />
                   <span class="radio-checkmark"></span>
                 </div>
               </template>
             </GenericTable>
 
             <h3 class="section-title">Seleção de Materiais</h3>
-            <GenericTable
-              :columns="columnsMateriais"
-              :data="materiaisList"
-              class="table-scroll"
-            >
+            <GenericTable :columns="columnsMateriais" :data="materiaisList" class="table-scroll">
               <template #cell-qtd="{ row }">
                 <div class="quantity-input">
-                  <button
-                    class="qty-btn minus"
-                    @click="decrementQty(row)"
-                    :disabled="row.qtd <= 0"
-                  >
+                  <button class="qty-btn minus" @click="decrementQty(row)" :disabled="row.qtd <= 0">
                     −
                   </button>
-                  <input
-                    type="number"
-                    min="0"
-                    :max="row.quantidade"
-                    v-model.number="row.qtd"
-                    @input="
-                      row.qtd =
-                        row.qtd > row.quantidade ? row.quantidade : row.qtd
-                    "
-                    class="input qty-input"
-                  />
-                  <button
-                    class="qty-btn plus"
-                    @click="incrementQty(row)"
-                    :disabled="row.qtd >= row.quantidade"
-                  >
+                  <input type="number" min="0" :max="row.quantidade" v-model.number="row.qtd" @input="
+                    row.qtd =
+                    row.qtd > row.quantidade ? row.quantidade : row.qtd
+                    " class="input qty-input" />
+                  <button class="qty-btn plus" @click="incrementQty(row)" :disabled="row.qtd >= row.quantidade">
                     +
                   </button>
                 </div>
@@ -142,36 +94,17 @@
             </GenericTable>
 
             <h3 class="section-title">Seleção de Profissionais</h3>
-            <GenericTable
-              :columns="columnsProfissionais"
-              :data="profissionaisList"
-              class="table-scroll"
-            >
+            <GenericTable :columns="columnsProfissionais" :data="profissionaisList" class="table-scroll">
               <template #cell-qtd="{ row }">
                 <div class="quantity-input">
-                  <button
-                    class="qty-btn minus"
-                    @click="decrementQty(row)"
-                    :disabled="row.qtd <= 0"
-                  >
+                  <button class="qty-btn minus" @click="decrementQty(row)" :disabled="row.qtd <= 0">
                     −
                   </button>
-                  <input
-                    type="number"
-                    min="0"
-                    :max="row.quantidade"
-                    v-model.number="row.qtd"
-                    @input="
-                      row.qtd =
-                        row.qtd > row.quantidade ? row.quantidade : row.qtd
-                    "
-                    class="input qty-input"
-                  />
-                  <button
-                    class="qty-btn plus"
-                    @click="incrementQty(row)"
-                    :disabled="row.qtd >= row.quantidade"
-                  >
+                  <input type="number" min="0" :max="row.quantidade" v-model.number="row.qtd" @input="
+                    row.qtd =
+                    row.qtd > row.quantidade ? row.quantidade : row.qtd
+                    " class="input qty-input" />
+                  <button class="qty-btn plus" @click="incrementQty(row)" :disabled="row.qtd >= row.quantidade">
                     +
                   </button>
                 </div>
@@ -181,20 +114,12 @@
             <div class="schedule-section">
               <div class="form-group">
                 <label>Data de Fim de Obra</label>
-                <input
-                  type="date"
-                  v-model="deadline"
-                  class="input date-input"
-                />
+                <input type="date" v-model="deadline" class="input date-input" />
               </div>
               <div class="form-group">
                 <label>Tempo Estimado (horas)</label>
                 <div class="time-input">
-                  <input
-                    type="number"
-                    v-model.number="estimatedTime"
-                    class="input"
-                  />
+                  <input type="number" v-model.number="estimatedTime" class="input" />
                   <span class="time-unit">horas</span>
                 </div>
               </div>
@@ -222,6 +147,8 @@ import {
   getDocs,
   setDoc,
   updateDoc,
+  query,
+  where
 } from "firebase/firestore";
 import { db } from "@/firebase";
 import { obterSugestaoAuditoria } from "../openai_service";
@@ -294,8 +221,25 @@ async function loadData() {
   if (ocSnap.exists()) ocorrencia.value = ocSnap.data();
 
   // Peritos
-  const peritosSnap = await getDocs(collection(db, "peritos"));
-  peritosList.value = peritosSnap.docs.map((d) => ({ uid: d.id, ...d.data() }));
+  const peritosQuery = query(
+    collection(db, "peritos"),
+    where("status", "==", "Ativo")
+  );
+  const peritosSnap = await getDocs(peritosQuery);
+  const peritosData = peritosSnap.docs.map((d) => ({ uid: d.id, ...d.data() }));
+
+  // 2. Buscamos todos os users com role = 'perito'
+  const usersQuery = query(
+    collection(db, "users"),
+    where("role", "==", "perito")
+  );
+  const usersSnap = await getDocs(usersQuery);
+  const userIds = usersSnap.docs.map((d) => d.id);
+
+  // 3. Filtramos só os peritos cujo UID está na lista dos users-perito
+  peritosList.value = peritosData.filter((p) =>
+    userIds.includes(p.uid)
+  );
 
   // Materiais
   const matSnap = await getDocs(collection(db, "materiais"));
@@ -355,6 +299,10 @@ async function pedirSugestao() {
 
     // Aplicar as sugestões recebidas aos campos do formulário
     if (respostaObj) {
+      if (respostaObj.motivoNaoNecessidade) {
+        sugestao.value = respostaObj.motivoNaoNecessidade
+        return
+      }
       // Selecionar o perito sugerido
       if (respostaObj.perito) {
         console.log("ID do perito sugerido:", respostaObj.perito);
@@ -424,8 +372,7 @@ async function pedirSugestao() {
           }
 
           console.log(
-            `Material ${materialSugerido.id}: ${
-              encontrado ? "Encontrado" : "Não encontrado"
+            `Material ${materialSugerido.id}: ${encontrado ? "Encontrado" : "Não encontrado"
             }`
           );
         });
@@ -487,8 +434,7 @@ async function pedirSugestao() {
           }
 
           console.log(
-            `Profissional ${profissionalSugerido.id}: ${
-              encontrado ? "Encontrado" : "Não encontrado"
+            `Profissional ${profissionalSugerido.id}: ${encontrado ? "Encontrado" : "Não encontrado"
             }`
           );
         });
@@ -522,15 +468,12 @@ async function pedirSugestao() {
 
       // Gerar texto resumo da sugestão
       sugestao.value = `Sugestão gerada com base na ocorrência:
-- Perito selecionado: ${nomePerito} (ID: ${
-        selectedPerito.value || "não selecionado"
-      })
-- Materiais aplicados: ${materiaisAplicados} de ${
-        respostaObj.materiais?.length || 0
-      } sugeridos
-- Profissionais aplicados: ${profissionaisAplicados} de ${
-        respostaObj.profissionais?.length || 0
-      } sugeridos
+- Perito selecionado: ${nomePerito} (ID: ${selectedPerito.value || "não selecionado"
+        })
+- Materiais aplicados: ${materiaisAplicados} de ${respostaObj.materiais?.length || 0
+        } sugeridos
+- Profissionais aplicados: ${profissionaisAplicados} de ${respostaObj.profissionais?.length || 0
+        } sugeridos
 - Tempo estimado: ${estimatedTime.value} horas
 - Data fim sugerida: ${deadline.value}`;
 
