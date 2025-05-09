@@ -36,24 +36,11 @@
             <div class="page-header">
               <h2>Gestão de Profissionais</h2>
             </div>
-            <div class="controls">
-              <input v-model="searchQuery" type="text" placeholder="Procurar Profissionais..." class="search-input" />
+            <FiltroTabela v-model:modelSearch="searchQuery" v-model:modelSort="sortKey" v-model:modelOrder="sortOrder"
+              :sortColumns="sortColumns" :filterOptions="filterOptions" @filter-applied="handleFilterApplied"
+              :showAdd="true" @add="openAddModal" search-placeholder="Procurar Profissionais..."
+              sort-placeholder="Ordenar por…" />
 
-              <select v-model="sortKey" class="sort-select">
-                <option value="">Ordenar por</option>
-                <option v-for="col in sortColumns" :key="col.key" :value="col.key">
-                  {{ col.label }}
-                </option>
-              </select>
-
-              <button @click="toggleSortOrder" class="sort-button">
-                {{ sortOrder === 'asc' ? '↑' : '↓' }}
-              </button>
-
-              <button @click="openAddModal" class="btn-add">
-                Adicionar Profissional
-              </button>
-            </div>
 
             <!-- Tabela genérica -->
             <GenericTable :data="processedProfissionais" :columns="[...profissionalColumns, editColumn]"
@@ -72,6 +59,7 @@ import GenericTable from '@/components/GenericTable.vue'
 import AddProfissionalModal from '@/components/AddProfissionalModal.vue'
 import { db } from '@/firebase.js'
 import { collection, getDocs, updateDoc, doc } from 'firebase/firestore'
+import FiltroTabela from '@/components/FiltroTabela.vue';
 
 // Estados reativos
 const profissionais = ref([])
@@ -99,33 +87,62 @@ const profissionalColumns = [
 ]
 const editColumn = { key: 'edit-profissionais', label: 'Ações' }
 
+// onde vamos guardar os filtros seleccionados
+const appliedFilters = ref({});
+
+// gera as opções de filtro para o modal
+// aqui escolhemos “area” e “preco” como exemplos de campos a filtrar
+const filterOptions = computed(() => {
+  const campos = ['area', 'preco'];
+  const opts = {};
+  campos.forEach(key => {
+    const valores = profissionais.value.map(p => p[key] ?? '');
+    opts[key] = Array.from(new Set(valores))
+      .filter(v => v !== '');
+  });
+  return opts;
+});
+
+// função que recebe os filtros seleccionados no modal
+function handleFilterApplied(filters) {
+  appliedFilters.value = filters;
+}
+
+
 // Computado equivalente a processedProfissionais
 const processedProfissionais = computed(() => {
-  let result = profissionais.value
+  let result = profissionais.value;
 
-  // filtrar por nome
+  // 1) Pesquisa por nome
   if (searchQuery.value) {
-    const term = searchQuery.value.toLowerCase()
+    const term = searchQuery.value.toLowerCase();
     result = result.filter(p =>
-      p.nome.toLowerCase().includes(term)
-    )
+      (p.nome ?? '').toLowerCase().includes(term)
+    );
   }
 
-  // ordenar se sortKey estiver definido
+  // 2) Filtrar pelos campos do modal
+  Object.entries(appliedFilters.value).forEach(([key, vals]) => {
+    if (!vals.length) return;
+    result = result.filter(p => vals.includes(p[key]));
+  });
+
+  // 3) Ordenação
   if (sortKey.value) {
     result = result.slice().sort((a, b) => {
-      let valA = a[sortKey.value]
-      let valB = b[sortKey.value]
-      if (typeof valA === 'string') valA = valA.toLowerCase()
-      if (typeof valB === 'string') valB = valB.toLowerCase()
-      if (valA < valB) return sortOrder.value === 'asc' ? -1 : 1
-      if (valA > valB) return sortOrder.value === 'asc' ? 1 : -1
-      return 0
-    })
+      let valA = a[sortKey.value];
+      let valB = b[sortKey.value];
+      if (typeof valA === 'string') valA = valA.toLowerCase();
+      if (typeof valB === 'string') valB = valB.toLowerCase();
+      if (valA < valB) return sortOrder.value === 'asc' ? -1 : 1;
+      if (valA > valB) return sortOrder.value === 'asc' ? 1 : -1;
+      return 0;
+    });
   }
 
-  return result
-})
+  return result;
+});
+
 
 // Funções/métodos
 async function fetchProfissionais() {
@@ -140,10 +157,6 @@ async function fetchProfissionais() {
   } finally {
     loading.value = false
   }
-}
-
-function toggleSortOrder() {
-  sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
 }
 
 function openAddModal() {

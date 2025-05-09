@@ -18,16 +18,9 @@
           </div>
 
           <!-- Controles de pesquisa e ordenação -->
-          <div class="controls">
-            <input v-model="searchQuery" type="text" placeholder="Procurar por ID..." class="search-input" />
-            <select v-model="sortKey" class="sort-select">
-              <option value="">Ordenar por</option>
-              <option v-for="col in sortColumns" :key="col.key" :value="col.key">{{ col.label }}</option>
-            </select>
-            <button @click="toggleSortOrder" class="sort-button">
-              {{ sortOrder === 'asc' ? '↑' : '↓' }}
-            </button>
-          </div>
+          <FiltroTabela v-model:modelSearch="searchQuery" v-model:modelSort="sortKey" v-model:modelOrder="sortOrder"
+            :sortColumns="sortColumns" :filterOptions="filterOptions" @filter-applied="handleFilterApplied"
+            search-placeholder="Procurar por ID..." sort-placeholder="Ordenar por…" />
 
           <!-- Tabela de Ocorrências -->
           <div class="table-section">
@@ -104,6 +97,7 @@ import NavigationList from '@/components/NavigationList.vue';
 import GenericTable from '@/components/GenericTable.vue';
 import { db } from '@/firebase.js';
 import { collection, getDocs, updateDoc, doc } from 'firebase/firestore';
+import FiltroTabela from '@/components/FiltroTabela.vue';
 
 // Estado
 const occurrences = ref([]);
@@ -116,6 +110,25 @@ const mediaIndex = ref(0);
 const searchQuery = ref('');
 const sortKey = ref('');
 const sortOrder = ref('asc');
+
+const appliedFilters = ref({});
+
+const filterOptions = computed(() => {
+  const campos = ['tipoOcorrencia', 'status'];
+  const opts = {};
+  campos.forEach(key => {
+    opts[key] = Array.from(
+      new Set(
+        occurrences.value.map(item => item[key] ?? '')
+      )
+    ).filter(v => v !== '');
+  });
+  return opts;
+});
+
+function handleFilterApplied(filters) {
+  appliedFilters.value = filters;
+}
 
 // Rótulos e opções de ordenação
 const tipoLabels = { sinals: 'Sinalização em Falta', roads: 'Vias e Passeios', lights: 'Iluminação Pública' };
@@ -136,19 +149,39 @@ const columns = [
 // Filtrar e ordenar apenas por ID
 const filteredOccurrences = computed(() => {
   let arr = occurrences.value;
+
+  // 1) pesquisa por texto
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase();
-    arr = arr.filter(i => i.id.toLowerCase().includes(q));
+    arr = arr.filter(item =>
+      (item.id ?? '').toString().toLowerCase().includes(q)
+    );
   }
+
+  // 2) filtros por checkbox
+  Object.entries(appliedFilters.value).forEach(([key, vals]) => {
+    if (vals.length) {
+      arr = arr.filter(item => vals.includes(item[key]));
+    }
+  });
+
+  // 3) ordenação
   if (sortKey.value) {
     arr = [...arr].sort((a, b) => {
-      const aVal = a[sortKey.value], bVal = b[sortKey.value];
-      if (typeof aVal === 'string') return sortOrder.value === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
-      return sortOrder.value === 'asc' ? aVal - bVal : bVal - aVal;
+      const A = a[sortKey.value], B = b[sortKey.value];
+      if (typeof A === 'string') {
+        return sortOrder.value === 'asc'
+          ? A.localeCompare(B)
+          : B.localeCompare(A);
+      }
+      return sortOrder.value === 'asc' ? A - B : B - A;
     });
   }
+
   return arr;
 });
+
+
 
 // Carregar dados
 async function loadOccurrences() {
@@ -183,9 +216,6 @@ async function submitReject() {
     await updateDoc(doc(db, 'ocorrencias', selected.value.id), { status: 'Rejeitado', motivoRejeicao: rejectReason.value });
     closeModals(); loadOccurrences();
   }
-}
-function toggleSortOrder() {
-  sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
 }
 function nextMedia() {
   if (!selected.value?.imagemVideo) return;

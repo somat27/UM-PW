@@ -15,18 +15,10 @@
             <h2>Gestão de Peritos</h2>
           </div>
 
-          <div class="controls">
-            <input v-model="searchQuery" type="text" placeholder="Procurar Peritos..." class="search-input" />
-            <select v-model="sortKey" class="sort-select">
-              <option value="">Ordenar por</option>
-              <option v-for="col in sortColumns" :key="col.key" :value="col.key">
-                {{ col.label }}
-              </option>
-            </select>
-            <button @click="toggleSortOrder" class="sort-button">
-              {{ sortOrder === 'asc' ? '↑' : '↓' }}
-            </button>
-          </div>
+          <FiltroTabela v-model:modelSearch="searchQuery" v-model:modelSort="sortKey" v-model:modelOrder="sortOrder"
+            :sortColumns="sortColumns" :filterOptions="filterOptions" @filter-applied="handleFilterApplied"
+            search-placeholder="Procurar Peritos..." sort-placeholder="Ordenar por…" />
+
 
           <template v-if="faltaPerfil.length > 0">
             <div class="table-section">
@@ -38,8 +30,8 @@
 
           <div class="table-section">
             <h3 class="table-section-title">Peritos Registados</h3>
-            <GenericTable :data="filteredComPerfil" :loading="aCarregar" :columns="completeColumns" type="striped" 
-              @edit="handleEdit"/>
+            <GenericTable :data="filteredComPerfil" :loading="aCarregar" :columns="completeColumns" type="striped"
+              @edit="handleEdit" />
           </div>
 
           <AddPeritoModal v-if="showAddModal" :user="selectedUser" @close="showAddModal = false"
@@ -56,6 +48,7 @@ import { ref, onMounted, computed } from 'vue';
 import GenericTable from '@/components/GenericTable.vue';
 import AddPeritoModal from '@/components/AddPeritoModal.vue';
 import { getPeritosWithoutProfile, getPeritosWithProfile } from '@/firebase';
+import FiltroTabela from '@/components/FiltroTabela.vue';
 
 const faltaPerfil = ref([]);
 const comPerfil = ref([]);
@@ -64,6 +57,37 @@ const aCarregar = ref(true);
 const searchQuery = ref('');
 const sortKey = ref('');
 const sortOrder = ref('asc');
+
+// 1) onde vamos guardar os filtros seleccionados
+const appliedFilters = ref({});
+
+// 2) opções para preencher o modal de filtros
+const filterOptions = computed(() => {
+  const campos = ['specialty', 'localidades', 'status'];
+  const opts = {};
+
+  campos.forEach(key => {
+    // recolhe todos os valores desse campo
+    let valores = comPerfil.value.map(u => u[key] ?? []);
+
+    // se for localidades, achata os arrays num único array
+    if (key === 'localidades') {
+      valores = valores.flat();
+    }
+
+    // tira duplicados e valores vazios
+    opts[key] = Array.from(new Set(valores))
+      .filter(v => v !== '');
+  });
+
+  return opts;
+});
+
+
+// 3) função a disparar quando clicas em “Aplicar” no modal
+function handleFilterApplied(filters) {
+  appliedFilters.value = filters;
+}
 
 const showAddModal = ref(false);
 const selectedUser = ref(null);
@@ -115,10 +139,6 @@ function handleEdit(user) {
   showAddModal.value = true;
 }
 
-function toggleSortOrder() {
-  sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
-}
-
 function sortData(arr) {
   if (!sortKey.value) return arr;
   return [...arr].sort((a, b) => {
@@ -143,11 +163,38 @@ const filteredFaltaPerfil = computed(() => {
 });
 
 const filteredComPerfil = computed(() => {
-  let data = comPerfil.value.filter(u =>
-    u.displayName.toLowerCase().includes(searchQuery.value.toLowerCase())
-  );
+  let data = comPerfil.value;
+
+  // pesquisa por texto
+  if (searchQuery.value) {
+    const q = searchQuery.value.toLowerCase();
+    data = data.filter(u =>
+      (u.displayName ?? '').toLowerCase().includes(q)
+    );
+  }
+
+  // aplicação dos filtros do modal
+  Object.entries(appliedFilters.value).forEach(([key, vals]) => {
+    if (!vals.length) return;
+
+    // campo localidades é um array: verifica se alguma das localidades do perito está nas vals
+    if (key === 'localidades') {
+      data = data.filter(u =>
+        Array.isArray(u.localidades) &&
+        u.localidades.some(loc => vals.includes(loc))
+      );
+    }
+    else {
+      // campos simples (specialty, status, etc.)
+      data = data.filter(u => vals.includes(u[key]));
+    }
+  });
+
+
+  // ordenação
   return sortData(data);
 });
+
 </script>
 
 <style scoped>

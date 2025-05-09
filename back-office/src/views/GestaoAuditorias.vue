@@ -15,11 +15,12 @@
             <h2>Gestão de Auditorias</h2>
           </div>
 
-          <div class="form-group">
-            <input v-model="searchQuery" type="text" placeholder="Pesquisar auditorias..." class="input" />
-          </div>
+          <FiltroTabela v-model:modelSearch="searchQuery" v-model:modelSort="sortKey" v-model:modelOrder="sortOrder"
+            :sortColumns="columns" :showAdd="false" :filterOptions="filterOptions" @filter-applied="handleFilterApplied"
+            search-placeholder="Procurar Auditorias..." sort-placeholder="Ordenar por…" />
 
-          <GenericTable :columns="columns" :data="filteredData" class="table-scroll">
+
+          <GenericTable :columns="[...columns, editColumn]" :data="filteredData" class="table-scroll">
             <template #cell-acoes="{ row }">
               <button @click="viewAuditoria(row)" class="icon-btn" title="Ver detalhes">
                 <img src="@/assets/icons8-eye-forma-light/icons8-eye-24.png" alt="Ver detalhes" />
@@ -153,6 +154,7 @@ import NavigationList from '@/components/NavigationList.vue';
 import GenericTable from '@/components/GenericTable.vue';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/firebase';
+import FiltroTabela from '@/components/FiltroTabela.vue';
 
 // mapeamento de tipo → label
 const tipoLabels = {
@@ -163,15 +165,74 @@ const tipoLabels = {
 
 const tableData = ref([]);
 const searchQuery = ref('');
+const sortKey = ref('');      // coluna por onde ordenar
+const sortOrder = ref('asc');   // 'asc' ou 'desc'
 const selectedAuditoria = ref(null);
+
+const appliedFilters = ref({});
+const filterOptions = computed(() => {
+  // para cada campo que queiras filtrar
+  const campos = ['status', 'tipo'];
+  const opts = {};
+  campos.forEach(key => {
+    opts[key] = [
+      ...new Set(tableData.value.map(item => item[key] ?? ''))  // retira undefined
+    ].filter(v => v !== '');  // opcional: tira valores vazios
+  });
+  return opts;
+});
+
+// 3. lidar com o evento do modal
+function handleFilterApplied(filters) {
+  appliedFilters.value = filters;
+}
+
+// 4. computed que junta pesquisa + filtros + ordenação
+const filteredData = computed(() => {
+  let data = tableData.value;
+
+  // pesquisa por texto
+  if (searchQuery.value) {
+    const q = searchQuery.value.toLowerCase();
+    data = data.filter(item => {
+      const valores = [
+        item.id
+      ];
+      return valores.some(v =>
+        (v ?? '').toString().toLowerCase().includes(q)
+      );
+    });
+  }
+
+  // filtros por checkbox
+  Object.entries(appliedFilters.value).forEach(([key, vals]) => {
+    if (vals.length) {
+      data = data.filter(item => vals.includes(item[key]));
+    }
+  });
+
+  // ordenação (igual ao que já tinhas)
+  if (sortKey.value) {
+    data = [...data].sort((a, b) => {
+      const A = a[sortKey.value];
+      const B = b[sortKey.value];
+      if (A < B) return sortOrder.value === 'asc' ? -1 : 1;
+      if (A > B) return sortOrder.value === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }
+
+  return data;
+});
+
 
 // colunas: só ID, Tipo, Estado + ações
 const columns = [
   { key: 'id', label: 'ID', sortable: true, headerClass: 'col-id' },
   { key: 'tipo', label: 'Tipo', sortable: true },
-  { key: 'status', label: 'Estado', sortable: true },
-  { key: 'acoes', label: 'Ações' }
+  { key: 'status', label: 'Estado', sortable: true }
 ];
+const editColumn = { key: 'acoes', label: 'Ações' }
 
 // carrega auditorias da Firestore
 async function loadAuditorias() {
@@ -196,16 +257,6 @@ async function loadAuditorias() {
 }
 
 onMounted(loadAuditorias);
-
-// computed com filtro de pesquisa
-const filteredData = computed(() => {
-  if (!searchQuery.value) return tableData.value;
-  const q = searchQuery.value.toLowerCase();
-  return tableData.value.filter(item =>
-    ['id', 'tipo', 'status']
-      .some(key => String(item[key]).toLowerCase().includes(q))
-  );
-});
 
 // abre modal
 function viewAuditoria(row) {
@@ -261,11 +312,7 @@ function addProfissional() {
 }
 
 .content-wrapper {
-  background: #fff;
-  padding: 1.5em;
-  border-radius: 8px;
-  max-height: calc(100vh - 120px);
-  overflow-y: auto;
+  margin-top: 40px;
   min-height: 100%;
 }
 

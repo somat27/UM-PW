@@ -35,21 +35,11 @@
               <h2>Gestão de Materiais</h2>
             </div>
 
-            <div class="controls">
-              <input v-model="searchQuery" type="text" placeholder="Procurar Materiais..." class="search-input" />
-              <select v-model="sortKey" class="sort-select">
-                <option value="">Ordenar por</option>
-                <option v-for="col in sortColumns" :key="col.key" :value="col.key">
-                  {{ col.label }}
-                </option>
-              </select>
-              <button @click="toggleSortOrder" class="sort-button">
-                {{ sortOrder === 'asc' ? '↑' : '↓' }}
-              </button>
-              <button @click="openAddMaterialModal" class="btn-add-material">
-                Adicionar Material
-              </button>
-            </div>
+            <FiltroTabela v-model:modelSearch="searchQuery" v-model:modelSort="sortKey" v-model:modelOrder="sortOrder"
+              :sortColumns="materialColumns" :filterOptions="filterOptions" @filter-applied="handleFilterApplied"
+              :showAdd="true" @add="openAddMaterialModal" search-placeholder="Procurar Materiais..."
+              sort-placeholder="Ordenar por…" />
+
 
             <!-- Tabela genérica com colunas e ações -->
             <GenericTable :data="filteredMateriais" :columns="[...materialColumns, editColumn]" :loading="loading"
@@ -68,6 +58,7 @@ import GenericTable from '@/components/GenericTable.vue'
 import AddMaterialModal from '@/components/AddMaterialModal.vue'
 import { db } from '@/firebase.js'
 import { collection, getDocs, updateDoc, doc } from 'firebase/firestore'
+import FiltroTabela from '@/components/FiltroTabela.vue';
 
 // estados
 const materiais = ref([])
@@ -90,33 +81,62 @@ const showAddQuantidadeModal = ref(false)
 const materialParaAdicionarQtd = ref(null)
 const quantidadeParaAdicionar = ref(1)
 
-// computados
+// 1) onde vamos guardar a seleção de filtros
+const appliedFilters = ref({});
+
+// 2) gera as opções para o modal de filtros
+//    ajusta ‘categoria’ e ‘estado’ aos campos reais do teu data model
+const filterOptions = computed(() => {
+  const campos = ['categoria'];
+  const opts = {};
+  campos.forEach(key => {
+    // ‘materiais’ é o teu ref com todos os registos
+    let vals = materiais.value.map(m => m[key] ?? '');
+    opts[key] = Array.from(new Set(vals))
+      .filter(v => v !== '');
+  });
+  return opts;
+});
+
+// 3) função chamada quando clicas em “Aplicar” no modal
+function handleFilterApplied(filters) {
+  appliedFilters.value = filters;
+}
+
+// 4) computed que junta pesquisa, filtros e ordenação
 const filteredMateriais = computed(() => {
-  let list = materiais.value
+  let arr = materiais.value;
 
-  // filtrar apenas por nome
+  // 4.1 pesquisa por texto
   if (searchQuery.value) {
-    const term = searchQuery.value.toLowerCase()
-    list = list.filter(m =>
-      m.nome.toLowerCase().includes(term)
-    )
+    const q = searchQuery.value.toLowerCase();
+    arr = arr.filter(m =>
+      (m.nome ?? '').toString().toLowerCase().includes(q)
+    );
   }
 
-  // ordenar
+  // 4.2 filtros por checkbox
+  Object.entries(appliedFilters.value).forEach(([key, vals]) => {
+    if (!vals.length) return;
+    arr = arr.filter(m => vals.includes(m[key]));
+  });
+
+  // 4.3 ordenação
   if (sortKey.value) {
-    list = list.slice().sort((a, b) => {
-      let valA = a[sortKey.value]
-      let valB = b[sortKey.value]
-      if (typeof valA === 'string') valA = valA.toLowerCase()
-      if (typeof valB === 'string') valB = valB.toLowerCase()
-      if (valA < valB) return sortOrder.value === 'asc' ? -1 : 1
-      if (valA > valB) return sortOrder.value === 'asc' ? 1 : -1
-      return 0
-    })
+    arr = [...arr].sort((a, b) => {
+      const A = a[sortKey.value], B = b[sortKey.value];
+      if (typeof A === 'string') {
+        return sortOrder.value === 'asc'
+          ? A.localeCompare(B)
+          : B.localeCompare(A);
+      }
+      return sortOrder.value === 'asc' ? A - B : B - A;
+    });
   }
 
-  return list
-})
+  return arr;
+});
+
 
 // métodos
 async function fetchMateriais() {
@@ -133,9 +153,6 @@ async function fetchMateriais() {
   }
 }
 
-function toggleSortOrder() {
-  sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
-}
 
 function openAddMaterialModal() {
   materialParaEditar.value = null
