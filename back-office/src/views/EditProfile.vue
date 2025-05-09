@@ -40,55 +40,45 @@
     </div>
 </template>
 
-<script>
+<script setup>
 import { reactive, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { doc, getDoc, updateDoc } from 'firebase/firestore'
 import { auth, db } from '@/firebase'
 import NavigationList from '@/components/NavigationList.vue'
 
-export default {
-    name: 'EditProfile',
-    components: {
-        NavigationList
-    },
-    setup() {
-        const form = reactive({ displayName: '', email: '' })
-        const saving = ref(false)
-        const router = useRouter()
-        const uid = auth.currentUser?.uid
+const form = reactive({ displayName: '', email: '' })
+const saving = ref(false)
+const router = useRouter()
+const uid = auth.currentUser?.uid
 
-        onMounted(async () => {
-            if (!uid) return router.push('/')
-            const snap = await getDoc(doc(db, 'users', uid))
-            if (snap.exists()) Object.assign(form, snap.data())
+onMounted(async () => {
+    if (!uid) return router.push('/')
+    const snap = await getDoc(doc(db, 'users', uid))
+    if (snap.exists()) Object.assign(form, snap.data())
+})
+
+const saveProfile = async () => {
+    saving.value = true
+    try {
+        await updateDoc(doc(db, 'users', uid), {
+            displayName: form.displayName
         })
-
-        const saveProfile = async () => {
-            saving.value = true
-            try {
-                await updateDoc(doc(db, 'users', uid), {
-                    displayName: form.displayName
-                    // adicione mais campos se houver
-                })
-                alert('Perfil atualizado com sucesso!')
-                router.push({ name: 'ProfileView' })
-            } catch (err) {
-                console.error(err)
-                alert('Erro ao salvar perfil.')
-            } finally {
-                saving.value = false
-            }
-        }
-
-        const cancelEdit = () => {
-            router.push({ name: 'ProfileView' })
-        }
-
-        return { form, saving, saveProfile, cancelEdit }
+        alert('Perfil atualizado com sucesso!')
+        router.push({ name: 'ProfileView' })
+    } catch (err) {
+        console.error(err)
+        alert('Erro ao salvar perfil.')
+    } finally {
+        saving.value = false
     }
 }
+
+const cancelEdit = () => {
+    router.push({ name: 'ProfileView' })
+}
 </script>
+
 
 <style scoped>
 .dashboard-layout {

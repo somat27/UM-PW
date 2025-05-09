@@ -65,126 +65,128 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, onMounted } from 'vue'
 import NavigationList from '@/components/NavigationList.vue'
 import GenericTable from '@/components/GenericTable.vue'
 import AddProfissionalModal from '@/components/AddProfissionalModal.vue'
 import { db } from '@/firebase.js'
 import { collection, getDocs, updateDoc, doc } from 'firebase/firestore'
 
-export default {
-  name: 'GestaoProfissionais',
-  components: {
-    NavigationList,
-    GenericTable,
-    AddProfissionalModal
-  },
-  data() {
-    return {
-      profissionais: [],
-      loading: false,
-      erro: null,
-      searchQuery: '',          // pesquisa por nome
-      sortKey: '',              // campo por onde ordenar
-      sortOrder: 'asc',         // ordem: asc ou desc
-      sortColumns: [            // opções do dropdown
-        { key: 'nome', label: 'Nome' },
-        { key: 'area', label: 'Área/Especialidade' },
-        { key: 'preco', label: 'Preço/Hora' },
-        { key: 'quantidade', label: 'Quantidade' }
-      ],
-      showAddModal: false,
-      profissionalParaEditar: null,
-      showAddQuantidadeModal: false,
-      profissionalParaAdicionarQtd: null,
-      quantidadeParaAdicionar: 1,
-      profissionalColumns: [
-        { key: 'nome', label: 'Nome' },
-        { key: 'area', label: 'Área/Especialidade' },
-        { key: 'preco', label: 'Preço/Hora' },
-        { key: 'quantidade', label: 'Quantidade' }
-      ],
-      editColumn: { key: 'edit-profissionais', label: 'Ações' }
-    }
-  },
-  computed: {
-    processedProfissionais() {
-      let result = this.profissionais
-      // filtrar apenas por nome
-      if (this.searchQuery) {
-        const term = this.searchQuery.toLowerCase()
-        result = result.filter(p => p.nome.toLowerCase().includes(term))
-      }
-      // ordenar se necessário
-      if (this.sortKey) {
-        result = result.slice().sort((a, b) => {
-          let valA = a[this.sortKey]
-          let valB = b[this.sortKey]
-          if (typeof valA === 'string') valA = valA.toLowerCase()
-          if (typeof valB === 'string') valB = valB.toLowerCase()
-          if (valA < valB) return this.sortOrder === 'asc' ? -1 : 1
-          if (valA > valB) return this.sortOrder === 'asc' ? 1 : -1
-          return 0
-        })
-      }
-      return result
-    }
-  },
-  mounted() {
-    this.fetchProfissionais()
-  },
-  methods: {
-    async fetchProfissionais() {
-      this.loading = true
-      this.erro = null
-      try {
-        const snap = await getDocs(collection(db, 'profissionais'))
-        this.profissionais = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-      } catch (e) {
-        this.erro = 'Não foi possível carregar os profissionais.'
-        console.error(e)
-      } finally {
-        this.loading = false
-      }
-    },
-    toggleSortOrder() {
-      this.sortOrder = this.sortOrder === "asc" ? "desc" : "asc";
-    },
-    openAddModal() {
-      this.profissionalParaEditar = null
-      this.showAddModal = true
-    },
-    openEditModal(item) {
-      this.profissionalParaEditar = item
-      this.showAddModal = true
-    },
-    openAddQuantidadeModal(item) {
-      this.profissionalParaAdicionarQtd = item
-      this.quantidadeParaAdicionar = 1
-      this.showAddQuantidadeModal = true
-    },
-    async confirmarAdicionarQuantidade() {
-      const novaQtd = this.profissionalParaAdicionarQtd.quantidade + this.quantidadeParaAdicionar
-      await this.atualizarQuantidade(this.profissionalParaAdicionarQtd.id, novaQtd)
-      this.showAddQuantidadeModal = false
-      await this.fetchProfissionais()
-    },
-    async handleProfissionalSaved() {
-      this.showAddModal = false
-      await this.fetchProfissionais()
-    },
-    async atualizarQuantidade(id, novaQtd) {
-      try {
-        const refDoc = doc(db, 'profissionais', id)
-        await updateDoc(refDoc, { quantidade: novaQtd })
-        const item = this.profissionais.find(p => p.id === id)
-        if (item) item.quantidade = novaQtd
-      } catch (e) {
-        console.error('Erro ao atualizar quantidade:', e)
-      }
-    }
+// Estados reativos
+const profissionais = ref([])
+const loading = ref(false)
+const erro = ref(null)
+const searchQuery = ref('')
+const sortKey = ref('')
+const sortOrder = ref('asc')
+const sortColumns = [
+  { key: 'nome', label: 'Nome' },
+  { key: 'area', label: 'Área/Especialidade' },
+  { key: 'preco', label: 'Preço/Hora' },
+  { key: 'quantidade', label: 'Quantidade' }
+]
+const showAddModal = ref(false)
+const profissionalParaEditar = ref(null)
+const showAddQuantidadeModal = ref(false)
+const profissionalParaAdicionarQtd = ref(null)
+const quantidadeParaAdicionar = ref(1)
+const profissionalColumns = [
+  { key: 'nome', label: 'Nome' },
+  { key: 'area', label: 'Área/Especialidade' },
+  { key: 'preco', label: 'Preço/Hora' },
+  { key: 'quantidade', label: 'Quantidade' }
+]
+const editColumn = { key: 'edit-profissionais', label: 'Ações' }
+
+// Computado equivalente a processedProfissionais
+const processedProfissionais = computed(() => {
+  let result = profissionais.value
+
+  // filtrar por nome
+  if (searchQuery.value) {
+    const term = searchQuery.value.toLowerCase()
+    result = result.filter(p =>
+      p.nome.toLowerCase().includes(term)
+    )
+  }
+
+  // ordenar se sortKey estiver definido
+  if (sortKey.value) {
+    result = result.slice().sort((a, b) => {
+      let valA = a[sortKey.value]
+      let valB = b[sortKey.value]
+      if (typeof valA === 'string') valA = valA.toLowerCase()
+      if (typeof valB === 'string') valB = valB.toLowerCase()
+      if (valA < valB) return sortOrder.value === 'asc' ? -1 : 1
+      if (valA > valB) return sortOrder.value === 'asc' ? 1 : -1
+      return 0
+    })
+  }
+
+  return result
+})
+
+// Funções/métodos
+async function fetchProfissionais() {
+  loading.value = true
+  erro.value = null
+  try {
+    const snap = await getDocs(collection(db, 'profissionais'))
+    profissionais.value = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+  } catch (e) {
+    erro.value = 'Não foi possível carregar os profissionais.'
+    console.error(e)
+  } finally {
+    loading.value = false
   }
 }
+
+function toggleSortOrder() {
+  sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+}
+
+function openAddModal() {
+  profissionalParaEditar.value = null
+  showAddModal.value = true
+}
+
+function openEditModal(item) {
+  profissionalParaEditar.value = item
+  showAddModal.value = true
+}
+
+function openAddQuantidadeModal(item) {
+  profissionalParaAdicionarQtd.value = item
+  quantidadeParaAdicionar.value = 1
+  showAddQuantidadeModal.value = true
+}
+
+async function confirmarAdicionarQuantidade() {
+  const novaQtd = profissionalParaAdicionarQtd.value.quantidade + quantidadeParaAdicionar.value
+  await atualizarQuantidade(profissionalParaAdicionarQtd.value.id, novaQtd)
+  showAddQuantidadeModal.value = false
+  await fetchProfissionais()
+}
+
+async function handleProfissionalSaved() {
+  showAddModal.value = false
+  await fetchProfissionais()
+}
+
+async function atualizarQuantidade(id, novaQtd) {
+  try {
+    const refDoc = doc(db, 'profissionais', id)
+    await updateDoc(refDoc, { quantidade: novaQtd })
+    const item = profissionais.value.find(p => p.id === id)
+    if (item) item.quantidade = novaQtd
+  } catch (e) {
+    console.error('Erro ao atualizar quantidade:', e)
+  }
+}
+
+// Life-cycle
+onMounted(fetchProfissionais)
 </script>
 
 <style scoped>
@@ -413,19 +415,19 @@ body,
 }
 
 .form-group {
-    margin-bottom: 0.75rem;
+  margin-bottom: 0.75rem;
 }
 
 .form-group label {
-    display: block;
-    margin-bottom: 0.25rem;
-    font-weight: 500;
+  display: block;
+  margin-bottom: 0.25rem;
+  font-weight: 500;
 }
 
 .form-group input {
-    width: 100%;
-    padding: 0.5rem;
-    border: 1px solid #ccc;
-    border-radius: 0.375rem;
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 0.375rem;
 }
 </style>

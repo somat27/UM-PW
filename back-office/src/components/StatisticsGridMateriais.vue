@@ -1,26 +1,13 @@
 <template>
   <section class="statistics-grid">
     <div class="statistics-layout">
-      <StatisticsCard
-        v-for="(card, idx) in cards"
-        :key="idx"
-        :title="card.title"
-        :value="card.value"
-      />
+      <StatisticsCard v-for="(card, idx) in cards" :key="idx" :title="card.title" :value="card.value" />
     </div>
   </section>
 </template>
 
-<script>
-import StatisticsCard from './StatisticsCard.vue';
-
-export default {
-  name: 'StatisticsGridMateriais',
-  components: { StatisticsCard },
-  props: {
-    cards: { type: Array, required: true }
-  }
-};
+<script setup>
+import StatisticsCard from './StatisticsCard.vue'
 </script>
 
 <style scoped>
@@ -28,6 +15,7 @@ export default {
   margin-top: 16px;
   width: 100%;
 }
+
 .statistics-layout {
   display: flex;
   gap: 20px;

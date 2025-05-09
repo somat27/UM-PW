@@ -54,151 +54,114 @@
   </div>
 </template>
 
-<script>
-import { ref, computed } from 'vue';
-import VueApexCharts from 'vue3-apexcharts';
-import NavigationList from '@/components/NavigationList.vue';
-import StatisticsGridOcorrencia from '@/components/StatisticsGridOcorrencia.vue';
+<script setup>
+import { ref, computed } from 'vue'
+import NavigationList from '@/components/NavigationList.vue'
+import StatisticsGridOcorrencia from '@/components/StatisticsGridOcorrencia.vue'
 
 // Exemplo de base de dados diária
 // Em produção, substitui por fetch/API
 const rawData = [
-  // cada entrada: { date: '2025-04-14', city: 'Lisboa', total: 5, resolved: 4 }
   { date: '2025-04-21', city: 'Lisboa', total: 5, resolved: 4 },
   { date: '2025-04-22', city: 'Lisboa', total: 6, resolved: 5 },
   // ... mais dias e cidades ...
-];
+]
 
 function isoWeekDates(weekString) {
-  // Recebe "YYYY-WW", devolve array de 7 datas 'YYYY-MM-DD'
-  const [year, wk] = weekString.split('-W').map(Number);
-  // calcula o 4º de janeiro desse ano (sempre na semana 1 ISO)
-  const jan4 = new Date(Date.UTC(year, 0, 4));
-  // quantos dias para início de semana ISO
-  const dayOfWeek = jan4.getUTCDay() || 7; // domingo→7
-  const week1Start = new Date(Date.UTC(
-    year, 0, 4 - (dayOfWeek - 1)
-  ));
-  // agora avança (wk - 1) * 7 dias
-  const start = new Date(week1Start);
-  start.setUTCDate(start.getUTCDate() + (wk - 1) * 7);
-  // gera 7 dias
+  const [year, wk] = weekString.split('-W').map(Number)
+  const jan4 = new Date(Date.UTC(year, 0, 4))
+  const dayOfWeek = jan4.getUTCDay() || 7
+  const week1Start = new Date(Date.UTC(year, 0, 4 - (dayOfWeek - 1)))
+  const start = new Date(week1Start)
+  start.setUTCDate(start.getUTCDate() + (wk - 1) * 7)
   return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(start);
-    d.setUTCDate(d.getUTCDate() + i);
-    return d.toISOString().slice(0, 10);
-  });
+    const d = new Date(start)
+    d.setUTCDate(d.getUTCDate() + i)
+    return d.toISOString().slice(0, 10)
+  })
 }
 
-// Dentro do setup() ou fora dele, antes de setup():
 function getCurrentISOWeek() {
-  const now = new Date();
-  // pega só a data UTC (evita off‑by‑one por fuso)
+  const now = new Date()
   const date = new Date(Date.UTC(
     now.getUTCFullYear(),
     now.getUTCMonth(),
     now.getUTCDate()
-  ));
-  // ISO semana: calcula data do 4 de janeiro e deriva semana
-  const dayNum = date.getUTCDay() || 7; // Domingo→7
-  date.setUTCDate(date.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-  const weekNo = Math.ceil(
-    (((date - yearStart) / 86400000) + 1) / 7
-  );
-  const weekStr = String(weekNo).padStart(2, '0');
-  return `${date.getUTCFullYear()}-W${weekStr}`;
+  ))
+  const dayNum = date.getUTCDay() || 7
+  date.setUTCDate(date.getUTCDate() + 4 - dayNum)
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1))
+  const weekNo = Math.ceil((((date - yearStart) / 86400000) + 1) / 7)
+  const weekStr = String(weekNo).padStart(2, '0')
+  return `${date.getUTCFullYear()}-W${weekStr}`
 }
 
-export default {
-  components: {
-    NavigationList,
-    StatisticsGridOcorrencia,
-    apexchart: VueApexCharts
-  },
-  setup() {
-    const activeTab = ref('ocorrencias');
+const activeTab = ref('ocorrencias')
+const localities = ['Lisboa', 'Porto', 'Coimbra', 'Faro', 'Braga']
+const selectedCity = ref(localities[0])
+const selectedWeek = ref(getCurrentISOWeek())
 
-    const localities = ['Lisboa', 'Porto', 'Coimbra', 'Faro', 'Braga'];
-    const selectedCity = ref(localities[0]);
-    const selectedWeek = ref(getCurrentISOWeek());
+const weekDates = computed(() =>
+  selectedWeek.value ? isoWeekDates(selectedWeek.value) : []
+)
 
-    // datas da semana ISO escolhida
-    const weekDates = computed(() =>
-      selectedWeek.value ? isoWeekDates(selectedWeek.value) : []
-    );
+const weeklyData = computed(() =>
+  rawData.filter(item =>
+    item.city === selectedCity.value &&
+    weekDates.value.includes(item.date)
+  )
+)
 
-    // filtra rawData pela cidade e pela semana
-    const weeklyData = computed(() =>
-      rawData.filter(item =>
-        item.city === selectedCity.value &&
-        weekDates.value.includes(item.date)
-      )
-    );
-
-    // cards: total, resolved, dia com max/min taxa
-    const weeklyCards = computed(() => {
-      if (!weeklyData.value.length) {
-        return [
-          { title: 'Total Confirmadas', value: 0 },
-          { title: 'Total Resolvidas', value: 0 },
-          { title: 'Maior taxa (dia)', value: '–' },
-          { title: 'Menor taxa (dia)', value: '–' }
-        ];
-      }
-      const total = weeklyData.value.reduce((sum, d) => sum + d.total, 0);
-      const resolved = weeklyData.value.reduce((sum, d) => sum + d.resolved, 0);
-      // calcula taxa diária e encontra max/min
-      const rates = weeklyData.value.map(d => ({
-        date: d.date,
-        pct: Math.round(d.resolved / d.total * 100)
-      }));
-      const max = rates.reduce((a, b) => b.pct > a.pct ? b : a);
-      const min = rates.reduce((a, b) => b.pct < a.pct ? b : a);
-      return [
-        { title: 'Total de Ocorrências Confirmadas', value: total },
-        { title: 'Total de Ocorrências Resolvidas', value: resolved },
-        { title: 'Dia com a maior taxa de resolução', value: `${max.date} (${max.pct}%)` },
-        { title: 'Dia com a menor taxa de resolução', value: `${min.date} (${min.pct}%)` }
-      ];
-    });
-
-    // gráfico: duas séries ao longo dos dias da semana
-    const series = computed(() => [
-      {
-        name: 'Total', data: weekDates.value.map(d => {
-          const rec = weeklyData.value.find(x => x.date === d);
-          return rec ? rec.total : 0;
-        })
-      },
-      {
-        name: 'Resolvidas', data: weekDates.value.map(d => {
-          const rec = weeklyData.value.find(x => x.date === d);
-          return rec ? rec.resolved : 0;
-        })
-      }
-    ]);
-
-    const chartOptions = computed(() => ({
-      chart: { type: 'area', height: 350 },
-      stroke: { curve: 'smooth' },
-      xaxis: { categories: weekDates.value },
-      dataLabels: { enabled: false },
-      legend: { position: 'top' },
-      tooltip: { x: { format: 'dd/MM' } }
-    }));
-
-    return {
-      activeTab,
-      localities,
-      selectedCity,
-      selectedWeek,
-      weeklyCards,
-      series,
-      chartOptions
-    };
+const weeklyCards = computed(() => {
+  if (!weeklyData.value.length) {
+    return [
+      { title: 'Total Confirmadas', value: 0 },
+      { title: 'Total Resolvidas', value: 0 },
+      { title: 'Maior taxa (dia)', value: '–' },
+      { title: 'Menor taxa (dia)', value: '–' }
+    ]
   }
-};
+  const total = weeklyData.value.reduce((s, d) => s + d.total, 0)
+  const resolved = weeklyData.value.reduce((s, d) => s + d.resolved, 0)
+  const rates = weeklyData.value.map(d => ({
+    date: d.date,
+    pct: Math.round(d.resolved / d.total * 100)
+  }))
+  const max = rates.reduce((a, b) => b.pct > a.pct ? b : a)
+  const min = rates.reduce((a, b) => b.pct < a.pct ? b : a)
+  return [
+    { title: 'Total de Ocorrências Confirmadas', value: total },
+    { title: 'Total de Ocorrências Resolvidas', value: resolved },
+    { title: 'Dia com a maior taxa de resolução', value: `${max.date} (${max.pct}%)` },
+    { title: 'Dia com a menor taxa de resolução', value: `${min.date} (${min.pct}%)` }
+  ]
+})
+
+const series = computed(() => [
+  {
+    name: 'Total',
+    data: weekDates.value.map(d => {
+      const rec = weeklyData.value.find(x => x.date === d)
+      return rec ? rec.total : 0
+    })
+  },
+  {
+    name: 'Resolvidas',
+    data: weekDates.value.map(d => {
+      const rec = weeklyData.value.find(x => x.date === d)
+      return rec ? rec.resolved : 0
+    })
+  }
+])
+
+const chartOptions = computed(() => ({
+  chart: { type: 'area', height: 350 },
+  stroke: { curve: 'smooth' },
+  xaxis: { categories: weekDates.value },
+  dataLabels: { enabled: false },
+  legend: { position: 'top' },
+  tooltip: { x: { format: 'dd/MM' } }
+}))
 </script>
 
 <style scoped>

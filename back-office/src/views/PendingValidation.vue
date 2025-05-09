@@ -19,24 +19,16 @@
     </div>
 </template>
 
-<script>
-import { useRouter } from 'vue-router';
+<script setup>
+import { useRouter } from 'vue-router'
 import { logout } from '@/firebase'
-export default {
-    name: 'PendingValidation',
-    setup() {
-        const router = useRouter();
 
-        const handleLogout = async () => {
-            await logout()
-            localStorage.removeItem('userUID')
-            router.push('/')
-        };
+const router = useRouter()
 
-        return {
-            handleLogout
-        };
-    },
+async function handleLogout() {
+    await logout()
+    localStorage.removeItem('userUID')
+    router.push('/')
 }
 </script>
 

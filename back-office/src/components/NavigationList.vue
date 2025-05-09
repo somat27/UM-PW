@@ -69,51 +69,42 @@
   </nav>
 </template>
 
-<script>
-import { computed, ref, onMounted } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
-import { useCurrentUser } from '@/composables/useCurrentUser';
-import { auth, db, logout  } from '@/firebase'
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useCurrentUser } from '@/composables/useCurrentUser'
+import { auth, db, logout } from '@/firebase'
 import { onAuthStateChanged } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
 
-export default {
-  name: 'NavigationList',
-  setup() {
-    const isAdmin = ref(false)
-    const router = useRouter();
-    const route = useRoute();
+const isAdmin = ref(false)
+const router = useRouter()
+const route = useRoute()
 
-    const { currentUser } = useCurrentUser();
-    const defaultAvatar = 'https://i.pravatar.cc/40?u=placeholder';
+const { currentUser } = useCurrentUser()
+const defaultAvatar = 'https://i.pravatar.cc/40?u=placeholder'
 
-    const handleLogout = async () => {
-      await logout()
-      localStorage.removeItem('userUID')
-      router.push('/')
-    };
+async function handleLogout() {
+  await logout()
+  localStorage.removeItem('userUID')
+  router.push('/')
+}
 
-    const isDashboardActive = computed(() => route.path.startsWith('/dashboards/'));
-    const isGAActive = computed(() => route.path.startsWith('/GestaoOcorrencias/'));
+const isDashboardActive = computed(() =>
+  route.path.startsWith('/dashboards/')
+)
 
-    onMounted(() => {
-      onAuthStateChanged(auth, async user => {
-        if (!user) return
-        const snap = await getDoc(doc(db, 'users', user.uid))
-        isAdmin.value = snap.exists() && snap.data().role === 'admin'
-      })
-    })
+const isGAActive = computed(() =>
+  route.path.startsWith('/GestaoOcorrencias/')
+)
 
-    return {
-      currentUser,
-      defaultAvatar,
-      handleLogout,
-      isDashboardActive,
-      isGAActive,
-      isAdmin,
-    };
-  },
-};
+onMounted(() => {
+  onAuthStateChanged(auth, async user => {
+    if (!user) return
+    const snap = await getDoc(doc(db, 'users', user.uid))
+    isAdmin.value = snap.exists() && snap.data().role === 'admin'
+  })
+})
 </script>
 
 <style scoped>

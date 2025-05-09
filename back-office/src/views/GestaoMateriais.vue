@@ -52,8 +52,8 @@
             </div>
 
             <!-- Tabela genérica com colunas e ações -->
-            <GenericTable :data="filteredMateriais" :columns="[...materialColumns, editColumn]"
-              :loading="loading" type="striped" @edit="openEditModal" @add="openAddQuantidadeModal" />
+            <GenericTable :data="filteredMateriais" :columns="[...materialColumns, editColumn]" :loading="loading"
+              type="striped" @edit="openEditModal" @add="openAddQuantidadeModal" />
           </div>
         </div>
       </main>
@@ -61,127 +61,125 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, onMounted } from 'vue'
 import NavigationList from '@/components/NavigationList.vue'
 import GenericTable from '@/components/GenericTable.vue'
 import AddMaterialModal from '@/components/AddMaterialModal.vue'
 import { db } from '@/firebase.js'
 import { collection, getDocs, updateDoc, doc } from 'firebase/firestore'
 
-export default {
-  name: 'GestaoMateriais',
-  components: {
-    NavigationList,
-    GenericTable,
-    AddMaterialModal
-  },
-  data() {
-    return {
-      materiais: [],
-      loading: false,
-      erro: null,
-      searchQuery: '',       // pesquisa por nome apenas
-      sortKey: '',
-      sortOrder: 'asc',
-      sortColumns: [
-        { key: 'nome', label: 'Nome' },
-        { key: 'categoria', label: 'Categoria' },
-        { key: 'preco', label: 'Preço/Unidade' },
-        { key: 'quantidade', label: 'Quantidade' }
-      ],
-      materialColumns: [
-        { key: 'nome', label: 'Nome' },
-        { key: 'categoria', label: 'Categoria' },
-        { key: 'preco', label: 'Preço/Unidade' },
-        { key: 'quantidade', label: 'Quantidade' }
-      ],
-      editColumn: { key: 'edit-materiais', label: 'Ações' },
-      showAddModal: false,
-      materialParaEditar: null,
-      showAddQuantidadeModal: false,
-      materialParaAdicionarQtd: null,
-      quantidadeParaAdicionar: 1
-    }
-  },
-  computed: {
-    filteredMateriais() {
-      let list = this.materiais
-      // filtrar apenas por nome
-      if (this.searchQuery) {
-        const term = this.searchQuery.toLowerCase()
-        list = list.filter(m => m.nome.toLowerCase().includes(term))
-      }
-      // ordenar
-      if (this.sortKey) {
-        list = list.slice().sort((a, b) => {
-          let valA = a[this.sortKey]
-          let valB = b[this.sortKey]
-          if (typeof valA === 'string') valA = valA.toLowerCase()
-          if (typeof valB === 'string') valB = valB.toLowerCase()
-          if (valA < valB) return this.sortOrder === 'asc' ? -1 : 1
-          if (valA > valB) return this.sortOrder === 'asc' ? 1 : -1
-          return 0
-        })
-      }
-      return list
-    }
-  },
-  mounted() {
-    this.fetchMateriais()
-  },
-  methods: {
-    async fetchMateriais() {
-      this.loading = true
-      this.erro = null
-      try {
-        const snap = await getDocs(collection(db, 'materiais'))
-        this.materiais = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-      } catch (e) {
-        this.erro = 'Não foi possível carregar os materiais.'
-        console.error(e)
-      } finally {
-        this.loading = false
-      }
-    },
-    toggleSortOrder() {
-      this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc'
-    },
-    openAddMaterialModal() {
-      this.materialParaEditar = null
-      this.showAddModal = true
-    },
-    openEditModal(item) {
-      this.materialParaEditar = item
-      this.showAddModal = true
-    },
-    openAddQuantidadeModal(item) {
-      this.materialParaAdicionarQtd = item
-      this.quantidadeParaAdicionar = 1
-      this.showAddQuantidadeModal = true
-    },
-    async confirmarAdicionarQuantidade() {
-      const novaQtd = this.materialParaAdicionarQtd.quantidade + this.quantidadeParaAdicionar
-      await this.atualizarQuantidade(this.materialParaAdicionarQtd.id, novaQtd)
-      this.showAddQuantidadeModal = false
-      this.fetchMateriais()
-    },
-    async handleMaterialSaved() {
-      this.showAddModal = false
-      this.fetchMateriais()
-    },
-    async atualizarQuantidade(id, novaQtd) {
-      try {
-        const refDoc = doc(db, 'materiais', id)
-        await updateDoc(refDoc, { quantidade: novaQtd })
-        const item = this.materiais.find(m => m.id === id)
-        if (item) item.quantidade = novaQtd
-      } catch (e) {
-        console.error('Erro ao atualizar quantidade:', e)
-      }
-    }
+// estados
+const materiais = ref([])
+const loading = ref(false)
+const erro = ref(null)
+const searchQuery = ref('')       // pesquisa por nome apenas
+const sortKey = ref('')
+const sortOrder = ref('asc')
+const sortColumns = [
+  { key: 'nome', label: 'Nome' },
+  { key: 'categoria', label: 'Categoria' },
+  { key: 'preco', label: 'Preço/Unidade' },
+  { key: 'quantidade', label: 'Quantidade' }
+]
+const materialColumns = [...sortColumns]
+const editColumn = { key: 'edit-materiais', label: 'Ações' }
+const showAddModal = ref(false)
+const materialParaEditar = ref(null)
+const showAddQuantidadeModal = ref(false)
+const materialParaAdicionarQtd = ref(null)
+const quantidadeParaAdicionar = ref(1)
+
+// computados
+const filteredMateriais = computed(() => {
+  let list = materiais.value
+
+  // filtrar apenas por nome
+  if (searchQuery.value) {
+    const term = searchQuery.value.toLowerCase()
+    list = list.filter(m =>
+      m.nome.toLowerCase().includes(term)
+    )
+  }
+
+  // ordenar
+  if (sortKey.value) {
+    list = list.slice().sort((a, b) => {
+      let valA = a[sortKey.value]
+      let valB = b[sortKey.value]
+      if (typeof valA === 'string') valA = valA.toLowerCase()
+      if (typeof valB === 'string') valB = valB.toLowerCase()
+      if (valA < valB) return sortOrder.value === 'asc' ? -1 : 1
+      if (valA > valB) return sortOrder.value === 'asc' ? 1 : -1
+      return 0
+    })
+  }
+
+  return list
+})
+
+// métodos
+async function fetchMateriais() {
+  loading.value = true
+  erro.value = null
+  try {
+    const snap = await getDocs(collection(db, 'materiais'))
+    materiais.value = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+  } catch (e) {
+    erro.value = 'Não foi possível carregar os materiais.'
+    console.error(e)
+  } finally {
+    loading.value = false
   }
 }
+
+function toggleSortOrder() {
+  sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+}
+
+function openAddMaterialModal() {
+  materialParaEditar.value = null
+  showAddModal.value = true
+}
+
+function openEditModal(item) {
+  materialParaEditar.value = item
+  showAddModal.value = true
+}
+
+function openAddQuantidadeModal(item) {
+  materialParaAdicionarQtd.value = item
+  quantidadeParaAdicionar.value = 1
+  showAddQuantidadeModal.value = true
+}
+
+async function confirmarAdicionarQuantidade() {
+  const novaQtd = materialParaAdicionarQtd.value.quantidade + quantidadeParaAdicionar.value
+  await atualizarQuantidade(materialParaAdicionarQtd.value.id, novaQtd)
+  showAddQuantidadeModal.value = false
+  fetchMateriais()
+}
+
+async function handleMaterialSaved() {
+  showAddModal.value = false
+  fetchMateriais()
+}
+
+async function atualizarQuantidade(id, novaQtd) {
+  try {
+    const refDoc = doc(db, 'materiais', id)
+    await updateDoc(refDoc, { quantidade: novaQtd })
+    const item = materiais.value.find(m => m.id === id)
+    if (item) item.quantidade = novaQtd
+  } catch (e) {
+    console.error('Erro ao atualizar quantidade:', e)
+  }
+}
+
+// life-cycle
+onMounted(fetchMateriais)
 </script>
+
 
 <style scoped>
 .dashboard-layout {

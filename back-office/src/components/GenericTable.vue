@@ -115,40 +115,37 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: "GenericTable",
-  props: {
-    title: String,
-    subTitle: String,
-    data: {
-      type: Array,
-      required: true
-    },
-    loading: {
-      type: Boolean,
-      default: false
-    },
-    columns: {
-      type: Array,
-      required: true,
-    },
-    type: {
-      type: String,
-      default: 'striped',
-      validator: val => ['striped', 'hover', 'plain'].includes(val)
-    }
+<script setup>
+/* eslint-disable no-undef */
+import { computed } from 'vue'
+
+const props = defineProps({
+  title: String,
+  subTitle: String,
+  data: {
+    type: Array,
+    required: true
   },
-  computed: {
-    tableClass() {
-      return {
-        striped: this.type === 'striped',
-        hover: this.type === 'hover',
-        plain: this.type === 'plain',
-      };
-    }
+  loading: {
+    type: Boolean,
+    default: false
+  },
+  columns: {
+    type: Array,
+    required: true
+  },
+  type: {
+    type: String,
+    default: 'striped',
+    validator: val => ['striped', 'hover', 'plain'].includes(val)
   }
-};
+})
+
+const tableClass = computed(() => ({
+  striped: props.type === 'striped',
+  hover: props.type === 'hover',
+  plain: props.type === 'plain'
+}))
 </script>
 
 <style scoped>

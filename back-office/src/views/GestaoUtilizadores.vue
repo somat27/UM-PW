@@ -28,11 +28,8 @@
                                     <td>{{ user.displayName }}</td>
                                     <td>{{ user.email }}</td>
                                     <td>
-                                        <select
-                                            v-model="user.newRole"
-                                            class="select-field"
-                                            :disabled="isOtherAdmin(user)"
-                                        >
+                                        <select v-model="user.newRole" class="select-field"
+                                            :disabled="isOtherAdmin(user)">
                                             <option value="usuario">Usuário</option>
                                             <option value="perito">Perito</option>
                                             <option value="gestor">Gestor</option>
@@ -40,11 +37,8 @@
                                         </select>
                                     </td>
                                     <td>
-                                        <button
-                                            class="btn-apply"
-                                            @click="changeRole(user)"
-                                            :disabled="isOtherAdmin(user)"
-                                        >Aplicar</button>
+                                        <button class="btn-apply" @click="changeRole(user)"
+                                            :disabled="isOtherAdmin(user)">Aplicar</button>
                                     </td>
                                 </tr>
                             </tbody>
@@ -56,77 +50,66 @@
     </div>
 </template>
 
-<script>
-import NavigationList from "../components/NavigationList.vue";
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { auth, db } from '@/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
-import { collection, getDocs, doc, updateDoc, getDoc } from 'firebase/firestore';
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import NavigationList from '../components/NavigationList.vue'
+import { auth, db } from '@/firebase'
+import { onAuthStateChanged } from 'firebase/auth'
+import { collection, getDocs, doc, updateDoc, getDoc } from 'firebase/firestore'
 
-export default {
-    name: 'GestaoUtilizadores',
-    components: { NavigationList },
-    setup() {
-        const users = ref([]);
-        const currentUser = ref(null);
-        const router = useRouter();
+const users = ref([])
+const currentUser = ref(null)
+const router = useRouter()
 
-        onMounted(() => {
-            onAuthStateChanged(auth, async (user) => {
-                if (!user) return router.push("/");
-                const snapAdmin = await getDoc(doc(db, "users", user.uid));
-                if (!(snapAdmin.exists() && snapAdmin.data().role === "admin")) {
-                    return router.push("/");
-                }
-                // Guarda o utilizador atual
-                currentUser.value = {
-                    uid: user.uid,
-                    role: snapAdmin.data().role
-                };
+onMounted(() => {
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) return router.push('/')
 
-                // Carrega todos os utilizadores e inicializa newRole
-                const qs = await getDocs(collection(db, "users"));
-                users.value = qs.docs.map((d) => ({
-                    uid: d.id,
-                    displayName: d.data().displayName,
-                    email: d.data().email,
-                    role: d.data().role,
-                    newRole: d.data().role
-                }));
-            });
-        });
+        const snapAdmin = await getDoc(doc(db, 'users', user.uid))
+        if (!(snapAdmin.exists() && snapAdmin.data().role === 'admin')) {
+            return router.push('/')
+        }
 
-        const isOtherAdmin = (user) => {
-            return user.role === 'admin' && user.uid !== currentUser.value.uid;
-        };
+        // Guarda o utilizador atual
+        currentUser.value = {
+            uid: user.uid,
+            role: snapAdmin.data().role
+        }
 
-        const changeRole = async (user) => {
-            try {
-                const isSelfDemoting =
-                    user.uid === currentUser.value.uid && user.newRole !== 'admin';
+        // Carrega todos os utilizadores e inicializa newRole
+        const qs = await getDocs(collection(db, 'users'))
+        users.value = qs.docs.map(d => ({
+            uid: d.id,
+            displayName: d.data().displayName,
+            email: d.data().email,
+            role: d.data().role,
+            newRole: d.data().role
+        }))
+    })
+})
 
-                await updateDoc(doc(db, "users", user.uid), { role: user.newRole });
-                alert("Role atualizada para " + user.newRole);
-                user.role = user.newRole;
+function isOtherAdmin(user) {
+    return user.role === 'admin' && user.uid !== currentUser.value.uid
+}
 
-                if (isSelfDemoting) {
-                    // Se o próprio se demitiu de admin, redireciona
-                    router.push("/");
-                }
-            } catch (err) {
-                console.error("Erro ao atualizar role:", err);
-                alert("Falha ao atualizar role");
-            }
-        };
+async function changeRole(user) {
+    try {
+        const isSelfDemoting =
+            user.uid === currentUser.value.uid && user.newRole !== 'admin'
 
-        return {
-            users,
-            changeRole,
-            isOtherAdmin
-        };
+        await updateDoc(doc(db, 'users', user.uid), { role: user.newRole })
+        alert(`Role atualizada para ${user.newRole}`)
+        user.role = user.newRole
+
+        if (isSelfDemoting) {
+            router.push('/')
+        }
+    } catch (err) {
+        console.error('Erro ao atualizar role:', err)
+        alert('Falha ao atualizar role')
     }
-};
+}
 </script>
 
 <style scoped>

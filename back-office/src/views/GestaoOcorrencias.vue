@@ -98,7 +98,8 @@
   </div>
 </template>
 
-<script setup>import { ref, onMounted, computed } from 'vue';
+<script setup>
+import { ref, onMounted, computed } from 'vue';
 import NavigationList from '@/components/NavigationList.vue';
 import GenericTable from '@/components/GenericTable.vue';
 import { db } from '@/firebase.js';

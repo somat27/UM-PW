@@ -40,89 +40,67 @@
     </div>
 </template>
 
-<script>
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { auth, db } from '@/firebase';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import NavigationList from '@/components/NavigationList.vue';
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { auth, db } from '@/firebase'
+import { doc, getDoc, updateDoc } from 'firebase/firestore'
+import NavigationList from '@/components/NavigationList.vue'
 
-const CLOUDINARY_URL = 'https://api.cloudinary.com/v1_1/do5hfydb2/upload';
-const CLOUDINARY_UPLOAD_PRESET = 'EyesEveryWhere';
+const CLOUDINARY_URL = 'https://api.cloudinary.com/v1_1/do5hfydb2/upload'
+const CLOUDINARY_UPLOAD_PRESET = 'EyesEveryWhere'
 
-export default {
-    name: 'ProfileView',
-    components: { NavigationList },
-    setup() {
-        const profile = ref({ displayName: '', email: '', photoURL: '' });
-        const selectedFile = ref(null);
-        const loading = ref(false);
-        const router = useRouter();
-        // Avatar padrão caso não haja foto no perfil
-        const defaultAvatar = '/default-avatar.png';
+const profile = ref({ displayName: '', email: '', photoURL: '' })
+const selectedFile = ref(null)
+const loading = ref(false)
+const router = useRouter()
+const defaultAvatar = '/default-avatar.png'
 
-        onMounted(async () => {
-            const user = auth.currentUser;
-            if (!user) return router.push('/');
-            const snap = await getDoc(doc(db, 'users', user.uid));
-            if (snap.exists()) profile.value = snap.data();
-        });
+onMounted(async () => {
+    const user = auth.currentUser
+    if (!user) return router.push('/')
+    const snap = await getDoc(doc(db, 'users', user.uid))
+    if (snap.exists()) profile.value = snap.data()
+})
 
-        const goToEdit = () => {
-            router.push({ name: 'EditProfile' });
-        };
+function goToEdit() {
+    router.push({ name: 'EditProfile' })
+}
 
-        const onFileChange = (event) => {
-            const file = event.target.files[0];
-            if (file) selectedFile.value = file;
-        };
+function onFileChange(event) {
+    const file = event.target.files[0]
+    if (file) selectedFile.value = file
+}
 
-        const uploadPhoto = async () => {
-            if (!selectedFile.value) return;
-            loading.value = true;
-            try {
-                // Prepara FormData para Cloudinary
-                const formData = new FormData();
-                formData.append('file', selectedFile.value);
-                formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+async function uploadPhoto() {
+    if (!selectedFile.value) return
+    loading.value = true
+    try {
+        const formData = new FormData()
+        formData.append('file', selectedFile.value)
+        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET)
 
-                // Envia para Cloudinary
-                const response = await fetch(CLOUDINARY_URL, {
-                    method: 'POST',
-                    body: formData,
-                });
-                const data = await response.json();
-                const photoURL = data.secure_url;
+        const response = await fetch(CLOUDINARY_URL, {
+            method: 'POST',
+            body: formData,
+        })
+        const data = await response.json()
+        const photoURL = data.secure_url
 
-                // Atualiza no Firestore
-                const user = auth.currentUser;
-                await updateDoc(doc(db, 'users', user.uid), { photoURL });
+        const user = auth.currentUser
+        await updateDoc(doc(db, 'users', user.uid), { photoURL })
 
-                // Atualiza localmente
-                profile.value.photoURL = photoURL;
-                alert('Foto de perfil atualizada com sucesso!');
-            } catch (error) {
-                console.error('Erro ao enviar foto:', error);
-                alert('Falha ao atualizar foto de perfil.');
-            } finally {
-                loading.value = false;
-                selectedFile.value = null;
-            }
-        };
-
-        return {
-            profile,
-            goToEdit,
-            onFileChange,
-            uploadPhoto,
-            selectedFile,
-            loading,
-            defaultAvatar,
-        };
-    },
-};
+        profile.value.photoURL = photoURL
+        alert('Foto de perfil atualizada com sucesso!')
+    } catch (error) {
+        console.error('Erro ao enviar foto:', error)
+        alert('Falha ao atualizar foto de perfil.')
+    } finally {
+        loading.value = false
+        selectedFile.value = null
+    }
+}
 </script>
-
 
 <style scoped>
 .profile-photo-section {
