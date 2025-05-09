@@ -33,12 +33,6 @@
               Auditorias e Ocorrências no Terreno
             </router-link>
           </nav>
-
-          <StatisticsGridMateriais :cards="materialCards" />
-
-          <div class="radial-chart">
-            <apexchart type="radialBar" :options="chartOptions" :series="chartSeries" height="350" />
-          </div>
         </div>
       </main>
     </div>
@@ -46,85 +40,10 @@
 </template>
 
 <script setup>
-import { ref, onUnmounted, computed } from 'vue';
+import { ref } from 'vue';
 import NavigationList from '@/components/NavigationList.vue';
-import StatisticsGridMateriais from '@/components/StatisticsGridMateriais.vue';
-import { collection, onSnapshot } from 'firebase/firestore'
-import { db } from '@/firebase.js'
 
-const activeTab = ref('materiais');
-
-const totalUtilizado = ref({})
-const totalDisponivel = ref({})
-
-const unsubAud = onSnapshot(
-  collection(db, 'auditorias'),
-  snap => {
-    let soma = 0
-    snap.forEach(doc =>
-      doc.data().materiais.forEach(item =>
-        soma += item.quantidade
-      )
-    )
-    totalUtilizado.value = soma
-  }
-)
-
-const unsubMat = onSnapshot(
-  collection(db, 'materiais'),
-  snap => {
-    let soma = 0
-    snap.forEach(doc =>
-      soma += doc.data().quantidade
-    )
-    totalDisponivel.value = soma
-  }
-)
-
-onUnmounted(() => { unsubAud(); unsubMat() })
-
-const materialCards = computed(() => [
-  { title: 'Materiais usados', value: totalUtilizado.value },
-  { title: 'Materiais por usar', value: totalDisponivel.value }
-])
-
-const totalGeral = computed(() =>
-  totalUtilizado.value + totalDisponivel.value
-)
-
-const pctUsados = computed(() =>
-  totalGeral.value
-    ? Math.round(totalUtilizado.value / totalGeral.value * 100)
-    : 0
-)
-
-const pctPorUsar = computed(() =>
-  totalGeral.value
-    ? 100 - pctUsados.value
-    : 0
-)
-
-const chartOptions = computed(() => ({
-  chart: { id: 'materiais-grafico' },
-  labels: ['Por usar', 'Usados'],
-  title: { text: 'Materiais Usados & Por Usar' },
-  plotOptions: {
-    radialBar: {
-      dataLabels: {
-        name: { fontSize: '16px' },
-        value: {
-          fontSize: '14px',
-          formatter: val => `${val}%`
-        }
-      }
-    }
-  }
-}))
-
-const chartSeries = computed(() => [
-  pctPorUsar.value,
-  pctUsados.value,
-])
+const activeTab = ref('mapa');
 </script>
 
 <style scoped>

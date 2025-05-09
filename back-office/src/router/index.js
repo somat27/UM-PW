@@ -6,11 +6,11 @@ import { doc, getDoc } from 'firebase/firestore'
 
 import LoginPage from '@/views/LoginPage.vue'
 import RegisterPage from '@/views/RegisterPage.vue'
-import DashboardLayout from '@/views/dashboards/DashboardLayout.vue'
 import DashboardAuditorias from '@/views/dashboards/DashboardAuditorias.vue'
 import DashboardOcorrencia from '@/views/dashboards/DashboardOcorrencia.vue'
 import DashboardPeritos from '@/views/dashboards/DashboardPeritos.vue'
 import DashboardMateriais from '@/views/dashboards/DashboardMateriais.vue'
+import DashboardMapa from '@/views/dashboards/DashboardMapa.vue'
 import GestaoAuditorias from '@/views/GestaoAuditorias.vue'
 import GestaoOcorrencias from '@/views/GestaoOcorrencias.vue'
 import AprovacaoOcorrencia from '@/views/AprovacaoOcorrencia.vue'
@@ -41,7 +41,6 @@ const routes = [
   },
   {
     path: '/profile',
-    component: DashboardLayout,
     meta: { requiresAuth: true },
     children: [
       {
@@ -58,13 +57,13 @@ const routes = [
   },
   {
     path: '/dashboards',
-    component: DashboardLayout,
     meta: { requiresAuth: true, requiresGestorOrAdmin: true },
     children: [
       { path: 'auditorias', component: DashboardAuditorias, name: 'auditorias' },
       { path: 'ocorrencias', component: DashboardOcorrencia, name: 'ocorrencias' },
       { path: 'peritos', component: DashboardPeritos, name: 'peritos' },
-      { path: 'materiais', component: DashboardMateriais, name: 'materiais' }
+      { path: 'materiais', component: DashboardMateriais, name: 'materiais' },
+      { path: 'mapa', component: DashboardMapa, name: 'mapa' }
     ]
   },
   {

@@ -6,8 +6,16 @@
   </section>
 </template>
 
-<script setup>
-import StatisticsCard from './StatisticsCard.vue'
+<script>
+import StatisticsCard from './StatisticsCard.vue';
+
+export default {
+  name: 'StatisticsGridMateriais',
+  components: { StatisticsCard },
+  props: {
+    cards: { type: Array, required: true }
+  }
+};
 </script>
 
 <style scoped>

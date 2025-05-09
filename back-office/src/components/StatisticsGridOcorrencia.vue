@@ -1,13 +1,33 @@
 <template>
   <section class="statistics-grid">
     <div class="statistics-layout">
-      <StatisticsCard v-for="(card, idx) in cards" :key="idx" :title="card.title" :value="card.value" />
+      <StatisticsCard v-for="(card, idx) in cards" :key="idx" :title="card.title" :value="formatValue(card.value)" />
     </div>
   </section>
 </template>
 
-<script setup>
-import StatisticsCard from './StatisticsCard.vue'
+<script>
+import StatisticsCard from './StatisticsCard.vue';
+
+export default {
+  name: 'StatisticsGridOcorrencia',
+  components: { StatisticsCard },
+  props: {
+    cards: {
+      type: Array,
+      required: true
+    }
+  },
+  methods: {
+    formatValue(val) {
+      const num = parseFloat(val)
+      if (!isNaN(num) && num === 0) {
+        return '-'
+      }
+      return val
+    }
+  }
+};
 </script>
 
 <style scoped>

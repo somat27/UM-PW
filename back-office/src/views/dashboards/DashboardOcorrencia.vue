@@ -18,20 +18,24 @@
             </router-link>
             <router-link to="/dashboards/ocorrencias" class="tab-link" :class="{ active: activeTab === 'ocorrencias' }"
               @click="activeTab = 'ocorrencias'">
-              Ocorrências resolvidas
+              Ocorrências por região
             </router-link>
             <router-link to="/dashboards/peritos" class="tab-link" :class="{ active: activeTab === 'peritos' }"
               @click="activeTab = 'peritos'">
-              Peritos mobilizados e no aguardo
+              Peritos Ativos e em Espera
             </router-link>
             <router-link to="/dashboards/materiais" class="tab-link" :class="{ active: activeTab === 'materiais' }"
               @click="activeTab = 'materiais'">
-              Materiais expedidos
+              Materiais Usados & Por Usar
+            </router-link>
+            <router-link to="/dashboards/mapa" class="tab-link" :class="{ active: activeTab === 'mapa' }"
+              @click="activeTab = 'mapa'">
+              Auditorias e Ocorrências no Terreno
             </router-link>
           </nav>
 
           <div class="filters-row">
-            <select v-model="selectedCity" class="filter-select">
+            <select v-model="selectedRegion">
               <option v-for="loc in localities" :key="loc" :value="loc">
                 {{ loc }}
               </option>
@@ -55,17 +59,135 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import NavigationList from '@/components/NavigationList.vue'
 import StatisticsGridOcorrencia from '@/components/StatisticsGridOcorrencia.vue'
+import { collection, getDocs } from 'firebase/firestore'
+import { db } from '@/firebase'
 
-// Exemplo de base de dados diária
-// Em produção, substitui por fetch/API
-const rawData = [
-  { date: '2025-04-21', city: 'Lisboa', total: 5, resolved: 4 },
-  { date: '2025-04-22', city: 'Lisboa', total: 6, resolved: 5 },
-  // ... mais dias e cidades ...
+const rawData = ref([])
+const regions = [
+  { name: 'Norte', bounds: { latMin: 41.5, latMax: 42.3, lngMin: -8.7, lngMax: -6.2 } },
+  { name: 'Centro', bounds: { latMin: 39.9, latMax: 41.5, lngMin: -8.5, lngMax: -6.0 } },
+  { name: 'Lisboa e Vale do Tejo', bounds: { latMin: 38.4, latMax: 40.2, lngMin: -9.5, lngMax: -7.0 } },
+  { name: 'Alentejo', bounds: { latMin: 37.6, latMax: 39.3, lngMin: -8.2, lngMax: -6.0 } },
+  { name: 'Algarve', bounds: { latMin: 37.0, latMax: 37.6, lngMin: -9.7, lngMax: -7.7 } },
 ]
+const localities = ['Portugal', ...regions.map(r => r.name)]
+const selectedRegion = ref(localities[0])
+const selectedWeek = ref(getCurrentISOWeek())
+
+const weekDates = computed(() =>
+  selectedWeek.value ? isoWeekDates(selectedWeek.value) : []
+)
+
+const weeklyData = computed(() =>
+  rawData.value.filter(item =>
+    weekDates.value.includes(item.date) &&
+    (selectedRegion.value === 'Portugal'
+      ? true
+      : item.region === selectedRegion.value)
+  )
+)
+
+const weeklyCards = computed(() => {
+  if (!weeklyData.value.length) {
+    return [
+      { title: 'Total Confirmadas', value: 0 },
+      { title: 'Total Resolvidas', value: 0 },
+      { title: 'Maior taxa (dia)', value: '–' },
+      { title: 'Menor taxa (dia)', value: '–' }
+    ]
+  }
+  const total = weeklyData.value.reduce((s, d) => s + d.total, 0)
+  const resolved = weeklyData.value.reduce((s, d) => s + d.resolved, 0)
+  const rates = weeklyData.value.map(d => ({
+    date: d.date,
+    pct: Math.round(d.resolved / d.total * 100)
+  }))
+  const max = rates.reduce((a, b) => b.pct > a.pct ? b : a)
+  const min = rates.reduce((a, b) => b.pct < a.pct ? b : a)
+  return [
+    { title: 'Total de Ocorrências Confirmadas', value: total },
+    { title: 'Total de Ocorrências por região', value: resolved },
+    { title: 'Dia com a maior taxa de resolução', value: `${max.date} (${max.pct}%)` },
+    { title: 'Dia com a menor taxa de resolução', value: `${min.date} (${min.pct}%)` }
+  ]
+})
+
+const distritoRegiaoMap = {
+  Porto: 'Norte', 'Viana do Castelo': 'Norte', Braga: 'Norte', 'Vila Real': 'Norte', Bragança: 'Norte',
+  Aveiro: 'Centro', Coimbra: 'Centro', Leiria: 'Centro', 'Castelo Branco': 'Centro', Guarda: 'Centro', Viseu: 'Centro',
+  Santarém: 'Lisboa e Vale do Tejo', Lisboa: 'Lisboa e Vale do Tejo', Setúbal: 'Lisboa e Vale do Tejo',
+  Évora: 'Alentejo', Beja: 'Alentejo', Portalegre: 'Alentejo', Faro: 'Algarve'
+}
+
+const cacheRegiao = {};
+async function buscarRegiao(lat, lon) {
+  const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&addressdetails=1&accept-language=pt`;
+  const res = await fetch(url, {
+    headers: { 'User-Agent': 'MeuAppUniversidade/1.0 (email@exemplo.com)' }
+  });
+  if (!res.ok) throw new Error(`Erro HTTP ${res.status}`);
+  const data = await res.json();
+  const addr = data.address || {};
+  const district = addr.state || addr.county || addr.region || '';
+  return distritoRegiaoMap[district] || 'Desconhecida';
+}
+
+async function buscarRegiaoComCache(lat, lon) {
+  const key = `${lat},${lon}`;
+  if (cacheRegiao[key]) return cacheRegiao[key];
+  try {
+    const regiao = await buscarRegiao(lat, lon);
+    cacheRegiao[key] = regiao;
+    return regiao;
+  } catch (err) {
+    console.error('Erro geocodificação região', err);
+    return 'Desconhecida';
+  }
+}
+
+function aggregate(items) {
+  const mapa = {}
+  items.forEach(item => {
+    const key = item.region + '|' + item.date
+    if (!mapa[key]) {
+      mapa[key] = { date: item.date, region: item.region, total: 0, resolved: 0 }
+    }
+    mapa[key].total += item.total
+    mapa[key].resolved += item.resolved
+  })
+  return Object.values(mapa)
+}
+
+onMounted(async () => {
+  const snap = await getDocs(collection(db, 'ocorrencias'))
+  console.log(snap.docs)
+  const items = []
+
+  for (const doc of snap.docs) {
+    const d = doc.data()
+    const stamp = d.dataSubmissao ?? doc.createTime
+    const tsDate = stamp.toDate()
+    const dateStr = tsDate.toISOString().slice(0, 10)
+    const lat = d.coordenadas.latitude
+    const lon = d.coordenadas.longitude
+    const region = await buscarRegiaoComCache(lat, lon)
+
+    const resolved = d.status === 'Resolvido' ? 1 : 0
+
+    items.push({
+      date: dateStr,
+      region,
+      total: 1,
+      resolved,
+    })
+  }
+
+  rawData.value = aggregate(items)
+})
+
 
 function isoWeekDates(weekString) {
   const [year, wk] = weekString.split('-W').map(Number)
@@ -97,45 +219,6 @@ function getCurrentISOWeek() {
 }
 
 const activeTab = ref('ocorrencias')
-const localities = ['Lisboa', 'Porto', 'Coimbra', 'Faro', 'Braga']
-const selectedCity = ref(localities[0])
-const selectedWeek = ref(getCurrentISOWeek())
-
-const weekDates = computed(() =>
-  selectedWeek.value ? isoWeekDates(selectedWeek.value) : []
-)
-
-const weeklyData = computed(() =>
-  rawData.filter(item =>
-    item.city === selectedCity.value &&
-    weekDates.value.includes(item.date)
-  )
-)
-
-const weeklyCards = computed(() => {
-  if (!weeklyData.value.length) {
-    return [
-      { title: 'Total Confirmadas', value: 0 },
-      { title: 'Total Resolvidas', value: 0 },
-      { title: 'Maior taxa (dia)', value: '–' },
-      { title: 'Menor taxa (dia)', value: '–' }
-    ]
-  }
-  const total = weeklyData.value.reduce((s, d) => s + d.total, 0)
-  const resolved = weeklyData.value.reduce((s, d) => s + d.resolved, 0)
-  const rates = weeklyData.value.map(d => ({
-    date: d.date,
-    pct: Math.round(d.resolved / d.total * 100)
-  }))
-  const max = rates.reduce((a, b) => b.pct > a.pct ? b : a)
-  const min = rates.reduce((a, b) => b.pct < a.pct ? b : a)
-  return [
-    { title: 'Total de Ocorrências Confirmadas', value: total },
-    { title: 'Total de Ocorrências Resolvidas', value: resolved },
-    { title: 'Dia com a maior taxa de resolução', value: `${max.date} (${max.pct}%)` },
-    { title: 'Dia com a menor taxa de resolução', value: `${min.date} (${min.pct}%)` }
-  ]
-})
 
 const series = computed(() => [
   {

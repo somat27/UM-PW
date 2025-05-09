@@ -18,15 +18,19 @@
             </router-link>
             <router-link to="/dashboards/ocorrencias" class="tab-link" :class="{ active: activeTab === 'ocorrencias' }"
               @click="activeTab = 'ocorrencias'">
-              Ocorrências resolvidas
+              Ocorrências por região
             </router-link>
             <router-link to="/dashboards/peritos" class="tab-link" :class="{ active: activeTab === 'peritos' }"
               @click="activeTab = 'peritos'">
-              Peritos mobilizados e no aguardo
+              Peritos Ativos e em Espera
             </router-link>
             <router-link to="/dashboards/materiais" class="tab-link" :class="{ active: activeTab === 'materiais' }"
               @click="activeTab = 'materiais'">
-              Materiais expedidos
+              Materiais Usados & Por Usar
+            </router-link>
+            <router-link to="/dashboards/mapa" class="tab-link" :class="{ active: activeTab === 'mapa' }"
+              @click="activeTab = 'mapa'">
+              Auditorias e Ocorrências no Terreno
             </router-link>
           </nav>
 

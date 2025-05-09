@@ -18,15 +18,19 @@
             </router-link>
             <router-link to="/dashboards/ocorrencias" class="tab-link" :class="{ active: activeTab === 'ocorrencias' }"
               @click="activeTab = 'ocorrencias'">
-              Ocorrências resolvidas
+              Ocorrências por região
             </router-link>
             <router-link to="/dashboards/peritos" class="tab-link" :class="{ active: activeTab === 'peritos' }"
               @click="activeTab = 'peritos'">
-              Peritos mobilizados e no aguardo
+              Peritos Ativos e em Espera
             </router-link>
             <router-link to="/dashboards/materiais" class="tab-link" :class="{ active: activeTab === 'materiais' }"
               @click="activeTab = 'materiais'">
-              Materiais expedidos
+              Materiais Usados & Por Usar
+            </router-link>
+            <router-link to="/dashboards/mapa" class="tab-link" :class="{ active: activeTab === 'mapa' }"
+              @click="activeTab = 'mapa'">
+              Auditorias e Ocorrências no Terreno
             </router-link>
           </nav>
 
@@ -49,15 +53,11 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import apexchart from 'vue3-apexcharts';
 import NavigationList from '@/components/NavigationList.vue';
 import StatisticsGridPeritos from '@/components/StatisticsGridPeritos.vue';
 import StatisticsCard from '@/components/StatisticsCard.vue';
-import {
-  collection,
-  onSnapshot,
-} from 'firebase/firestore';
-import {db} from "@/firebase"
+import { collection, onSnapshot, doc, getDoc } from 'firebase/firestore';
+import { db } from '@/firebase';
 
 const activeTab = ref('peritos');
 
@@ -110,7 +110,6 @@ async function buscarRegiaoComCache(lat, lon) {
   }
 }
 
-// Computed para peritos mobilizados e em espera
 const mobilizadosUids = computed(() => {
   const set = new Set();
   auditorias.value.forEach(a => {
@@ -144,10 +143,22 @@ let unsubPeritos, unsubAud;
 onMounted(() => {
   unsubPeritos = onSnapshot(
     collection(db, 'peritos'),
-    snap => { peritos.value = snap.docs.map(d => d.data()); },
+    async snap => {
+      const peritosData = await Promise.all(
+        snap.docs.map(async d => {
+          const data = d.data();
+          if (data.status !== 'Ativo') return null;
+          const userSnap = await getDoc(doc(db, 'users', data.uid));
+          if (!userSnap.exists() || userSnap.data().role !== 'perito') return null;
+          return data;
+        })
+      );
+      peritos.value = peritosData.filter(p => p !== null);
+    },
     err => console.error('Erro peritos:', err)
   );
-  
+
+
   unsubAud = onSnapshot(
     collection(db, 'auditorias'),
     async snap => {
@@ -155,7 +166,11 @@ onMounted(() => {
       // Recalcular ativos por localidade
       const counts = { Norte: 0, Centro: 0, 'Lisboa e Vale do Tejo': 0, Alentejo: 0, Algarve: 0 };
       for (const a of auditorias.value) {
-        if (a.perito && a.coordenadas) {
+        if (
+          a.perito &&
+          a.coordenadas &&
+          peritos.value.some(p => p.uid === a.perito)
+        ) {
           const { latitude, longitude } = a.coordenadas;
           const reg = await buscarRegiaoComCache(latitude, longitude);
           if (counts[reg] !== undefined) counts[reg]++;
@@ -176,7 +191,8 @@ onUnmounted(() => {
 const totalPeritos = computed(() => peritos.value.length);
 const cidadesVigia = computed(() => new Set(auditorias.value.map(a => {
   if (a.coordenadas) return `${a.coordenadas.latitude},${a.coordenadas.longitude}`;
-  return ''; })).size
+  return '';
+})).size
 );
 const countAtivos = computed(() => peritosMobilizados.value.length);
 const countAguardando = computed(() => peritosAguardando.value.length);
@@ -186,7 +202,6 @@ const chartOptions = computed(() => ({
   chart: { id: 'peritos-chart' },
   xaxis: { categories: regioes },
   dataLabels: { enabled: false },
-  title: { text: 'Peritos Ativos vs Em Espera por Região' },
   legend: { position: 'top' },
   tooltip: { y: { title: { formatter: seriesName => seriesName } } }
 }));
