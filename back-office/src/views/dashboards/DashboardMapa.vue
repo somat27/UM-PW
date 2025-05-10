@@ -348,7 +348,7 @@ function adicionarMarcadores() {
 }
 
 // Função para criar um marcador
-function criarMarcador(lat, lng, titulo, categoria, dados) {
+function criarMarcador(lat, lng, titulo, categoria) {
   if (!window.google || !map.value) return null;
 
   const position = { lat: parseFloat(lat), lng: parseFloat(lng) };
@@ -374,76 +374,9 @@ function criarMarcador(lat, lng, titulo, categoria, dados) {
     animation: window.google.maps.Animation.DROP,
   });
 
-  // Conteúdo da janela de informação
-  let conteudo = "";
-
-  if (dados.tipo === "auditoria") {
-    // Conteúdo para auditorias
-    conteudo = `
-      <div class="info-window">
-        <h3>${
-          dados.nome || "Auditoria"
-        } <span class="status-badge ${categoria.toLowerCase()}">${
-      dados.status || "N/A"
-    }</span></h3>
-        <p><strong>Data:</strong> ${formatarData(dados.data)}</p>
-        <p><strong>Tipo:</strong> ${dados.tipo || "N/A"}</p>
-        <p><strong>Responsável:</strong> ${dados.responsavel || "N/A"}</p>
-        <p><strong>Ocorrência associada:</strong> ${
-          dados.ocorrenciaId || "N/A"
-        }</p>
-      </div>
-    `;
-  } else {
-    // Conteúdo para ocorrências
-    conteudo = `
-      <div class="info-window">
-        <h3>${
-          dados.titulo || "Ocorrência"
-        } <span class="status-badge ${categoria.toLowerCase()}">${
-      dados.status || "N/A"
-    }</span></h3>
-        <p><strong>Data:</strong> ${formatarData(dados.data)}</p>
-        <p><strong>Tipo:</strong> ${dados.tipoOcorrencia || "N/A"}</p>
-        <p><strong>Prioridade:</strong> ${dados.prioridade || "N/A"}</p>
-        <p><strong>Reportado por:</strong> ${dados.reportadoPor || "N/A"}</p>
-      </div>
-    `;
-  }
-
-  // Criar a janela de informação com estilo
-  const infoWindow = new window.google.maps.InfoWindow({
-    content: conteudo,
-    maxWidth: 300,
-    pixelOffset: new window.google.maps.Size(0, -5),
-  });
-
-  // Adicionar evento de clique ao marcador
-  marker.addListener("click", () => {
-    // Fechar todas as janelas de informação abertas
-    markers.value.forEach((m) => {
-      if (m.infoWindow) {
-        m.infoWindow.close();
-      }
-    });
-
-    // Abrir esta janela de informação
-    infoWindow.open(map.value, marker);
-
-    // Adicionar animação ao clicar
-    marker.setAnimation(window.google.maps.Animation.BOUNCE);
-    setTimeout(() => {
-      marker.setAnimation(null);
-    }, 750);
-  });
-
-  // Armazenar a referência da janela de informação
-  marker.infoWindow = infoWindow;
-
   return marker;
 }
 
-// Função para limpar marcadores - REFORÇADA
 function limparMarcadores() {
   console.log("Limpando", markers.value.length, "marcadores");
 
@@ -509,34 +442,6 @@ function ajustarZoom() {
       map.value.setZoom(12);
     }
   }
-}
-
-// Função para formatar data
-function formatarData(timestamp) {
-  if (!timestamp) return "N/A";
-
-  let data;
-
-  if (timestamp.seconds) {
-    // Se for um timestamp do Firestore
-    data = new Date(timestamp.seconds * 1000);
-  } else if (timestamp instanceof Date) {
-    data = timestamp;
-  } else {
-    try {
-      data = new Date(timestamp);
-    } catch (error) {
-      return "Data inválida";
-    }
-  }
-
-  return data.toLocaleDateString("pt-PT", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 }
 
 // Carregar script da Google Maps API
