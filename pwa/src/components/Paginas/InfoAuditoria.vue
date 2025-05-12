@@ -9,7 +9,7 @@
     <div class="flex-coluna margem painel" v-if="auditoria.tipo">
 
         <div class="flex-linha centro item-ponta">
-            <h1>{{ auditoria.tipo }}</h1>
+            <h1>{{ nomeOcorrencia(auditoria.tipo) }}</h1>
             <h2 :class="corEstado(auditoria.status)" id="estado">{{ auditoria.status }}</h2>
         </div>
 
@@ -32,11 +32,6 @@
             <h2><i class='bi bi-file-earmark-text'></i> Materiais</h2>
             <PopUpPresente v-if="popUpMateriais && auditoria.materiais.length > 0" :dados="this.auditoria.materiais" :texto="`<i class='bi bi-file-earmark-text'></i> Materiais`"/>
         </button>
-
-
-        <div class="painel fundo-cinza margem-cima">            <!--Local para colocar o mapa-->
-
-        </div>
 
 
         <div v-if="this.auditoria.status !== 'Concluido'" class="flex-linha margem-cima" style="gap: 5vw;">
@@ -131,6 +126,13 @@
                     });
                 }
             },
+            nomeOcorrencia(valor) {
+                switch(valor) {
+                    case "lights": return "Iluminação Pública"
+                    case "sinals": return "Sinalização em Falta"
+                    case "roads": return "Vias e Passeios"
+                }
+            }
         }
     }
 </script>

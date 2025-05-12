@@ -16,28 +16,28 @@ const routes = [
       path: "/ListaAuditorias",
       name: "ListaAuditorias",
       component: ListaAuditorias,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, requiresPerito: true },
     },
 
     {
       path: "/InfoAuditoria/:id",
       name: "InfoAuditoria",
       component: InfoAuditoria,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, requiresPerito: true, requiresAcesso: true },
     },
 
     {
       path: "/RegistoAuditoria/:id",
       name: "RegistoAuditoria",
       component: RegistoAuditoria,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, requiresPerito: true, requiresAcesso: true, porCompletar: true },
     },
 
     {
       path: "/Perfil",
       name: "UserPerfil",
       component: UserPerfil,
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, requiresPerito: true },
     },
 
     {
@@ -83,32 +83,54 @@ function getCurrentUser() {
 
 router.beforeEach(async (to, from, next) => {
   if (!to.meta.requiresAuth) {
-    return next()
+    return next();
   }
 
-  const savedUID = localStorage.getItem('userUID')
+  const savedUID = localStorage.getItem('userUID');
   if (!savedUID) {
-    return next({ name: 'LoginPage' })
+    return next({ name: 'LoginPage' });
   }
 
-  const user = await getCurrentUser()
+  const user = await getCurrentUser();
   if (!user) {
-    localStorage.removeItem('userUID')
-    return next({ name: 'LoginPage' })
+    localStorage.removeItem('userUID');
+    return next({ name: 'LoginPage' });
   }
 
-  const snap = await getDoc(doc(db, 'users', user.uid))
-  const role = snap.exists() ? snap.data().role : null
+  const snap = await getDoc(doc(db, 'users', user.uid));
+  const role = snap.exists() ? snap.data().role : null;
 
-  if (to.meta.requiresGestorOrAdmin) {
-    if (role === 'gestor' || role === 'admin') {
-      return next()
-    } else {
-      return next({ name: 'PendingValidation' })
+  // Verificação de acesso à auditoria (precisa acontecer antes do next())
+  if (to.meta.requiresAcesso) {
+    const auditoriaId = to.params.id;
+    const auditoriaRef = doc(db, 'auditorias', auditoriaId);
+    const auditoriaSnap = await getDoc(auditoriaRef);
+
+    if (!auditoriaSnap.exists()) {
+      return next({ name: 'ListaAuditorias' });
+    }
+
+    const auditoria = auditoriaSnap.data();
+    if (auditoria.perito !== user.uid) {
+      return next({ name: 'PendingValidation' });
+    }
+
+    if (to.meta.porCompletar) {
+      if (auditoria.status === "Concluido") {
+        return next({ name: "InfoAuditoria", params: { id: auditoriaId }, });
+      }
     }
   }
 
-  next()
-  });
+  // Verificação do papel de perito
+  if (to.meta.requiresPerito) {
+    if (role !== 'perito') {
+      return next({ name: 'PendingValidation' });
+    }
+  }
+
+  return next();
+});
+
 
 export default router;

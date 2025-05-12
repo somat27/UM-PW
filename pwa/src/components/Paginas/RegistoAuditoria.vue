@@ -7,7 +7,7 @@
     </button>
 
     <div class="flex-coluna margem painel" v-if="auditoria.tipo">
-        <h1>{{ auditoria.tipo }}</h1>
+        <h1>{{ nomeOcorrencia(auditoria.tipo) }}</h1>
 
 
         <div class="flex-linha item-ponta margem-cima centro">
@@ -35,7 +35,12 @@
         <div class="flex-linha item-ponta margem-cima centro">
             <h2><i class="bi bi-mic icon"></i> Áudio</h2>
 
-            <button class="transparente" @touchstart.prevent="iniciarGravacao" @touchend.prevent="pararGravacao"><i :class="isGravando ? 'bi bi-circle-fill' : 'bi bi-record-circle'" id="gravar"></i></button>
+            <button 
+                class="transparente" 
+                @touchstart.prevent="iniciarGravacao" 
+                @touchend.prevent="pararGravacao">
+                    <i :class="isGravando ? 'bi bi-circle-fill' : 'bi bi-record-circle'" id="gravar"></i>
+            </button>
         </div>
 
         <div class="painel fundo-cinza" style="padding: 0;">
@@ -49,19 +54,25 @@
             type="text" 
             v-model="auditoria.descricao"
             placeholder="Adicione notas, observações ou detalhes importantes..." 
+            @change="salvarAlteracoesEmLocalStorage"
             class="painel fundo-cinza"
             id="caixa-texto"></textarea>
         
 
         <button class="flex-linha transparente margem-cima" @click="popUpProfissionais = !popUpProfissionais">
             <h2><i class='bi bi-people icon'></i> Profissionais</h2>
-            <PopUpInfo v-if="popUpProfissionais && auditoria.profissionais.length > 0" :dados="this.auditoria.profissionais" :texto="`<i class='bi bi-people icon'></i> Profissionais`" :lista="listaProfissionais" @alteracoes="atualizarListaAlteracaoProfissionais"/>
+            <PopUpInfo 
+                v-if="popUpProfissionais && auditoria.profissionais.length > 0" 
+                :dados="this.auditoria.profissionais" 
+                :texto="`<i class='bi bi-people icon'></i> Profissionais`" 
+                :lista="listaProfissionais" 
+                @alteracoes="atualizarListaAlteracaoProfissionais"/>
         </button>
 
 
         <button class="flex-linha transparente" @click="popUpMateriais = !popUpMateriais">
             <h2><i class='bi bi-file-earmark-text icon'></i> Materiais</h2>
-            <PopUpInfo v-if="popUpMateriais && auditoria.materiais.length > 0" :dados="this.auditoria.materiais" :texto="`<i class='bi bi-file-earmark-text icon'></i> Materiais`" :lista="listaMateriais" @alteracoes="atualizarListaAlteracaoEquipamento"/>
+            <PopUpInfo v-if="popUpMateriais && auditoria.materiais.length > 0" :dados="this.auditoria.materiais" :texto="`<i class='bi bi-file-earmark-text icon'></i> Materiais`" :lista="listaMateriais" @alteracoes="atualizarListaAlteracaoMateriais"/>
         </button>
 
 
@@ -105,39 +116,55 @@
                 percentagemUpload: 0,
 
                 listaAlteracaoProfissionais: [],
-                listaAlteracaoEquipamento: [],
+                listaAlteracaoMateriais: [],
             }
         },
         async mounted() {
             const id = this.$route.params.id;
-            const docSnap = await getDoc(doc(db, "auditorias", id));
-            if (docSnap.exists()) {
 
-                const dados = docSnap.data();
-                this.auditoria = { 
-                    id: docSnap.id, 
-                    ...dados,
-                    imagemVideo: dados.imagemVideo || [],
-                    audios: dados.audios || [],
-                    profissionais: dados.profissionais || [],
-                    materiais: dados.materiais || []
-                };
+            const auditorias = JSON.parse(localStorage.getItem('previaAuditoria')) || {};
+            const materiais = JSON.parse(localStorage.getItem('previaMaterial')) || {};
+            const profissionais = JSON.parse(localStorage.getItem('previaProfissionais')) || {};
+            const materiaisAlterados = JSON.parse(localStorage.getItem('previaMaterialAlterado')) || {};
+            const profissionaisAlterados = JSON.parse(localStorage.getItem('previaProfissionaisAlterado')) || {};
+
+            if (auditorias[id] && auditorias[id].tipo) {
+                this.auditoria = auditorias[id];
+                this.listaMateriais = materiais[id] || [];
+                this.listaProfissionais = profissionais[id] || [];
+                this.listaAlteracaoMateriais = materiaisAlterados[id] || [];
+                this.listaAlteracaoProfissionais = profissionaisAlterados[id] || [];
+            }
+            else {
+                const docSnap = await getDoc(doc(db, "auditorias", id));
+                if (docSnap.exists()) {
+
+                    const dados = docSnap.data();
+                    this.auditoria = { 
+                        id: docSnap.id, 
+                        ...dados,
+                        imagemVideo: dados.imagemVideo || [],
+                        audios: dados.audios || [],
+                        profissionais: dados.profissionais || [],
+                        materiais: dados.materiais || []
+                    };
 
 
-                const querySnapshotProfissionais = await getDocs(collection(db, "profissionais"));
-                this.listaProfissionais = querySnapshotProfissionais.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
+                    const querySnapshotProfissionais = await getDocs(collection(db, "profissionais"));
+                    this.listaProfissionais = querySnapshotProfissionais.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
 
-                const querySnapshotMateriais = await getDocs(collection(db, "materiais"));
-                this.listaMateriais = querySnapshotMateriais.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
+                    const querySnapshotMateriais = await getDocs(collection(db, "materiais"));
+                    this.listaMateriais = querySnapshotMateriais.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
 
-            } else {
-                this.auditoria = {};
+                } else {
+                    this.auditoria = {};
+                }
             }
         },
         methods: {
@@ -161,11 +188,15 @@
                         url: url,
                         tipo: tipo
                     });
+
+                    this.salvarAlteracoesEmLocalStorage()
+
                     this.carregarFicheiro = false;
                     this.percentagemUpload = 0;
                 }
             },
             async guardarAuditoria() {
+                this.limparAlteracoesDeLocalStorage()
                 try {
                     // Primeiro, busque os valores atualizados na Firebase para profissionais e materiais
                     const querySnapshotProfissionais = await getDocs(collection(db, "profissionais"));
@@ -186,7 +217,7 @@
                         return profissional && profissional.quantidade >= -alteracao.quantidade;
                     });
 
-                    const materiaisValidados = this.listaAlteracaoEquipamento.every(alteracao => {
+                    const materiaisValidados = this.listaAlteracaoMateriais.every(alteracao => {
                         const material = materiaisAtualizados.find(m => m.nome === alteracao.nome);
                         return material && material.quantidade >= -alteracao.quantidade;
                     });
@@ -204,7 +235,7 @@
                         }
 
                         // Atualizar a quantidade dos materiais na Firebase
-                        for (const alteracao of this.listaAlteracaoEquipamento) {
+                        for (const alteracao of this.listaAlteracaoMateriais) {
                             const material = materiaisAtualizados.find(m => m.nome === alteracao.nome);
                             if (material) {
                                 await updateDoc(doc(db, "materiais", material.id), {
@@ -237,9 +268,11 @@
             },
             removeAudio(index) {
                 this.auditoria.audios.splice(index, 1);
+                this.salvarAlteracoesEmLocalStorage()
             },
             removeFicheiro(index) {
                 this.auditoria.imagemVideo.splice(index, 1);
+                this.salvarAlteracoesEmLocalStorage()
             },
             async iniciarGravacao() {
                 try {
@@ -280,6 +313,7 @@
             pararGravacao() {
                 if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
                     this.mediaRecorder.stop();
+                    this.salvarAlteracoesEmLocalStorage()
                 }
             },
             atualizarListaAlteracaoProfissionais(dados) {
@@ -300,24 +334,57 @@
                         "quantidade": quantidade,
                     })
                 }
+                this.salvarAlteracoesEmLocalStorage()
             },
-            atualizarListaAlteracaoEquipamento(dados) {
+            atualizarListaAlteracaoMateriais(dados) {
                 const elemento = dados.elemento;
                 const quantidade = dados.quantidade;
 
-                const item = this.listaAlteracaoEquipamento.find(item => item.nome === elemento.nome)
+                const item = this.listaAlteracaoMateriais.find(item => item.nome === elemento.nome)
                 if(item) {
                     item.quantidade += quantidade
 
                     if (item.quantidade === 0) {
-                        this.listaAlteracaoEquipamento = this.listaAlteracaoEquipamento.filter(i => i.nome !== elemento.nome);
+                        this.listaAlteracaoMateriais = this.listaAlteracaoMateriais.filter(i => i.nome !== elemento.nome);
                     }
                 }
                 else {
-                    this.listaAlteracaoEquipamento.push({
+                    this.listaAlteracaoMateriais.push({
                         "nome": elemento.nome,
                         "quantidade": quantidade,
                     })
+                }
+                this.salvarAlteracoesEmLocalStorage()
+            },
+            salvarAlteracoesEmLocalStorage() {
+                localStorage.setItem('previaAuditoria', JSON.stringify({[this.auditoria.id]: this.auditoria}));
+
+                localStorage.setItem('previaMaterialAlterado', JSON.stringify({[this.auditoria.id]: this.listaAlteracaoMateriais}));
+                
+                localStorage.setItem('previaProfissionaisAlterado', JSON.stringify({[this.auditoria.id]: this.listaAlteracaoProfissionais}));
+
+                localStorage.setItem('previaMaterial', JSON.stringify({[this.auditoria.id]: this.listaMateriais}));
+                
+                localStorage.setItem('previaProfissionais', JSON.stringify({[this.auditoria.id]: this.listaProfissionais}));
+            },
+
+            limparAlteracoesDeLocalStorage() {
+
+                localStorage.setItem('previaAuditoria', JSON.stringify({[this.auditoria.id]: {}}));
+
+                localStorage.setItem('previaMaterialAlterado', JSON.stringify({[this.auditoria.id]: {}}));
+
+                localStorage.setItem('previaProfissionaisAlterado', JSON.stringify({[this.auditoria.id]: {}}));
+
+                localStorage.setItem('previaMaterial', JSON.stringify({[this.auditoria.id]: {}}));
+
+                localStorage.setItem('previaProfissionais', JSON.stringify({[this.auditoria.id]: {}}));
+            },
+            nomeOcorrencia(valor) {
+                switch(valor) {
+                    case "lights": return "Iluminação Pública"
+                    case "sinals": return "Sinalização em Falta"
+                    case "roads": return "Vias e Passeios"
                 }
             }
         }

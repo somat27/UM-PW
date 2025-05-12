@@ -30,7 +30,7 @@
 
     <button class="flex-coluna margem painel item-ponta" id="auditoria" v-for="audit in auditoriasVisiveis" :key="audit.id" @click="goToPaginaDetalhe(audit)">
         <div class="flex-linha centro item-ponta">
-            <h1>{{ audit.tipo }}</h1>
+            <h1>{{ nomeOcorrencia(audit.tipo) }}</h1>
             <h2 :class="corEstado(audit.status)" id="estado">{{ audit.status }}</h2>
         </div>
 
@@ -44,9 +44,9 @@
 
 <script>
     import AppHeader from '../AppHeader.vue'
-    import { db } from '@/firebase/firebase.js';
-    import { collection, getDocs } from 'firebase/firestore';
     import PopUpFiltro from './PopUp/PopUpFiltro.vue';
+    import { db, auth } from '@/firebase/firebase.js';
+    import { collection, getDocs, query, where } from 'firebase/firestore';
     export default {
         name: 'ListaAuditorias',
         components: {
@@ -62,7 +62,13 @@
             };
         },
         async mounted() {
-            const querySnapshot = await getDocs(collection(db, "auditorias"));
+            const user = auth.currentUser;
+            if (!user) return;
+
+            const auditoriasRef = collection(db, "auditorias");
+            const q = query(auditoriasRef, where("perito", "==", user.uid));
+            
+            const querySnapshot = await getDocs(q);
             this.listaAuditorias = querySnapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
@@ -98,8 +104,14 @@
                     default:
                         return "";
                 }
+            },
+            nomeOcorrencia(valor) {
+                switch(valor) {
+                    case "lights": return "Iluminação Pública"
+                    case "sinals": return "Sinalização em Falta"
+                    case "roads": return "Vias e Passeios"
+                }
             }
-
         },
         computed: {
             auditoriasVisiveis() {
