@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard-container" :space="23">
+  <div class="dashboard-container">
     <div class="dashboard-layout">
       <aside class="sidebar-column">
         <nav class="sidebar-nav">
@@ -9,252 +9,278 @@
         </nav>
       </aside>
 
-  <main class="main-content">
-  <div class="content-wrapper">
-    <nav class="navigation-tabs"></nav>
-    
-    <StatisticsGrid />
+      <main class="main-content">
+        <div class="content-wrapper">
 
-    <div class="page-header">
-      <h2>Gestão de Professionais</h2>
-    </div>
+          <!-- Modal de adicionar/editar -->
+          <AddProfissionalModal v-if="showAddModal" :profissional="profissionalParaEditar" @close="showAddModal = false"
+            @saved="handleProfissionalSaved" />
 
-    <div class="filters-container">
-      <Filters
-        :filters="filterOptions"
-        :gap="'172px'"
-        search-placeholder="Procurar Professionais..."
-        button-text="+ Adicionar Professionais"
-        @search="handleSearch"
-        @filter-change="handleFilterChange"
-        @add="handleAddMaterial"
-      />
-    </div>
+          <div v-if="showAddQuantidadeModal" class="modal-overlay">
+            <div class="modal-content">
+              <h3>Adicionar {{ profissionalParaAdicionarQtd.nome }}</h3>
+              <input type="number" v-model.number="quantidadeParaAdicionar" min="1" class="input-quantidade" />
+              <div class="modal-actions">
+                <button @click="showAddQuantidadeModal = false" class="btn-secondary">Cancelar</button>
+                <button @click="confirmarAdicionarQuantidade" class="btn-primary">Confirmar</button>
+              </div>
+            </div>
+          </div>
 
-    <GenericTable
-      :data="peritos"
-      :columns="columns"
-      :type="'striped'"
-      @action="handlePeritoAction"
-    />
-  </div>
-</main>
+          <!-- Loading / Erro -->
+          <div v-if="loading">A carregar…</div>
+          <div v-else>
+            <div v-if="erro" class="error">{{ erro }}</div>
+
+            <!-- Cabeçalho -->
+            <div class="page-header">
+              <h2>Gestão de Profissionais</h2>
+            </div>
+            <FiltroTabela v-model:modelSearch="searchQuery" v-model:modelSort="sortKey" v-model:modelOrder="sortOrder"
+              :sortColumns="sortColumns" :filterOptions="filterOptions" @filter-applied="handleFilterApplied"
+              :showAdd="true" @add="openAddModal" search-placeholder="Procurar Profissionais..."
+              sort-placeholder="Ordenar por…" />
+
+
+            <!-- Tabela genérica -->
+            <GenericTable :data="processedProfissionais" :columns="[...profissionalColumns, editColumn]"
+              :loading="loading" type="striped" @edit="openEditModal" @add="openAddQuantidadeModal" />
+          </div>
+        </div>
+      </main>
     </div>
   </div>
 </template>
 
-<script>
-import NavigationList from "../components/NavigationList.vue";
-import GenericTable from "../components/GenericTable.vue";
-import Filters from "../components/Filters.vue";
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import NavigationList from '@/components/NavigationList.vue'
+import GenericTable from '@/components/GenericTable.vue'
+import AddProfissionalModal from '@/components/AddProfissionalModal.vue'
+import { db } from '@/firebase.js'
+import { collection, getDocs, updateDoc, doc } from 'firebase/firestore'
+import FiltroTabela from '@/components/FiltroTabela.vue';
 
-export default {
-  name: "GestaoPeritos",
-  components: {
-    NavigationList,
-    GenericTable,
-    Filters
-  },
-  data() {
-    return {
+// Estados reativos
+const profissionais = ref([])
+const loading = ref(false)
+const erro = ref(null)
+const searchQuery = ref('')
+const sortKey = ref('')
+const sortOrder = ref('asc')
+const sortColumns = [
+  { key: 'nome', label: 'Nome' },
+  { key: 'area', label: 'Área/Especialidade' },
+  { key: 'preco', label: 'Preço/Hora' },
+  { key: 'quantidade', label: 'Quantidade' }
+]
+const showAddModal = ref(false)
+const profissionalParaEditar = ref(null)
+const showAddQuantidadeModal = ref(false)
+const profissionalParaAdicionarQtd = ref(null)
+const quantidadeParaAdicionar = ref(1)
+const profissionalColumns = [
+  { key: 'nome', label: 'Nome' },
+  { key: 'area', label: 'Área/Especialidade' },
+  { key: 'preco', label: 'Preço/Hora' },
+  { key: 'quantidade', label: 'Quantidade' }
+]
+const editColumn = { key: 'edit-profissionais', label: 'Ações' }
 
-filterOptions: [
-        {
-          key: 'type',
-          label: 'Tipo',
-          selected: '',
-          options: [
-            { value: '', label: 'Filtrar Por' },
-            { key: 'area', label: 'Área/Especialidade' },
-            { key: 'qtd', label: 'Quantidade' }
-          ]
-        }
-      ],
-          columns: [
-            { key: 'area', label: 'Área/Especialidade' },
-            { key: 'qtd', label: 'Quantidade' },
-            { key: 'actions', label: 'Ações' }
-      ],
-      peritos: [
-        {
-          area: "Bombeiros",
-          qtd: "100"
-        },
-        {
-          area: "Polícia",
-          qtd: "140"
-        }
-      ]
-    };
+// onde vamos guardar os filtros seleccionados
+const appliedFilters = ref({});
+
+// gera as opções de filtro para o modal
+// aqui escolhemos “area” e “preco” como exemplos de campos a filtrar
+const filterOptions = computed(() => {
+  const campos = ['area', 'preco'];
+  const opts = {};
+  campos.forEach(key => {
+    const valores = profissionais.value.map(p => p[key] ?? '');
+    opts[key] = Array.from(new Set(valores))
+      .filter(v => v !== '');
+  });
+  return opts;
+});
+
+// função que recebe os filtros seleccionados no modal
+function handleFilterApplied(filters) {
+  appliedFilters.value = filters;
+}
+
+
+// Computado equivalente a processedProfissionais
+const processedProfissionais = computed(() => {
+  let result = profissionais.value;
+
+  // 1) Pesquisa por nome
+  if (searchQuery.value) {
+    const term = searchQuery.value.toLowerCase();
+    result = result.filter(p =>
+      (p.nome ?? '').toLowerCase().includes(term)
+    );
   }
-};
+
+  // 2) Filtrar pelos campos do modal
+  Object.entries(appliedFilters.value).forEach(([key, vals]) => {
+    if (!vals.length) return;
+    result = result.filter(p => vals.includes(p[key]));
+  });
+
+  // 3) Ordenação
+  if (sortKey.value) {
+    result = result.slice().sort((a, b) => {
+      let valA = a[sortKey.value];
+      let valB = b[sortKey.value];
+      if (typeof valA === 'string') valA = valA.toLowerCase();
+      if (typeof valB === 'string') valB = valB.toLowerCase();
+      if (valA < valB) return sortOrder.value === 'asc' ? -1 : 1;
+      if (valA > valB) return sortOrder.value === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }
+
+  return result;
+});
+
+
+// Funções/métodos
+async function fetchProfissionais() {
+  loading.value = true
+  erro.value = null
+  try {
+    const snap = await getDocs(collection(db, 'profissionais'))
+    profissionais.value = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+  } catch (e) {
+    erro.value = 'Não foi possível carregar os profissionais.'
+    console.error(e)
+  } finally {
+    loading.value = false
+  }
+}
+
+function openAddModal() {
+  profissionalParaEditar.value = null
+  showAddModal.value = true
+}
+
+function openEditModal(item) {
+  profissionalParaEditar.value = item
+  showAddModal.value = true
+}
+
+function openAddQuantidadeModal(item) {
+  profissionalParaAdicionarQtd.value = item
+  quantidadeParaAdicionar.value = 1
+  showAddQuantidadeModal.value = true
+}
+
+async function confirmarAdicionarQuantidade() {
+  const novaQtd = profissionalParaAdicionarQtd.value.quantidade + quantidadeParaAdicionar.value
+  await atualizarQuantidade(profissionalParaAdicionarQtd.value.id, novaQtd)
+  showAddQuantidadeModal.value = false
+  await fetchProfissionais()
+}
+
+async function handleProfissionalSaved() {
+  showAddModal.value = false
+  await fetchProfissionais()
+}
+
+async function atualizarQuantidade(id, novaQtd) {
+  try {
+    const refDoc = doc(db, 'profissionais', id)
+    await updateDoc(refDoc, { quantidade: novaQtd })
+    const item = profissionais.value.find(p => p.id === id)
+    if (item) item.quantidade = novaQtd
+  } catch (e) {
+    console.error('Erro ao atualizar quantidade:', e)
+  }
+}
+
+// Life-cycle
+onMounted(fetchProfissionais)
 </script>
 
-  
-    
-    <style scoped>
-    .dashboard-container {
-      background: linear-gradient(
-          0deg,
-          var(--color-grey-98, #fafafb) 0%,
-          var(--color-grey-98, #fafafb) 100%
-        ),
-        var(--color-white-solid, #fff);
-      padding-right: 18px;
-      padding-bottom: 135px;
-    }
-    
-    .dashboard-layout {
-      display: flex;
-      gap: 20px;
-    }
-    
-    .sidebar-column {
-      width: 19%;
-    }
-    
-    .sidebar-nav {
-      box-shadow: 1px 0px 0px 0px #f0f0f0;
-      background-color: #fff;
-      padding-bottom: 772px;
-      overflow: hidden;
-      width: 100%;
-    }
-    
-    .sidebar-background {
-      padding-bottom: 395px;
-      background-color: #fff;
-    }
-    
-    .logo {
-      aspect-ratio: 6.17;
-      object-fit: contain;
-      width: 260px;
-      box-shadow: 0px 4px 4px rgba(254, 247, 247, 1);
-    }
-    
-    .notification-icons {
-      z-index: 10;
-      margin-top: 160px;
-      margin-left: 25px;
-      width: 16px;
-    }
-    
-    .notification-icon,
-    .alert-icon {
-      aspect-ratio: 1;
-      object-fit: contain;
-      width: 100%;
-    }
-    
-    .alert-icon {
-      margin-top: 27px;
-    }
-    
-    .main-content {
-      width: 81%;
-      margin-left: 20px;
-    }
-    
-    .content-wrapper {
-      display: flex;
-      margin-top: 59px;
-      width: 100%;
-      flex-direction: column;
-    }
-    
-    .navigation-tabs {
-      display: flex;
-      align-items: center;
-      gap: 30px;
-      font-family:
-        Public Sans,
-        -apple-system,
-        Roboto,
-        Helvetica,
-        sans-serif;
-      font-size: 13px;
-      color: #212529;
-      flex-wrap: wrap;
-    }
-    
-    .tab-link {
-      text-decoration: none;
-      color: inherit;
-      line-height: 19.5px;
-    }
-    
-    .tab-link.active {
-      color: #1890ff;
-    }
-    
-    .map-visualization {
-      aspect-ratio: 0.95;
-      object-fit: contain;
-      width: 100%;
-    }
-    
-    @media (max-width: 991px) {
-      .dashboard-container {
-        padding-bottom: 100px;
-        
-      }
-    
-      .dashboard-layout {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0;
-      }
-    
-      .sidebar-column {
-        width: 100%;
-      }
-    
-      .sidebar-nav {
-        margin-top: 24px;
-        padding-bottom: 100px;
-      }
-    
-      .sidebar-background {
-        padding-bottom: 100px;
-      }
-    
-      .notification-icons {
-        margin-left: 10px;
-        margin-top: 40px;
-      }
-    
-      .main-content {
-        width: 100%;
-      }
-    
-      .content-wrapper {
-        max-width: 100%;
-        margin-top: 40px;
-      }
-    
-      .map-visualization {
-        max-width: 100%;
-      }
-    }
+<style scoped>
+html,
+body,
+#app,
+.dashboard-container,
+.dashboard-layout {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
 
-    .user-profile {
-    display: flex;
-    align-items: center;
-    margin-bottom: 20px;
-  }
-  
-  .user-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    margin-right: 10px;
-  }
-  
-  .user-name {
-    font-size: 16px;
-    font-weight: bold;
-  }
+.dashboard-layout {
+  display: flex;
+  gap: 20px;
+  height: 100%;
+}
+
+.sidebar-column {
+  width: 20%;
+}
+
+.main-content {
+  flex: 1;
+  margin-right: 10px;
+  overflow-y: auto;
+}
+
+.content-wrapper {
+  margin-top: 40px;
+  min-height: 100%;
+}
+
+.tab-link {
+  text-decoration: none;
+  color: #6c757d;
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 10px 16px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  position: relative;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+
+.tab-link:hover {
+  background-color: #f8f9fa;
+  color: #495057;
+}
+
+.tab-link.active {
+  color: #1890ff;
+  background-color: rgba(24, 144, 255, 0.08);
+  font-weight: 600;
+}
+
+.tab-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: -9px;
+  left: 16px;
+  right: 16px;
+  height: 2px;
+  background-color: #1890ff;
+  border-radius: 2px 2px 0 0;
+}
+
+.tab-link::after {
+  content: '';
+  position: absolute;
+  bottom: -9px;
+  left: 50%;
+  right: 50%;
+  height: 2px;
+  background-color: #1890ff;
+  transition: all 0.3s ease;
+  border-radius: 2px 2px 0 0;
+}
 
 .filters-container {
   display: flex;
@@ -264,6 +290,157 @@ filterOptions: [
   max-width: fit-content;
 }
 
+.page-header h2 {
+  font-size: 1.75rem;
+  margin-bottom: 1rem;
+}
 
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.search-input {
+  flex: 1;
+  padding: 0.5rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+}
+
+.sort-select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+}
+
+.sort-button {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 0.375rem;
+  background: white;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.sort-button:hover {
+  background: #f0f0f0;
+}
+
+.quant-input {
+  width: 4rem;
+  padding: 0.25rem;
+  border: 1px solid #ccc;
+  border-radius: 0.25rem;
+  text-align: right;
+}
+
+.btn-add {
+  background-color: #1890ff;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-add:hover {
+  background-color: #167ac6;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 300px;
+}
+
+.modal-content h3 {
+  margin-top: 0;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.btn-confirm,
+.btn-cancel {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-confirm {
+  background: #4caf50;
+  color: #fff;
+}
+
+.btn-cancel {
+  background: #f44336;
+  color: #fff;
+}
+
+.btn-primary {
+  background: #1890ff;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background: #167ac6;
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 1px solid #ccc;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background: #f5f5f5;
+}
+
+.form-group {
+  margin-bottom: 0.75rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 0.375rem;
+}
 </style>
-    

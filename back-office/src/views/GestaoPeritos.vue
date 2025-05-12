@@ -9,293 +9,267 @@
         </nav>
       </aside>
 
-  <main class="main-content">
-  <div class="content-wrapper">
-    <nav class="navigation-tabs"></nav>
-    
-    <StatisticsGrid />
+      <main class="main-content">
+        <div class="content-wrapper">
+          <div class="page-header">
+            <h2>Gestão de Peritos</h2>
+          </div>
 
-    <div class="page-header">
-      <h2>Gestão de Peritos</h2>
-    </div>
+          <FiltroTabela v-model:modelSearch="searchQuery" v-model:modelSort="sortKey" v-model:modelOrder="sortOrder"
+            :sortColumns="sortColumns" :filterOptions="filterOptions" @filter-applied="handleFilterApplied"
+            search-placeholder="Procurar Peritos..." sort-placeholder="Ordenar por…" />
 
-    <div class="filters-container">
-      <Filters
-        :filters="filterOptions"
-        :gap="'172px'"
-        search-placeholder="Procurar Peritos..."
-        button-text="+ Adicionar Peritos"
-        @search="handleSearch"
-        @filter-change="handleFilterChange"
-        @add="handleAddPerito"
-      />
-    </div>
 
-    <GenericTable
-      :title="'Lista de Peritos'"
-      :subTitle="'Gestão de peritos mobilizados'"
-      :data="peritos"
-      :columns="columns"
-      :type="'striped'"
-      @action="handlePeritoAction"
-    />
-  </div>
-</main>
+          <template v-if="faltaPerfil.length > 0">
+            <div class="table-section">
+              <h3 class="table-section-title">Peritos não Registados</h3>
+              <GenericTable :data="filteredFaltaPerfil" :loading="aCarregar" :columns="missingColumns" type="striped"
+                @add="openAddPeritoModal" />
+            </div>
+          </template>
+
+          <div class="table-section">
+            <h3 class="table-section-title">Peritos Registados</h3>
+            <GenericTable :data="filteredComPerfil" :loading="aCarregar" :columns="completeColumns" type="striped"
+              @edit="handleEdit" />
+          </div>
+
+          <AddPeritoModal v-if="showAddModal" :user="selectedUser" @close="showAddModal = false"
+            @saved="handlePeritoSaved" />
+        </div>
+      </main>
     </div>
   </div>
 </template>
 
-<script>
-import NavigationList from "../components/NavigationList.vue";
-import GenericTable from "../components/GenericTable.vue";
-import Filters from "../components/Filters.vue";
+<script setup>
+import NavigationList from '@/components/NavigationList.vue'
+import { ref, onMounted, computed } from 'vue';
+import GenericTable from '@/components/GenericTable.vue';
+import AddPeritoModal from '@/components/AddPeritoModal.vue';
+import { getPeritosWithoutProfile, getPeritosWithProfile } from '@/firebase';
+import FiltroTabela from '@/components/FiltroTabela.vue';
 
-export default {
-  name: "GestaoPeritos",
-  components: {
-    NavigationList,
-    GenericTable,
-    Filters
-  },
-  data() {
-    return {
+const faltaPerfil = ref([]);
+const comPerfil = ref([]);
+const aCarregar = ref(true);
 
-filterOptions: [
-        {
-          key: 'status',
-          label: 'Estado',
-          selected: '',
-          options: [
-            { value: '', label: 'Todos os Estados' },
-            { value: 'mobilizado', label: 'Mobilizados' },
-            { value: 'disponivel', label: 'Disponivel' }
-          ]
-        },
-        {
-          key: 'type',
-          label: 'Tipo',
-          selected: '',
-          options: [
-            { value: '', label: 'Filtrar Por' },
-            { key: 'name', label: 'Nome' },
-            { key: 'address', label: 'Morada' },
-            { key: 'birthdate', label: 'Data Nascimento' },
-            { key: 'specialty', label: 'Especialidade' },
-            { key: 'phone', label: 'Número de Telemóvel' }
-          ]
-        }
-      ],
-          columns: [
-            { key: 'nameEmail', label: 'Nome' },
-            { key: 'address', label: 'Morada' },
-            { key: 'birthDate', label: 'Data Nascimento' },
-            { key: 'specialty', label: 'Especialidade' },
-            { key: 'phone', label: 'Número de Telemóvel' },
-            { key: 'status', label: 'Estado' },
-            { key: 'actions', label: 'Ações' }
-      ],
-      peritos: [
-        {
-          id: 1,
-          name: "Joana Silva",
-          email: "joana@sapo.pt",
-          address: "Porto",
-          birthDate: "22/07/1990",
-          specialty: "Engenheira Civil",
-          phone: "912345678",
-          status: "Mobilizado"
-        },
-        {
-          id: 2,
-          name: "Carlos Pinto",
-          email: "carlos@sapo.pt",
-          address: "Lisboa",
-          birthDate: "15/11/1987",
-          specialty: "Pedreiro",
-          phone: "934567890",
-          status: "Disponível"
-        }
-      ]
-    };
-  }
-};
-</script>
+const searchQuery = ref('');
+const sortKey = ref('');
+const sortOrder = ref('asc');
 
-  
-    
-    <style scoped>
-    .dashboard-container {
-      background: linear-gradient(
-          0deg,
-          var(--color-grey-98, #fafafb) 0%,
-          var(--color-grey-98, #fafafb) 100%
-        ),
-        var(--color-white-solid, #fff);
-      padding-right: 18px;
-      padding-bottom: 135px;
-    }
-    
-    .dashboard-layout {
-      display: flex;
-      gap: 20px;
-    }
-    
-    .sidebar-column {
-      width: 19%;
-    }
-    
-    .sidebar-nav {
-      box-shadow: 1px 0px 0px 0px #f0f0f0;
-      background-color: #fff;
-      padding-bottom: 772px;
-      overflow: hidden;
-      width: 100%;
-    }
-    
-    .sidebar-background {
-      padding-bottom: 395px;
-      background-color: #fff;
-    }
-    
-    .logo {
-      aspect-ratio: 6.17;
-      object-fit: contain;
-      width: 260px;
-      box-shadow: 0px 4px 4px rgba(254, 247, 247, 1);
-    }
-    
-    .notification-icons {
-      z-index: 10;
-      margin-top: 160px;
-      margin-left: 25px;
-      width: 16px;
-    }
-    
-    .notification-icon,
-    .alert-icon {
-      aspect-ratio: 1;
-      object-fit: contain;
-      width: 100%;
-    }
-    
-    .alert-icon {
-      margin-top: 27px;
-    }
-    
-    .main-content {
-      width: 81%;
-      margin-left: 20px;
-    }
-    
-    .content-wrapper {
-      display: flex;
-      margin-top: 59px;
-      width: 100%;
-      flex-direction: column;
-    }
-    
-    .navigation-tabs {
-      display: flex;
-      align-items: center;
-      gap: 30px;
-      font-family:
-        Public Sans,
-        -apple-system,
-        Roboto,
-        Helvetica,
-        sans-serif;
-      font-size: 13px;
-      color: #212529;
-      flex-wrap: wrap;
-    }
-    
-    .tab-link {
-      text-decoration: none;
-      color: inherit;
-      line-height: 19.5px;
-    }
-    
-    .tab-link.active {
-      color: #1890ff;
-    }
-    
-    .map-visualization {
-      aspect-ratio: 0.95;
-      object-fit: contain;
-      width: 100%;
-    }
-    
-    @media (max-width: 991px) {
-      .dashboard-container {
-        padding-bottom: 100px;
-        
-      }
-    
-      .dashboard-layout {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0;
-      }
-    
-      .sidebar-column {
-        width: 100%;
-      }
-    
-      .sidebar-nav {
-        margin-top: 24px;
-        padding-bottom: 100px;
-      }
-    
-      .sidebar-background {
-        padding-bottom: 100px;
-      }
-    
-      .notification-icons {
-        margin-left: 10px;
-        margin-top: 40px;
-      }
-    
-      .main-content {
-        width: 100%;
-      }
-    
-      .content-wrapper {
-        max-width: 100%;
-        margin-top: 40px;
-      }
-    
-      .map-visualization {
-        max-width: 100%;
-      }
+// 1) onde vamos guardar os filtros seleccionados
+const appliedFilters = ref({});
+
+// 2) opções para preencher o modal de filtros
+const filterOptions = computed(() => {
+  const campos = ['specialty', 'localidades', 'status'];
+  const opts = {};
+
+  campos.forEach(key => {
+    // recolhe todos os valores desse campo
+    let valores = comPerfil.value.map(u => u[key] ?? []);
+
+    // se for localidades, achata os arrays num único array
+    if (key === 'localidades') {
+      valores = valores.flat();
     }
 
-    .user-profile {
-    display: flex;
-    align-items: center;
-    margin-bottom: 20px;
-  }
-  
-  .user-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    margin-right: 10px;
-  }
-  
-  .user-name {
-    font-size: 16px;
-    font-weight: bold;
-  }
+    // tira duplicados e valores vazios
+    opts[key] = Array.from(new Set(valores))
+      .filter(v => v !== '');
+  });
 
-.filters-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 0 auto;
-  max-width: fit-content;
+  return opts;
+});
+
+
+// 3) função a disparar quando clicas em “Aplicar” no modal
+function handleFilterApplied(filters) {
+  appliedFilters.value = filters;
 }
 
+const showAddModal = ref(false);
+const selectedUser = ref(null);
+
+const missingColumns = [
+  { key: 'displayName', label: 'Nome' },
+  { key: 'email', label: 'Email' },
+  { key: 'add', label: 'Ações' }
+];
+
+const completeColumns = [
+  { key: 'displayName', label: 'Nome' },
+  { key: 'specialty', label: 'Especialidade' },
+  { key: 'localidades', label: 'Localidades' },
+  { key: 'status', label: 'Status' },
+  { key: 'edit', label: 'Ações' }
+];
+
+// pega todos os elementos até ao penúltimo
+const sortColumns = completeColumns.slice(0, -1);
+
+async function loadData() {
+  aCarregar.value = true;
+  try {
+    faltaPerfil.value = await getPeritosWithoutProfile();
+    comPerfil.value = await getPeritosWithProfile();
+  } catch (error) {
+    console.error('Erro ao carregar peritos:', error);
+  } finally {
+    aCarregar.value = false;
+  }
+}
+
+onMounted(loadData);
+
+function openAddPeritoModal(user) {
+  selectedUser.value = user;
+  showAddModal.value = true;
+}
+
+function handlePeritoSaved() {
+  showAddModal.value = false;
+  loadData();
+}
+
+function handleEdit(user) {
+  selectedUser.value = user;
+  console.log(selectedUser.value);
+  showAddModal.value = true;
+}
+
+function sortData(arr) {
+  if (!sortKey.value) return arr;
+  return [...arr].sort((a, b) => {
+    const aVal = a[sortKey.value];
+    const bVal = b[sortKey.value];
+    if (typeof aVal === 'number' && typeof bVal === 'number') {
+      return sortOrder.value === 'asc' ? aVal - bVal : bVal - aVal;
+    }
+    const aStr = Array.isArray(aVal) ? aVal.join(', ') : String(aVal);
+    const bStr = Array.isArray(bVal) ? bVal.join(', ') : String(bVal);
+    return sortOrder.value === 'asc'
+      ? aStr.localeCompare(bStr)
+      : bStr.localeCompare(aStr);
+  });
+}
+
+const filteredFaltaPerfil = computed(() => {
+  let data = faltaPerfil.value.filter(u =>
+    u.displayName.toLowerCase().includes(searchQuery.value.toLowerCase())
+  );
+  return sortData(data);
+});
+
+const filteredComPerfil = computed(() => {
+  let data = comPerfil.value;
+
+  // pesquisa por texto
+  if (searchQuery.value) {
+    const q = searchQuery.value.toLowerCase();
+    data = data.filter(u =>
+      (u.displayName ?? '').toLowerCase().includes(q)
+    );
+  }
+
+  // aplicação dos filtros do modal
+  Object.entries(appliedFilters.value).forEach(([key, vals]) => {
+    if (!vals.length) return;
+
+    // campo localidades é um array: verifica se alguma das localidades do perito está nas vals
+    if (key === 'localidades') {
+      data = data.filter(u =>
+        Array.isArray(u.localidades) &&
+        u.localidades.some(loc => vals.includes(loc))
+      );
+    }
+    else {
+      // campos simples (specialty, status, etc.)
+      data = data.filter(u => vals.includes(u[key]));
+    }
+  });
 
 
+  // ordenação
+  return sortData(data);
+});
+
+</script>
+
+<style scoped>
+.dashboard-layout {
+  display: flex;
+  gap: 20px;
+  height: 100%;
+}
+
+.sidebar-column {
+  width: 20%;
+}
+
+.main-content {
+  flex: 1;
+  margin-right: 10px;
+  overflow-y: auto;
+}
+
+.content-wrapper {
+  margin-top: 40px;
+  min-height: 100%;
+}
+
+.page-header {
+  margin-bottom: 16px;
+}
+
+.page-header h2 {
+  font-size: 1.75rem;
+  margin-bottom: 1rem;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.search-input {
+  flex: 1;
+  padding: 0.5rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+}
+
+.sort-select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 0.375rem;
+  background: #fff;
+  font-size: 0.875rem;
+}
+
+.sort-button {
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.add-button {
+  padding: 0.5rem 1rem;
+  background-color: #1890ff;
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.add-button:hover {
+  background-color: #167ac6;
+}
 </style>
-    

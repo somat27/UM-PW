@@ -1,421 +1,412 @@
 <template>
-    <div class="dashboard-container" :space="23">
-      <div class="dashboard-layout">
-        <aside class="sidebar-column">
-          <nav class="sidebar-nav">
-            <div class="sidebar-background">
-          
-              <NavigationList />
-            </div>
-          </nav>
-        </aside>
-  
-        <main class="main-content">
-          <div class="content-wrapper">
-            <nav class="navigation-tabs">
-              <router-link 
-                to="/dashboards/auditorias" 
-                class="tab-link" 
-                :class="{ active: activeTab === 'auditorias' }"
-              >
-                Auditorias por região
-              </router-link>
-              
-              <router-link 
-                to="/dashboards/ocorrencias" 
-                class="tab-link" 
-                :class="{ active: activeTab === 'ocorrencias' }"
-              >
-                Ocorrências resolvidas
-              </router-link>
-
-              <router-link 
-                to="/dashboards/peritos" 
-                class="tab-link" 
-                :class="{ active: activeTab === 'peritos' }"
-              >
-              Peritos mobilizados e no aguardo
-              </router-link>
-              <router-link 
-                  to="/dashboards/materiais" 
-                  class="tab-link" 
-                  :class="{ active: activeTab === 'materiais' }"
-                >
-                Materiais expedidos
-              </router-link>
-            </nav>
-  
-            <StatisticsGrid2 />
-  
-
-            <div class="search-section">
-              <div class="search-item">
-                <img
-                  src="https://cdn.builder.io/api/v1/image/assets/TEMP/0dc2d2a81d2a326f4151dcc6a4defcd801630669?placeholderIfAbsent=true&apiKey=98100b9ac2c544efa71903dc3e1eda07"
-                  alt="Search Icon"
-                  class="search-icon"
-                />
-              </div>
-              <div class="search-form">
-                <div class="search-input">
-                  <input 
-                    type="text" 
-                    class="search-container" 
-                    placeholder="Pesquisar Localidade..." 
-                  />
-                  <img
-                    src="https://cdn.builder.io/api/v1/image/assets/TEMP/e2adb638175328e468397894582b9de35e2a0581?placeholderIfAbsent=true&apiKey=98100b9ac2c544efa71903dc3e1eda07"
-                    alt="Search"
-                    class="search-button"
-                  />
-                </div>
-              </div>
-
-            </div>
-        
-          <div id="chart">
-            <apexchart type="area" height="350" :options="chartOptions" :series="series"></apexchart>   
-           </div>
+  <div class="dashboard-container">
+    <div class="dashboard-layout">
+      <aside class="sidebar-column">
+        <nav class="sidebar-nav">
+          <div class="sidebar-background">
+            <NavigationList />
           </div>
-        </main>
-      </div>
+        </nav>
+      </aside>
+      <main class="main-content">
+        <div class="content-wrapper">
+
+          <nav class="navigation-tabs">
+            <router-link to="/dashboards/auditorias" class="tab-link" :class="{ active: activeTab === 'auditorias' }"
+              @click="activeTab = 'auditorias'">
+              Auditorias por região
+            </router-link>
+            <router-link to="/dashboards/ocorrencias" class="tab-link" :class="{ active: activeTab === 'ocorrencias' }"
+              @click="activeTab = 'ocorrencias'">
+              Ocorrências por região
+            </router-link>
+            <router-link to="/dashboards/peritos" class="tab-link" :class="{ active: activeTab === 'peritos' }"
+              @click="activeTab = 'peritos'">
+              Peritos Ativos e em Espera
+            </router-link>
+            <router-link to="/dashboards/materiais" class="tab-link" :class="{ active: activeTab === 'materiais' }"
+              @click="activeTab = 'materiais'">
+              Materiais Usados & Por Usar
+            </router-link>
+            <router-link to="/dashboards/mapa" class="tab-link" :class="{ active: activeTab === 'mapa' }"
+              @click="activeTab = 'mapa'">
+              Auditorias e Ocorrências no Terreno
+            </router-link>
+          </nav>
+
+          <div class="filters-row">
+            <select v-model="selectedRegion">
+              <option v-for="loc in localities" :key="loc" :value="loc">
+                {{ loc }}
+              </option>
+            </select>
+
+            <div class="filter-week-wrapper">
+              <input type="week" v-model="selectedWeek" class="filter-week" />
+            </div>
+          </div>
+
+          <StatisticsGridOcorrencia :cards="weeklyCards" />
+
+          <div id="chart">
+            <apexchart type="area" height="350" :options="chartOptions" :series="series" />
+          </div>
+
+        </div>
+      </main>
     </div>
-  </template>
-  
-  <script>
-import { ref } from "vue";
-import NavigationList from "@/components/NavigationList.vue";
-import StatisticsGrid2 from "@/components/StatisticsGridOcorrencia.vue";
-import VueApexCharts from 'vue3-apexcharts';
+  </div>
+</template>
 
-export default {
-  name: "DashboardOcorrencias",
-  components: {
-    NavigationList,
-    StatisticsGrid2,
-    apexchart: VueApexCharts,
-  },
-  setup() {
-    const activeTab = ref("ocorrencias");
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import NavigationList from '@/components/NavigationList.vue'
+import StatisticsGridOcorrencia from '@/components/StatisticsGridOcorrencia.vue'
+import { collection, getDocs } from 'firebase/firestore'
+import { db } from '@/firebase'
 
- 
+const rawData = ref([])
+const regions = [
+  { name: 'Norte', bounds: { latMin: 41.5, latMax: 42.3, lngMin: -8.7, lngMax: -6.2 } },
+  { name: 'Centro', bounds: { latMin: 39.9, latMax: 41.5, lngMin: -8.5, lngMax: -6.0 } },
+  { name: 'Lisboa e Vale do Tejo', bounds: { latMin: 38.4, latMax: 40.2, lngMin: -9.5, lngMax: -7.0 } },
+  { name: 'Alentejo', bounds: { latMin: 37.6, latMax: 39.3, lngMin: -8.2, lngMax: -6.0 } },
+  { name: 'Algarve', bounds: { latMin: 37.0, latMax: 37.6, lngMin: -9.7, lngMax: -7.7 } },
+]
+const localities = ['Portugal', ...regions.map(r => r.name)]
+const selectedRegion = ref(localities[0])
+const selectedWeek = ref(getCurrentISOWeek())
 
-    return {
-   
-      activeTab,
-      series: [
-        {
-          name: "series1",
-          data: [31, 40, 28, 51, 42, 109, 100],
-        },
-        {
-          name: "series2",
-          data: [11, 32, 45, 32, 34, 52, 41],
-        },
-      ],
-      chartOptions: {
-        chart: {
-          height: 350,
-          type: "area",
-        },
-        dataLabels: {
-          enabled: false,
-        },
-        stroke: {
-          curve: "smooth",
-        },
-        xaxis: {
-          type: "datetime",
-          categories: [
-            "2018-09-19T00:00:00.000Z",
-            "2018-09-19T01:30:00.000Z",
-            "2018-09-19T02:30:00.000Z",
-            "2018-09-19T03:30:00.000Z",
-            "2018-09-19T04:30:00.000Z",
-            "2018-09-19T05:30:00.000Z",
-            "2018-09-19T06:30:00.000Z",
-          ],
-        },
-        tooltip: {
-          x: {
-            format: "dd/MM/yy HH:mm",
-          },
-        },
-      },
-    };
-  },
-};
-</script>
+const weekDates = computed(() =>
+  selectedWeek.value ? isoWeekDates(selectedWeek.value) : []
+)
 
-  
-   
-<style scoped>
-.dashboard-container {
-  background: linear-gradient(
-      0deg,
-      var(--color-grey-98, #fafafb) 0%,
-      var(--color-grey-98, #fafafb) 100%
-    ),
-    var(--color-white-solid, #fff);
-  padding-right: 18px;
-  padding-bottom: 135px;
+const weeklyData = computed(() =>
+  rawData.value.filter(item =>
+    weekDates.value.includes(item.date) &&
+    (selectedRegion.value === 'Portugal'
+      ? true
+      : item.region === selectedRegion.value)
+  )
+)
+
+const weeklyCards = computed(() => {
+  if (!weeklyData.value.length) {
+    return [
+      { title: 'Total Confirmadas', value: 0 },
+      { title: 'Total Resolvidas', value: 0 },
+      { title: 'Maior taxa (dia)', value: '–' },
+      { title: 'Menor taxa (dia)', value: '–' }
+    ]
+  }
+  const total = weeklyData.value.reduce((s, d) => s + d.total, 0)
+  const resolved = weeklyData.value.reduce((s, d) => s + d.resolved, 0)
+  const rates = weeklyData.value.map(d => ({
+    date: d.date,
+    pct: Math.round(d.resolved / d.total * 100)
+  }))
+  const max = rates.reduce((a, b) => b.pct > a.pct ? b : a)
+  const min = rates.reduce((a, b) => b.pct < a.pct ? b : a)
+  return [
+    { title: 'Total de Ocorrências Confirmadas', value: total },
+    { title: 'Total de Ocorrências por região', value: resolved },
+    { title: 'Dia com a maior taxa de resolução', value: `${max.date} (${max.pct}%)` },
+    { title: 'Dia com a menor taxa de resolução', value: `${min.date} (${min.pct}%)` }
+  ]
+})
+
+const distritoRegiaoMap = {
+  Porto: 'Norte', 'Viana do Castelo': 'Norte', Braga: 'Norte', 'Vila Real': 'Norte', Bragança: 'Norte',
+  Aveiro: 'Centro', Coimbra: 'Centro', Leiria: 'Centro', 'Castelo Branco': 'Centro', Guarda: 'Centro', Viseu: 'Centro',
+  Santarém: 'Lisboa e Vale do Tejo', Lisboa: 'Lisboa e Vale do Tejo', Setúbal: 'Lisboa e Vale do Tejo',
+  Évora: 'Alentejo', Beja: 'Alentejo', Portalegre: 'Alentejo', Faro: 'Algarve'
 }
 
+const cacheRegiao = {};
+async function buscarRegiao(lat, lon) {
+  const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&addressdetails=1&accept-language=pt`;
+  const res = await fetch(url, {
+    headers: { 'User-Agent': 'MeuAppUniversidade/1.0 (email@exemplo.com)' }
+  });
+  if (!res.ok) throw new Error(`Erro HTTP ${res.status}`);
+  const data = await res.json();
+  const addr = data.address || {};
+  const district = addr.state || addr.county || addr.region || '';
+  return distritoRegiaoMap[district] || 'Desconhecida';
+}
+
+async function buscarRegiaoComCache(lat, lon) {
+  const key = `${lat},${lon}`;
+  if (cacheRegiao[key]) return cacheRegiao[key];
+  try {
+    const regiao = await buscarRegiao(lat, lon);
+    cacheRegiao[key] = regiao;
+    return regiao;
+  } catch (err) {
+    console.error('Erro geocodificação região', err);
+    return 'Desconhecida';
+  }
+}
+
+function aggregate(items) {
+  const mapa = {}
+  items.forEach(item => {
+    const key = item.region + '|' + item.date
+    if (!mapa[key]) {
+      mapa[key] = { date: item.date, region: item.region, total: 0, resolved: 0 }
+    }
+    mapa[key].total += item.total
+    mapa[key].resolved += item.resolved
+  })
+  return Object.values(mapa)
+}
+
+onMounted(async () => {
+  const snap = await getDocs(collection(db, 'ocorrencias'))
+  console.log(snap.docs)
+  const items = []
+
+  for (const doc of snap.docs) {
+    const d = doc.data()
+    const stamp = d.dataSubmissao ?? doc.createTime
+    const tsDate = stamp.toDate()
+    const dateStr = tsDate.toISOString().slice(0, 10)
+    const lat = d.coordenadas.latitude
+    const lon = d.coordenadas.longitude
+    const region = await buscarRegiaoComCache(lat, lon)
+
+    const resolved = d.status === 'Resolvido' ? 1 : 0
+
+    items.push({
+      date: dateStr,
+      region,
+      total: 1,
+      resolved,
+    })
+  }
+
+  rawData.value = aggregate(items)
+})
+
+
+function isoWeekDates(weekString) {
+  const [year, wk] = weekString.split('-W').map(Number)
+  const jan4 = new Date(Date.UTC(year, 0, 4))
+  const dayOfWeek = jan4.getUTCDay() || 7
+  const week1Start = new Date(Date.UTC(year, 0, 4 - (dayOfWeek - 1)))
+  const start = new Date(week1Start)
+  start.setUTCDate(start.getUTCDate() + (wk - 1) * 7)
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(start)
+    d.setUTCDate(d.getUTCDate() + i)
+    return d.toISOString().slice(0, 10)
+  })
+}
+
+function getCurrentISOWeek() {
+  const now = new Date()
+  const date = new Date(Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate()
+  ))
+  const dayNum = date.getUTCDay() || 7
+  date.setUTCDate(date.getUTCDate() + 4 - dayNum)
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1))
+  const weekNo = Math.ceil((((date - yearStart) / 86400000) + 1) / 7)
+  const weekStr = String(weekNo).padStart(2, '0')
+  return `${date.getUTCFullYear()}-W${weekStr}`
+}
+
+const activeTab = ref('ocorrencias')
+
+const series = computed(() => [
+  {
+    name: 'Total',
+    data: weekDates.value.map(d => {
+      const rec = weeklyData.value.find(x => x.date === d)
+      return rec ? rec.total : 0
+    })
+  },
+  {
+    name: 'Resolvidas',
+    data: weekDates.value.map(d => {
+      const rec = weeklyData.value.find(x => x.date === d)
+      return rec ? rec.resolved : 0
+    })
+  }
+])
+
+const chartOptions = computed(() => ({
+  chart: { type: 'area', height: 350 },
+  stroke: { curve: 'smooth' },
+  xaxis: { categories: weekDates.value },
+  dataLabels: { enabled: false },
+  legend: { position: 'top' },
+  tooltip: { x: { format: 'dd/MM' } }
+}))
+</script>
+
+<style scoped>
 .dashboard-layout {
   display: flex;
   gap: 20px;
+  height: 100%;
 }
 
 .sidebar-column {
-  width: 19%;
-}
-
-.sidebar-nav {
-  box-shadow: 1px 0px 0px 0px #f0f0f0;
-  background-color: #fff;
-  padding-bottom: 772px;
-  overflow: hidden;
-  width: 100%;
-}
-
-.sidebar-background {
-  padding-bottom: 395px;
-  background-color: #fff;
-}
-
-.logo {
-  aspect-ratio: 6.17;
-  object-fit: contain;
-  width: 260px;
-  box-shadow: 0px 4px 4px rgba(254, 247, 247, 1);
-}
-
-.notification-icons {
-  z-index: 10;
-  margin-top: 160px;
-  margin-left: 25px;
-  width: 16px;
-}
-
-.notification-icon,
-.alert-icon {
-  aspect-ratio: 1;
-  object-fit: contain;
-  width: 100%;
-}
-
-.alert-icon {
-  margin-top: 27px;
+  width: 20%;
 }
 
 .main-content {
-  width: 81%;
-  margin-left: 20px;
+  flex: 1;
+  margin-right: 10px;
+  overflow-y: auto;
 }
 
 .content-wrapper {
-  display: flex;
-  margin-top: 59px;
-  width: 100%;
-  flex-direction: column;
+  margin-top: 40px;
+  min-height: 100%;
 }
 
+/* Mesmos estilos de DashboardOcorrencia.vue */
 .navigation-tabs {
-  margin-top: -15px; 
-
-display: flex;
-align-items: center;
-gap: 8px; 
-font-family: 'Public Sans', -apple-system, Roboto, Helvetica, sans-serif;
-padding: 8px 0;
-margin-bottom: 24px;
-border-bottom: 1px solid #f0f0f0; 
+  margin-top: -15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Public Sans', -apple-system, Roboto, Helvetica, sans-serif;
+  padding: 8px 0;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #f0f0f0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tab-link {
-text-decoration: none;
-color: #6c757d;
-font-size: 14px;
-line-height: 1.5;
-padding: 10px 16px;
-border-radius: 6px;
-transition: all 0.3s ease;
-position: relative;
-font-weight: 500;
-letter-spacing: 0.2px;
-white-space: nowrap; 
+  text-decoration: none;
+  color: #6c757d;
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 10px 16px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  position: relative;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
 }
 
 .tab-link:hover {
-background-color: #f8f9fa; 
-color: #495057; 
+  background-color: #f8f9fa;
+  color: #495057;
 }
 
 .tab-link.active {
-color: #1890ff;
-background-color: rgba(24, 144, 255, 0.08); 
-font-weight: 600;
+  color: #1890ff;
+  background-color: rgba(24, 144, 255, 0.08);
+  font-weight: 600;
 }
 
 .tab-link.active::after {
-content: '';
-position: absolute;
-bottom: -9px; 
-left: 16px;
-right: 16px;
-height: 2px;
-background-color: #1890ff;
-border-radius: 2px 2px 0 0;
+  content: '';
+  position: absolute;
+  bottom: -9px;
+  left: 16px;
+  right: 16px;
+  height: 2px;
+  background-color: #1890ff;
+  border-radius: 2px 2px 0 0;
 }
 
 .tab-link::after {
-content: '';
-position: absolute;
-bottom: -9px;
-left: 50%;
-right: 50%;
-height: 2px;
-background-color: #1890ff;
-transition: all 0.3s ease;
-border-radius: 2px 2px 0 0;
+  content: '';
+  position: absolute;
+  bottom: -9px;
+  left: 50%;
+  right: 50%;
+  height: 2px;
+  background-color: #1890ff;
+  transition: all 0.3s ease;
+  border-radius: 2px 2px 0 0;
 }
 
-.tab-link.active::after {
-left: 16px;
-right: 16px;
-}
 .search-section {
-  transform: rotate(3.141592653589793rad);
-  align-self: flex-end;
   display: flex;
-  margin-top: 37px;
-  padding: 13px;
-  align-items: center;
-  gap: 4px;
-}
-
-.search-item {
-  border-radius: 4px;
-  min-height: 34px;
-  padding: 6px 7px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-}
-
-.search-icon {
-  
-  aspect-ratio: 0.91;
-  object-fit: contain;
-  width: 20px;
-}
-
-.search-form {
-  position: relative;
-  font-family:
-    Public Sans,
-    -apple-system,
-    Roboto,
-    Helvetica,
-    sans-serif;
-  font-size: 14px;
-  color: #6c757d;
-  width: 200px;
+  justify-content: flex-end;
+  margin-bottom: 20px;
 }
 
 .search-input {
-  border-radius: 4px;
-  border: 1px solid rgba(19, 194, 194, 0.85);
-  background-color: #fff;
-  width: 198px;
-  padding: 8px 29px 9px 12px;
+  position: relative;
 }
 
 .search-container {
-  transform: rotate(3.141592653589793rad);
-  width: 100%;
-  overflow: hidden;
-}
-
-.search-button {
-  transform: rotate(3.141592653589793rad);
-  aspect-ratio: 1;
-  object-fit: contain;
-  width: 18px;
-  position: absolute;
-  right: 160px;
-  bottom: 14px;
-  height: 12px;
-
-}
-
-.map-visualization {
-  aspect-ratio: 0.95;
-  object-fit: contain;
-  width: 100%;
-}
-
-@media (max-width: 991px) {
-  .dashboard-container {
-    padding-bottom: 100px;
-    
-  }
-
-  .dashboard-layout {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0;
-  }
-
-  .sidebar-column {
-    width: 100%;
-  }
-
-  .sidebar-nav {
-    margin-top: 24px;
-    padding-bottom: 100px;
-  }
-
-  .sidebar-background {
-    padding-bottom: 100px;
-  }
-
-  .notification-icons {
-    margin-left: 10px;
-    margin-top: 40px;
-  }
-
-  .main-content {
-    width: 100%;
-  }
-
-  .content-wrapper {
-    max-width: 100%;
-    margin-top: 40px;
-  }
-
-  .search-section {
-    margin-right: 5px;
-  }
-
-  .search-input {
-    padding-right: 20px;
-  }
-
-  .map-visualization {
-    max-width: 100%;
-  }
-  .navigation-tabs {
-  overflow-x: auto; 
-  padding-bottom: 8px; 
-  -webkit-overflow-scrolling: touch; 
-}
-
-.tab-link {
   padding: 8px 12px;
-  font-size: 13px;
-}
+  border: 1px solid #13c2c2;
+  border-radius: 4px;
+  width: 200px;
 }
 
+.filters-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  align-items: center;
+}
+
+/* Dropdown da cidade */
+.filter-select {
+  padding: 8px 12px;
+  border: 1px solid #13c2c2;
+  border-radius: 4px;
+  background: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.filter-select:hover,
+.filter-select:focus {
+  border-color: #1890ff;
+  outline: none;
+}
+
+/* Wrapper e label para o week-picker */
+.filter-week-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.filter-week-label {
+  font-size: 12px;
+  color: #6c757d;
+  margin-bottom: 4px;
+}
+
+/* Input type=week */
+.filter-week {
+  padding: 8px 12px;
+  border: 1px solid #13c2c2;
+  border-radius: 4px;
+  background: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  /* forçar largura consistente */
+  width: 160px;
+}
+
+.filter-week:hover,
+.filter-week:focus {
+  border-color: #1890ff;
+  outline: none;
+}
+
+select,
+input[type="week"] {
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
 </style>

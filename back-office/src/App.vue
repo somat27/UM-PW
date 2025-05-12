@@ -10,17 +10,17 @@ export default {
   watch: {
     $route(to) {
       if (to.path === '/dashboards/peritos' || to.path === '/GestaoOcorrencias/AprovacaoOcorrencia') {
-        document.body.style.overflow = 'auto'; 
+        document.body.style.overflow = 'auto';
       } else {
         document.body.style.overflow = 'hidden';
       }
     }
   },
   mounted() {
-    if (this.$route.path === '/dashboards/peritos'|| this.$route.path  === '/GestaoOcorrencias/AprovacaoOcorrencia') {
-      document.body.style.overflow = 'auto'; 
+    if (this.$route.path === '/dashboards/peritos' || this.$route.path === '/GestaoOcorrencias/AprovacaoOcorrencia') {
+      document.body.style.overflow = 'auto';
     } else {
-      document.body.style.overflow = 'hidden'; 
+      document.body.style.overflow = 'hidden';
     }
   }
 };
@@ -34,12 +34,12 @@ export default {
   text-align: center;
   color: #2c3e50;
 }
-html, body {
+
+html,
+body {
   margin: 0;
   padding: 0;
   height: 100%;
-  background-color: rgba(32, 76, 109, 1); 
-  overflow: hidden; 
+  overflow: hidden;
 }
 </style>
-
