@@ -12,14 +12,6 @@
         <div class="content-wrapper">
           <nav class="navigation-tabs">
             <router-link
-              to="/dashboards/auditorias"
-              class="tab-link"
-              :class="{ active: activeTab === 'auditorias' }"
-              @click="activeTab = 'auditorias'"
-            >
-              Auditorias por região
-            </router-link>
-            <router-link
               to="/dashboards/ocorrencias"
               class="tab-link"
               :class="{ active: activeTab === 'ocorrencias' }"
@@ -63,11 +55,11 @@
                 </div>
                 <div class="legend-item">
                   <span class="legend-marker analise-marker"></span>
-                  <span>Auditorias em Andamento</span>
+                  <span>Auditorias a decorrer</span>
                 </div>
                 <div class="legend-item">
                   <span class="legend-marker resolvido-marker"></span>
-                  <span>Auditorias Finalizadas</span>
+                  <span>Auditorias finalizadas</span>
                 </div>
               </div>
               <div class="map-filters">
@@ -80,7 +72,7 @@
                       adicionarMarcadores();
                     "
                   />
-                  <span>Ocorrências Pendentes</span>
+                  <span>Pendentes</span>
                 </label>
                 <label class="filter-checkbox">
                   <input
@@ -91,7 +83,7 @@
                       adicionarMarcadores();
                     "
                   />
-                  <span>Auditorias em Andamento</span>
+                  <span>Em Análise</span>
                 </label>
                 <label class="filter-checkbox">
                   <input
@@ -102,7 +94,7 @@
                       adicionarMarcadores();
                     "
                   />
-                  <span>Auditorias Finalizadas</span>
+                  <span>Resolvidas</span>
                 </label>
               </div>
             </div>
@@ -112,24 +104,46 @@
       </main>
     </div>
   </div>
+
+  <!-- Modal para detalhes -->
+  <div v-if="modalVisible" class="modal-overlay" @click.self="fecharModal">
+    <div class="modal-content">
+      <div class="modal-body">
+        <DetailModal
+          v-if="ocorrenciaSelecionada"
+          :ocorrencia="ocorrenciaSelecionada"
+          :auditoria="auditoriaSelecionada"
+          @fechar="fecharModal"
+        />
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
 import { ref, onMounted, watch } from "vue";
 import NavigationList from "@/components/NavigationList.vue";
+import DetailModal from "@/components/DetailModal.vue";
 import { db } from "@/firebase.js";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 
 const activeTab = ref("mapa");
 const googleMap = ref(null);
 const map = ref(null);
 const markers = ref([]);
 const dados = ref([]);
+const auditorias = ref([]); // Nova ref para armazenar auditorias
 const filtros = ref({
   mostrarPendentes: true,
   mostrarAnalise: true,
   mostrarResolvidos: true,
 });
+
+// Estado para controle da modal
+const modalVisible = ref(false);
+const modalTitulo = ref("");
+const ocorrenciaSelecionada = ref(null);
+const auditoriaSelecionada = ref(null); // Nova ref para auditoria selecionada
 
 // Ícones para os diferentes status
 const STATUS_ICONS = {
@@ -138,65 +152,46 @@ const STATUS_ICONS = {
   Resolvido: "https://maps.google.com/mapfiles/ms/icons/green-dot.png",
 };
 
-// Função para buscar todas as ocorrências com suas auditorias relacionadas
+// Função para buscar todas as ocorrências e auditorias
 async function getDados() {
   try {
+    // Buscar ocorrências
     const ocorrenciasRef = collection(db, "ocorrencias");
-    const snapshot = await getDocs(ocorrenciasRef);
+    const ocorrenciasSnapshot = await getDocs(ocorrenciasRef);
 
-    const todosItens = [];
-
-    for (const doc of snapshot.docs) {
-      const ocorrencia = { id: doc.id, ...doc.data(), tipo: "ocorrencia" };
-
-      // Adiciona a ocorrência à lista se tiver coordenadas
+    const ocorrencias = [];
+    for (const doc of ocorrenciasSnapshot.docs) {
+      const ocorrencia = { id: doc.id, ...doc.data() };
       if (
         ocorrencia.coordenadas &&
         ocorrencia.coordenadas.latitude &&
         ocorrencia.coordenadas.longitude
       ) {
-        todosItens.push(ocorrencia);
-      }
-
-      // Busca auditoria relacionada se existir (mesmo ID da ocorrência)
-      try {
-        const auditoriasRef = collection(db, "auditorias");
-        const auditoriaQuery = query(
-          auditoriasRef,
-          where("ocorrenciaId", "==", doc.id)
-        );
-        const auditoriaSnapshot = await getDocs(auditoriaQuery);
-
-        if (!auditoriaSnapshot.empty) {
-          const auditoriaDoc = auditoriaSnapshot.docs[0];
-          const auditoria = {
-            id: auditoriaDoc.id,
-            ...auditoriaDoc.data(),
-            tipo: "auditoria",
-            ocorrenciaId: doc.id,
-          };
-
-          // Só adiciona a auditoria se tiver coordenadas, ou usa as coordenadas da ocorrência
-          if (
-            !auditoria.coordenadas ||
-            !auditoria.coordenadas.latitude ||
-            !auditoria.coordenadas.longitude
-          ) {
-            auditoria.coordenadas = ocorrencia.coordenadas;
-          }
-
-          todosItens.push(auditoria);
-        }
-      } catch (error) {
-        console.error(
-          `Erro ao buscar auditoria para ocorrência ${doc.id}:`,
-          error
-        );
+        ocorrencias.push(ocorrencia);
       }
     }
 
-    console.log("Dados carregados:", todosItens.length, "itens");
-    return todosItens;
+    // Buscar auditorias
+    const auditoriasRef = collection(db, "auditorias");
+    const auditoriasSnapshot = await getDocs(auditoriasRef);
+
+    const auditoriasData = [];
+    for (const doc of auditoriasSnapshot.docs) {
+      const auditoria = { id: doc.id, ...doc.data() };
+      auditoriasData.push(auditoria);
+    }
+
+    // Armazenar auditorias na ref
+    auditorias.value = auditoriasData;
+
+    console.log(
+      "Dados carregados:",
+      ocorrencias.length,
+      "ocorrências,",
+      auditoriasData.length,
+      "auditorias"
+    );
+    return ocorrencias;
   } catch (error) {
     console.error("Erro ao buscar dados:", error);
     throw error;
@@ -205,7 +200,6 @@ async function getDados() {
 
 // Função para inicializar o mapa
 function inicializarMapa() {
-  // Verificar se o elemento DOM já existe
   const mapElement = document.getElementById("google-map");
   if (!mapElement || !window.google) {
     console.error(
@@ -216,11 +210,9 @@ function inicializarMapa() {
 
   console.log("Inicializando mapa com elemento:", mapElement);
 
-  // Centro inicial do mapa (pode ser ajustado conforme necessário)
-  const centroInicial = { lat: 38.7223, lng: -9.1393 }; // Lisboa como ponto inicial
+  const centroInicial = { lat: 38.7223, lng: -9.1393 }; //incio
 
   try {
-    // Criação do mapa
     map.value = new window.google.maps.Map(mapElement, {
       center: centroInicial,
       zoom: 7,
@@ -243,45 +235,69 @@ function inicializarMapa() {
   }
 }
 
-// Função para carregar os dados e adicionar ao mapa
 async function carregarDados() {
   try {
-    // Primeiro, limpar todos os marcadores existentes
     limparMarcadores();
 
-    // Buscar dados do Firestore (apenas se dados ainda não estiverem carregados)
     if (dados.value.length === 0) {
-      const todosDados = await getDados();
-      dados.value = todosDados;
+      const ocorrencias = await getDados();
+      dados.value = ocorrencias;
       console.log("Dados iniciais carregados:", dados.value.length);
     }
 
-    // Adicionar marcadores ao mapa
     adicionarMarcadores();
   } catch (error) {
     console.error("Erro ao carregar dados:", error);
   }
 }
-
-// Função para determinar a categoria de um item com base no status
-function determinarCategoria(item) {
-  // Se for uma ocorrência e tiver status Pendente
-  if (item.tipo === "ocorrencia" && item.status === "Pendente") {
+function determinarCategoria(ocorrencia) {
+  if (!ocorrencia || !ocorrencia.status) {
+    console.error("ocorrencia ou status não encontrado", ocorrencia);
     return "Pendente";
   }
 
-  // Se for uma auditoria ou ocorrência em análise
-  if (item.status === "Analise") {
+  // Categorizar com base no status
+  if (ocorrencia.status === "Pendente") {
+    return "Pendente";
+  } else if (ocorrencia.status === "Analise") {
     return "Analise";
-  }
-
-  // Se for uma auditoria ou ocorrência resolvida
-  if (item.status === "Resolvido") {
+  } else if (ocorrencia.status === "Resolvido") {
     return "Resolvido";
   }
 
   // Caso não se encaixe em nenhuma categoria, assume Pendente como padrão
   return "Pendente";
+}
+
+// Função para encontrar a auditoria correspondente à ocorrência
+function encontrarAuditoria(ocorrenciaId) {
+  return auditorias.value.find((auditoria) => auditoria.id === ocorrenciaId);
+}
+
+// Função para abrir a modal com detalhes da ocorrência selecionada
+function abrirModal(ocorrencia) {
+  // Definir o ocorrencia selecionado
+  ocorrenciaSelecionada.value = ocorrencia;
+
+  // Encontrar a auditoria correspondente
+  const auditoria = encontrarAuditoria(ocorrencia.id);
+  auditoriaSelecionada.value = auditoria;
+
+  // Definir o título da modal
+  modalTitulo.value = `Ocorrência: ${ocorrencia.titulo || "Sem título"}`;
+
+  // Exibir a modal
+  modalVisible.value = true;
+
+  console.log("Modal aberta com ocorrência:", ocorrencia);
+  console.log("Auditoria relacionada:", auditoria || "Não encontrada");
+}
+
+// Função para fechar a modal
+function fecharModal() {
+  modalVisible.value = false;
+  ocorrenciaSelecionada.value = null;
+  auditoriaSelecionada.value = null;
 }
 
 // Função para adicionar marcadores no mapa
@@ -301,9 +317,9 @@ function adicionarMarcadores() {
   // Contador para verificar quantos marcadores foram adicionados
   let marcadoresAdicionados = 0;
 
-  dados.value.forEach((item) => {
-    // Determinar a categoria do item
-    const categoria = determinarCategoria(item);
+  dados.value.forEach((ocorrencia) => {
+    // Determinar a categoria da ocorrência
+    const categoria = determinarCategoria(ocorrencia);
 
     // Verificar se esta categoria deve ser mostrada com base nos filtros
     if (
@@ -313,21 +329,18 @@ function adicionarMarcadores() {
     ) {
       // Verifica se tem coordenadas válidas
       if (
-        item.coordenadas &&
-        item.coordenadas.latitude &&
-        item.coordenadas.longitude
+        ocorrencia.coordenadas &&
+        ocorrencia.coordenadas.latitude &&
+        ocorrencia.coordenadas.longitude
       ) {
-        const titulo =
-          item.tipo === "ocorrencia"
-            ? item.titulo || "Ocorrência"
-            : item.nome || "Auditoria";
+        const titulo = ocorrencia.titulo || "Ocorrência";
 
         const marker = criarMarcador(
-          item.coordenadas.latitude,
-          item.coordenadas.longitude,
+          ocorrencia.coordenadas.latitude,
+          ocorrencia.coordenadas.longitude,
           titulo,
           categoria,
-          item
+          ocorrencia
         );
 
         if (marker) {
@@ -348,7 +361,7 @@ function adicionarMarcadores() {
 }
 
 // Função para criar um marcador
-function criarMarcador(lat, lng, titulo, categoria) {
+function criarMarcador(lat, lng, titulo, categoria, ocorrencia) {
   if (!window.google || !map.value) return null;
 
   const position = { lat: parseFloat(lat), lng: parseFloat(lng) };
@@ -374,6 +387,11 @@ function criarMarcador(lat, lng, titulo, categoria) {
     animation: window.google.maps.Animation.DROP,
   });
 
+  // Adicionar evento de clique para abrir a modal
+  marker.addListener("click", () => {
+    abrirModal(ocorrencia);
+  });
+
   return marker;
 }
 
@@ -382,10 +400,6 @@ function limparMarcadores() {
 
   // 1. Remover todos os marcadores do mapa
   for (const marker of markers.value) {
-    if (marker.infoWindow) {
-      marker.infoWindow.close();
-      marker.infoWindow = null;
-    }
     marker.setMap(null);
   }
 
@@ -581,7 +595,7 @@ watch(
 .navigation-tabs {
   margin-top: -15px;
   display: flex;
-  align-items: center;
+  align-ocorrencias: center;
   gap: 8px;
   font-family: "Public Sans", -apple-system, Roboto, Helvetica, sans-serif;
   padding: 8px 0;
@@ -714,46 +728,76 @@ watch(
   cursor: pointer;
 }
 
-/* Estilo para a janela de informação */
-:global(.info-window) {
-  padding: 10px;
-  max-width: 300px;
-  font-family: "Public Sans", -apple-system, Roboto, Helvetica, sans-serif;
+/* Modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(3px);
 }
 
-:global(.info-window h3) {
-  margin: 0 0 10px 0;
-  font-size: 16px;
-  color: #1890ff;
+.modal-content {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  width: 90%;
+  max-width: 700px;
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid #eaeaea;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: sticky;
+  top: 0;
+  background-color: white;
+  z-index: 1;
+  border-radius: 8px 8px 0 0;
 }
 
-:global(.info-window p) {
-  margin: 6px 0;
-  font-size: 13px;
-  color: #4a4a4a;
+.modal-header h2 {
+  margin: 0;
+  font-size: 18px;
+  color: #262626;
+  font-weight: 600;
 }
 
-:global(.status-badge) {
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: normal;
-  color: white;
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #8c8c8c;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  transition: all 0.2s;
 }
 
-:global(.status-badge.pendente) {
-  background-color: #ff4d4f;
+.modal-close:hover {
+  background-color: #f5f5f5;
+  color: #262626;
 }
 
-:global(.status-badge.analise) {
-  background-color: #faad14;
-}
-
-:global(.status-badge.resolvido) {
-  background-color: #52c41a;
+.modal-body {
+  padding: 20px 24px;
 }
 
 /* Estilos responsivos */
@@ -778,6 +822,11 @@ watch(
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
+  }
+
+  .modal-content {
+    width: 95%;
+    max-height: 85vh;
   }
 }
 </style>

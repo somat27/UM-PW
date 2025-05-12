@@ -16,71 +16,73 @@ export async function obterSugestaoAuditoria(dados) {
     const hoje = new Date().toISOString().split("T")[0];
 
     const prompt = `
-      You are an assistant specialized in audit planning and municipal resource management.
+  You are an assistant specialized in audit planning and municipal resource management.
 
-      Today's date is ${hoje}.
+  Today's date is ${hoje}.
 
-      Based on the following data, evaluate critically whether an audit is necessary.
-      If yes, propose a detailed audit plan.
-      If not, explain briefly why not in the JSON under the field "motivoNaoNecessidade".
+  Based on the following data, evaluate critically whether an audit is necessary.
+  If yes, propose a detailed audit plan.
+  If not, explain briefly why not in the JSON under the field "motivoNaoNecessidade".
 
-      ## OCCURRENCE:
-      - ID: ${ocorrencia.id}
-      - Description: ${ocorrencia.descricao}
-      - Type: ${ocorrencia.tipoLabel || ocorrencia.tipo}
-      - Address: ${ocorrencia.endereco}
-      - Coordinates: Latitude ${ocorrencia.coordenadas.latitude}, Longitude ${
+  When selecting the expert (perito), always prefer the one whose location (localidades) is closest to the occurrence address or coordinates.
+
+  ## OCCURRENCE:
+  - ID: ${ocorrencia.id}
+  - Description: ${ocorrencia.descricao}
+  - Type: ${ocorrencia.tipoLabel || ocorrencia.tipo}
+  - Address: ${ocorrencia.endereco}
+  - Coordinates: Latitude ${ocorrencia.coordenadas.latitude}, Longitude ${
       ocorrencia.coordenadas.longitude
     }
 
-      ## AVAILABLE EXPERTS:
-      ${peritos
-        .map(
-          (p) =>
-            `- ID: ${p.uid}, Name: ${p.displayName}, Specialty: ${p.specialty}, Location: ${p.localidades}`
-        )
-        .join("\n")}
+  ## AVAILABLE EXPERTS:
+  ${peritos
+    .map(
+      (p) =>
+        `- ID: ${p.uid}, Name: ${p.displayName}, Specialty: ${p.specialty}, Location: ${p.localidades}`
+    )
+    .join("\n")}
 
-      ## AVAILABLE MATERIALS:
-      ${materiais
-        .map(
-          (m) =>
-            `- Name: ${m.nome}, Category: ${m.categoria}, Available Quantity: ${m.quantidade}`
-        )
-        .join("\n")}
+  ## AVAILABLE MATERIALS:
+  ${materiais
+    .map(
+      (m) =>
+        `- Name: ${m.nome}, Category: ${m.categoria}, Available Quantity: ${m.quantidade}`
+    )
+    .join("\n")}
 
-      ## AVAILABLE PROFESSIONALS:
-      ${profissionais
-        .map(
-          (p) =>
-            `- Name: ${p.nome}, Area: ${p.area}, Available Quantity: ${p.quantidade}`
-        )
-        .join("\n")}
+  ## AVAILABLE PROFESSIONALS:
+  ${profissionais
+    .map(
+      (p) =>
+        `- Name: ${p.nome}, Area: ${p.area}, Available Quantity: ${p.quantidade}`
+    )
+    .join("\n")}
 
-      Please respond ONLY in JSON format with one of the following two structures:
+  Please respond ONLY in JSON format with one of the following two structures:
 
-      1. If an audit is needed:
-      {
-        "necessidadeAuditoria": true,
-        "perito": "expert_uid",
-        "materiais": [
-          {"id": "material_id", "quantidade": 10}
-        ],
-        "profissionais": [
-          {"id": "professional_id", "quantidade": 2}
-        ],
-        "tempoEstimado": 24,
-        "dataFimSugerida": "2025-05-15"
-      }
+  1. If an audit is needed:
+  {
+    "necessidadeAuditoria": true,
+    "perito": "expert_uid", // closest to the occurrence
+    "materiais": [
+      {"id": "material_id", "quantidade": 10}
+    ],
+    "profissionais": [
+      {"id": "professional_id", "quantidade": 2}
+    ],
+    "tempoEstimado": 24,
+    "dataFimSugerida": "2025-05-15"
+  }
 
-      2. If no audit is needed:
-      {
-        "necessidadeAuditoria": false,
-        "motivoNaoNecessidade": "Brief explanation why no audit is necessary."
-      }
+  2. If no audit is needed:
+  {
+    "necessidadeAuditoria": false,
+    "motivoNaoNecessidade": "Brief explanation why no audit is necessary."
+  }
 
-      Do not include any explanation outside the JSON.
-    `;
+  Do not include any explanation outside the JSON.
+`;
 
     const response = await axios.post(
       OPENAI_API_URL,
