@@ -1,10 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
-//import PaginaLogin from "@/components/PaginaLogin/PaginaLogin.vue";
-import PaginaInicial from "@/components/PaginaInicial/PaginaInicial.vue";
-import PaginaDetalhe from "@/components/PaginaDetalhe/PaginaDetalhe.vue";
-import PaginaRegistar from "@/components/PaginaRegistar/PaginaRegistar.vue";
 import { auth, db } from "@/firebase/firebase.js";
-//import VerPerfil from "@/components/VerPerfil.vue";
 import ListaAuditorias from "@/components/Paginas/ListaAuditorias.vue";
 import InfoAuditoria from "@/components/Paginas/InfoAuditoria.vue";
 import UserPerfil from "@/components/UserPerfil.vue";
@@ -17,38 +12,6 @@ import { onAuthStateChanged } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
 
 const routes = [
-    /*{
-        path: "/",
-        name: "PaginaLogin",
-        component: PaginaLogin,
-    },*/
-    {
-        path: "/PaginaInicial",
-        name: "PaginaInicial",
-        component: PaginaInicial,
-        meta: { requiresAuth: true },
-    },
-    {
-        path: "/PaginaDetalhe/:id",
-        name: "PaginaDetalhe",
-        component: PaginaDetalhe,
-        //meta: { requiresAuth: true },
-    },
-    {
-        path: "/PaginaRegistar/:id",
-        name: "PaginaRegistar",
-        component: PaginaRegistar,
-        //meta: { requiresAuth: true },
-    },
-/*    {
-        path: "/Perfil",
-        name: "Perfil",
-        component: VerPerfil,
-        meta: { requiresAuth: true },
-    },*/
-
-
-
     {
       path: "/ListaAuditorias",
       name: "ListaAuditorias",
