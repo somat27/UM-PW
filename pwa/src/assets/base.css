@@ -32,6 +32,10 @@ h3 {
     flex-direction: row;
 }
 
+.flex {
+    flex: 1;
+}
+
 .margem {
     margin: 2.5vh 5vw;
 }

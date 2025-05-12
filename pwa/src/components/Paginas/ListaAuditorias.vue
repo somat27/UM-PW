@@ -30,7 +30,7 @@
 
     <button class="flex-coluna margem painel item-ponta" id="auditoria" v-for="audit in auditoriasVisiveis" :key="audit.id" @click="goToPaginaDetalhe(audit)">
         <div class="flex-linha centro item-ponta">
-            <h1>{{ audit.nome }}</h1>
+            <h1>{{ audit.tipo }}</h1>
             <h2 :class="corEstado(audit.status)" id="estado">{{ audit.status }}</h2>
         </div>
 
@@ -74,10 +74,18 @@
                 this.filtroEstado = false;
             },
             goToPaginaDetalhe(audit) {
-                this.$router.push({
-                    name: "InfoAuditoria",
-                    params: { id: audit.id },
-                });
+                if(audit.status === "Incompleto") {
+                    this.$router.push({
+                        name: "RegistoAuditoria",
+                        params: { id: audit.id },
+                    });
+                }
+                else {
+                    this.$router.push({
+                        name: "InfoAuditoria",
+                        params: { id: audit.id },
+                    });
+                }
             },
             corEstado(valor) {
                 switch(valor) {
@@ -96,8 +104,8 @@
         computed: {
             auditoriasVisiveis() {
                 return this.listaAuditorias.filter(auditoria => {
-                    const nomeMatch = auditoria.nome.toLowerCase().includes(this.pesquisa.toLowerCase());
-                    const statusMatch = this.filtroValor ? auditoria.estado === this.filtroValor : true;
+                    const nomeMatch = auditoria.tipo.toLowerCase().includes(this.pesquisa.toLowerCase());
+                    const statusMatch = this.filtroValor ? auditoria.status === this.filtroValor : true;
                     return nomeMatch && statusMatch;
                 });
             }

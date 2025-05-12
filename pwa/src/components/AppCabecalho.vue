@@ -20,15 +20,14 @@
     </div>
     <div v-if="detalhePerfil" class="popup" id="popupPerfil">
       <button class="botao" @click="goToVerPerfil"><h2>Ver Perfil</h2></button>
-      <button class="botao" @click="logout"><h2>Log Out</h2></button>
+      <button class="botao" @click="terminarSessao"><h2>Log Out</h2></button>
     </div>
   </header>
 </template>
 
 
 <script>
-  import { signOut } from "firebase/auth";
-  import { auth } from "@/firebase/firebase.js";
+  import { logout } from "@/firebase/firebase.js";
   export default {
     name: "AppCabecalho",
     data() {
@@ -47,8 +46,9 @@
       goToVerPerfil() {
         this.$router.push("/Perfil");
       },
-      logout() {
-        signOut(auth);
+      terminarSessao() {
+        logout;
+        localStorage.removeItem("userUID");
         this.$router.push("/");
       },
     },

@@ -3,8 +3,15 @@
 // https://firebase.google.com/docs/web/setup#available-libraries
 
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+  import {
+    signInWithPopup,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    GoogleAuthProvider,
+    signOut
+  } from "firebase/auth";
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -49,3 +56,39 @@ export async function uploadToCloudinary(file, onUploadProgress = null) {
       return null;
   }
 }
+
+export const googleProvider = new GoogleAuthProvider();
+export const logout = () => signOut(auth);
+
+// Registo com email/password (mantém role "usuario")
+export const registerWithEmail = async (email, password, displayName) => {
+    const { user } = await createUserWithEmailAndPassword(auth, email, password);
+    await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
+        displayName,
+        email,
+        photoURL: null,
+        role: "usuario",
+    });
+    return user;
+  };
+  
+  // Login com email/password
+  export const loginWithEmail = (email, password) =>
+    signInWithEmailAndPassword(auth, email, password);
+  
+  // Login com Google (cria user em users se não existir)
+  export const loginWithGoogle = async () => {
+    const { user } = await signInWithPopup(auth, googleProvider);
+    const ref = doc(db, "users", user.uid);
+    if (!(await getDoc(ref)).exists()) {
+      await setDoc(ref, {
+        uid: user.uid,
+        displayName: user.displayName,
+        email: user.email,
+        photoURL: user.photoURL,
+        role: "usuario",
+      });
+    }
+    return user;
+  };

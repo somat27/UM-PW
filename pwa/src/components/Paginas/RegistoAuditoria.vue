@@ -6,8 +6,8 @@
         <h2><i class="bi bi-arrow-left"></i>   Voltar para menu</h2>
     </button>
 
-    <div class="flex-coluna margem painel" v-if="auditoria.nome">
-        <h1>{{ auditoria.nome }}</h1>
+    <div class="flex-coluna margem painel" v-if="auditoria.tipo">
+        <h1>{{ auditoria.tipo }}</h1>
 
 
         <div class="flex-linha item-ponta margem-cima centro">
@@ -65,12 +65,9 @@
         </button>
 
 
-        <button class="flex-linha transparente centro fundo-azul margem-cima" id="iniciar" @click="guardarAuditoria">
+        <button class="flex-linha transparente centro fundo-azul margem-cima botao-acao" @click="guardarAuditoria">
             <h2><i class="bi bi-save"></i> Guardar Auditoria</h2>
         </button>
-
-        <h1> Equipa {{ listaAlteracaoProfissionais }}</h1>
-        <h1> Equipamento{{ listaAlteracaoEquipamento }}</h1>
     </div>
 </template>
 
@@ -117,7 +114,14 @@
             if (docSnap.exists()) {
 
                 const dados = docSnap.data();
-                this.auditoria = { id: docSnap.id, ...dados };
+                this.auditoria = { 
+                    id: docSnap.id, 
+                    ...dados,
+                    imagemVideo: dados.imagemVideo || [],
+                    audios: dados.audios || [],
+                    profissionais: dados.profissionais || [],
+                    materiais: dados.materiais || []
+                };
 
 
                 const querySnapshotProfissionais = await getDocs(collection(db, "profissionais"));

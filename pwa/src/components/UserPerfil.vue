@@ -43,6 +43,13 @@
         mounted() {
             const auth = getAuth();
             this.user = auth.currentUser;
+            if (auth.currentUser) {
+                this.user = {
+                    displayName: auth.currentUser.displayName,
+                    email: auth.currentUser.email,
+                    photoURL: auth.currentUser.photoURL
+                };
+            }
         }
     }
 </script>

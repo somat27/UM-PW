@@ -7,7 +7,7 @@
             <div v-for="(elemento, index) in dados" :key="index" class="flex-linha item-ponta centro">
                 <h2>{{ elemento.nome }}</h2>
 
-                <button class="transparente" :class="elemento.presente ? 'fundo-verde' : 'fundo-vermelho'" id="botao-verificar" @click="elemento.presente = !elemento.presente">
+                <button class="transparente" :class="elemento.presente ? 'fundo-verde' : 'fundo-vermelho'" id="botao-verificar" @click="elemento.presente = !elemento.presente" :disabled="listaCopia[index].presente">
                     <i v-if="elemento.presente" class='bi bi-check' style="color: #fff;"></i>
                     <i v-else class='bi bi-x' style="color: #fff;"></i>
                 </button>
@@ -21,6 +21,11 @@
 <script>
     export default {
         name: "PopUpPresente",
+        data() {
+            return {
+                listaCopia: JSON.parse(JSON.stringify(this.dados))
+            }
+        },
         props: {
             dados: {
                 type: Array,

@@ -1,5 +1,5 @@
 <template>
-    <div class="flex-linha centro" v-if="this.imagens.length !== 0" style="position: relative;">
+    <div class="flex-linha centro" v-if="imagens && imagens.length !== 0" style="position: relative;">
         <button class="transparente botao-imagem" id="esquerda" @click="imagemAnterior" v-if="imagens.length > 1">
             <i class="bi bi-chevron-compact-left"></i>
         </button>
@@ -23,7 +23,8 @@
         props: {
             imagens: {
                 type: Array,
-                required: true
+                required: true,
+                default: () => []
             }
         },
         data() {

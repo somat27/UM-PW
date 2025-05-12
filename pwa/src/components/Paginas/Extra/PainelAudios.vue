@@ -1,5 +1,5 @@
 <template>
-    <div class="flex-linha centro" v-if="this.audios.length !== 0" style="position: relative;">
+    <div class="flex-linha centro" v-if="audios && audios.length !== 0" style="position: relative;">
         <button class="transparente botao-audio" id="esquerda" @click="audioAnterior" v-if="audios.length > 1">
             <i class="bi bi-chevron-compact-left"></i>
         </button>
