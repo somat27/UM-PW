@@ -116,7 +116,7 @@
         computed: {
             auditoriasVisiveis() {
                 return this.listaAuditorias.filter(auditoria => {
-                    const nomeMatch = auditoria.tipo.toLowerCase().includes(this.pesquisa.toLowerCase());
+                    const nomeMatch = this.nomeOcorrencia(auditoria.tipo).toLowerCase().includes(this.pesquisa.toLowerCase());
                     const statusMatch = this.filtroValor ? auditoria.status === this.filtroValor : true;
                     return nomeMatch && statusMatch;
                 });
