@@ -72,6 +72,7 @@
 
     .painel-ajustado {
         height: 5vh;
+        width: 25vw;
         padding: 1vh;
 
         justify-content: space-evenly;

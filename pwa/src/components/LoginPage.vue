@@ -1,5 +1,5 @@
 <template>
-  <main class="login-page">
+  <main class="login-page painel">
     <form class="auth-form" @submit.prevent="handleEmailLogin" novalidate>
       <h2>Iniciar Sessão</h2>
       <div class="form-group">
@@ -115,13 +115,13 @@ const handleGoogleLogin = async () => {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #e3f2fd 0%, #90caf9 100%);
+  background: linear-gradient(135deg, #F5F5F5 0%, #e3f2fd 100%);
 }
 
 .auth-form {
   background: white;
   padding: 2rem;
-  border-radius: 12px;
+  border-radius: 15px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   width: 100%;
   max-width: 360px;
@@ -134,6 +134,7 @@ const handleGoogleLogin = async () => {
 }
 
 .form-group {
+  width: 100%;
   margin-bottom: 1rem;
   margin-right: 1.6rem;
   text-align: left;

@@ -9,7 +9,7 @@ import RegisterPage from "@/components/RegisterPage.vue";
 import PendingValidation from "@/components/PendingValidation.vue";
 
 import { onAuthStateChanged } from 'firebase/auth'
-import { doc, getDoc } from 'firebase/firestore'
+import { doc, getDoc, collection, query, where } from 'firebase/firestore'
 
 const routes = [
     {
@@ -111,7 +111,8 @@ router.beforeEach(async (to, from, next) => {
     }
 
     const auditoria = auditoriaSnap.data();
-    if (auditoria.perito !== user.uid) {
+
+    if (auditoria.perito !== user.uid || !query(collection(db, "peritos"), where("uid", "==", user.uid))) {
       return next({ name: 'PendingValidation' });
     }
 

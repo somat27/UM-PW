@@ -28,7 +28,10 @@
     #popupPerfil {
         position: absolute;
 
-        width: 250%;
+        justify-content: space-around;
+
+        width: 350%;
+        height: 200%;
         right: 0;
         padding: 1vh 1vh;
         gap: 0;

@@ -1,5 +1,5 @@
 <template>
-  <main class="register-page">
+  <main class="register-page painel">
     <form class="auth-form" @submit.prevent="handleRegister" novalidate>
       <h2>Registar Conta</h2>
       <div class="form-group">
@@ -68,7 +68,7 @@ const handleRegister = async () => {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #e3f2fd 0%, #90caf9 100%);
+  background: linear-gradient(135deg, #F5F5F5 0%, #e3f2fd 100%);
 }
 
 .auth-form {
@@ -87,6 +87,7 @@ const handleRegister = async () => {
 }
 
 .form-group {
+  width: 100%;
   margin-bottom: 1rem;
   margin-right: 1.6rem;
   text-align: left;
