@@ -63,7 +63,7 @@ export default {
 .change-account-button {
     margin-top: 16px;
     padding: 8px 16px;
-    background: #1890ff;
+    background: #204C6D;
     color: #fff;
     border: none;
     border-radius: 4px;
