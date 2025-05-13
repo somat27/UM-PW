@@ -6,17 +6,20 @@ h1 {
     text-align: left;
     font-size: 20px;
     color: #1e1e1e;
+    margin: 0;
 }
 
 h2 {
     text-align: left;
     font-size: 16px;
+    margin: 0;
 }
 
 h3 {
     text-align: left;
     font-size: 12px;
     color: #6c757d;
+    margin: 0;
 }
 
 .flex-coluna {
@@ -29,12 +32,16 @@ h3 {
     flex-direction: row;
 }
 
+.flex {
+    flex: 1;
+}
+
 .margem {
     margin: 2.5vh 5vw;
 }
 
 .margem-cima {
-    margin-top: 1vh;
+    margin-top: 1.5vh;
 }
 
 .transparente {
@@ -61,6 +68,28 @@ h3 {
 
 .item-ponta {
     justify-content: space-between;
+}
+
+.pop-up {
+    position: relative; 
+    display: inline-block;
+}
+
+.fundo {
+    position: fixed;
+
+    height: 100vh;
+    width: 100vw;
+    top: 0;
+    left: 0;
+
+    background-color: rgba(0, 0, 0, 0.5);
+
+    z-index: 50;
+}
+
+.icon {
+    color: #086cfc;
 }
 
 .fundo-verde {

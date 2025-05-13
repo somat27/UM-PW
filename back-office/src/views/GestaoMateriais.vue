@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard-container" :space="23">
+  <div class="dashboard-container">
     <div class="dashboard-layout">
       <aside class="sidebar-column">
         <nav class="sidebar-nav">
@@ -9,264 +9,264 @@
         </nav>
       </aside>
 
-  <main class="main-content">
-  <div class="content-wrapper">
-    <nav class="navigation-tabs"></nav>
-    
-    <StatisticsGrid />
+      <main class="main-content">
+        <div class="content-wrapper">
 
-    <div class="page-header">
-      <h2>Gestão de Materiais</h2>
-    </div>
+          <AddMaterialModal v-if="showAddModal" :material="materialParaEditar" @close="showAddModal = false"
+            @saved="handleMaterialSaved" />
 
-    <div class="filters-container">
-      <Filters
-        :filters="filterOptions"
-        :gap="'172px'"
-        search-placeholder="Procurar Materiais..."
-        button-text="+ Adicionar Materiais"
-        @search="handleSearch"
-        @filter-change="handleFilterChange"
-        @add="handleAddMaterial"
-      />
-    </div>
+          <div v-if="showAddQuantidadeModal" class="modal-overlay">
+            <div class="modal-content">
+              <h3>Adicionar {{ materialParaAdicionarQtd.nome }}</h3>
+              <input type="number" v-model.number="quantidadeParaAdicionar" min="1" class="input-quantidade" />
+              <div class="modal-actions">
+                <button @click="showAddQuantidadeModal = false" class="btn-secondary">Cancelar</button>
+                <button @click="confirmarAdicionarQuantidade" class="btn-primary">Confirmar</button>
+              </div>
+            </div>
+          </div>
 
-    <GenericTable
-      :data="peritos"
-      :columns="columns"
-      :type="'striped'"
-      @action="handlePeritoAction"
-    />
-  </div>
-</main>
+          <div v-if="loading">A carregar…</div>
+          <div v-else>
+            <div v-if="erro" class="error">{{ erro }}</div>
+
+            <!-- Cabeçalho -->
+            <div class="page-header">
+              <h2>Gestão de Materiais</h2>
+            </div>
+
+            <FiltroTabela v-model:modelSearch="searchQuery" v-model:modelSort="sortKey" v-model:modelOrder="sortOrder"
+              :sortColumns="materialColumns" :filterOptions="filterOptions" @filter-applied="handleFilterApplied"
+              :showAdd="true" @add="openAddMaterialModal" search-placeholder="Procurar Materiais..."
+              sort-placeholder="Ordenar por…" />
+
+
+            <!-- Tabela genérica com colunas e ações -->
+            <GenericTable :data="filteredMateriais" :columns="[...materialColumns, editColumn]" :loading="loading"
+              type="striped" @edit="openEditModal" @add="openAddQuantidadeModal" />
+          </div>
+        </div>
+      </main>
     </div>
   </div>
 </template>
 
-<script>
-import NavigationList from "../components/NavigationList.vue";
-import GenericTable from "../components/GenericTable.vue";
-import Filters from "../components/Filters.vue";
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import NavigationList from '@/components/NavigationList.vue'
+import GenericTable from '@/components/GenericTable.vue'
+import AddMaterialModal from '@/components/AddMaterialModal.vue'
+import { db } from '@/firebase.js'
+import { collection, getDocs, updateDoc, doc } from 'firebase/firestore'
+import FiltroTabela from '@/components/FiltroTabela.vue';
 
-export default {
-  name: "GestaoPeritos",
-  components: {
-    NavigationList,
-    GenericTable,
-    Filters
-  },
-  data() {
-    return {
+// estados
+const materiais = ref([])
+const loading = ref(false)
+const erro = ref(null)
+const searchQuery = ref('')       // pesquisa por nome apenas
+const sortKey = ref('')
+const sortOrder = ref('asc')
+const sortColumns = [
+  { key: 'nome', label: 'Nome' },
+  { key: 'categoria', label: 'Categoria' },
+  { key: 'preco', label: 'Preço/Unidade' },
+  { key: 'quantidade', label: 'Quantidade' }
+]
+const materialColumns = [...sortColumns]
+const editColumn = { key: 'edit-materiais', label: 'Ações' }
+const showAddModal = ref(false)
+const materialParaEditar = ref(null)
+const showAddQuantidadeModal = ref(false)
+const materialParaAdicionarQtd = ref(null)
+const quantidadeParaAdicionar = ref(1)
 
-filterOptions: [
-        {
-          key: 'type',
-          label: 'Tipo',
-          selected: '',
-          options: [
-            { value: '', label: 'Filtrar Por' },
-            { key: 'details', label: 'Detalhes do Material' },
-            { key: 'category', label: 'Categoria' },
-            { key: 'price', label: 'Preço' },
-            { key: 'qtd', label: 'Quantidade' },
-            { key: 'status', label: 'Estado' }
-          ]
-        }
-      ],
-          columns: [
-            { key: 'details', label: 'Detalhes do Material' },
-            { key: 'category', label: 'Categoria' },
-            { key: 'price', label: 'Preço' },
-            { key: 'qtd', label: 'Quantidade' },
-            { key: 'status', label: 'Estado' },
-            { key: 'actions', label: 'Ações' }
-      ],
-      peritos: [
-        {
-          details: "Asfalto",
-          category: "Materiais de construção",
-          price: "399.99$",
-          qtd: "3",
-          status: "Em stock"
-        },
-        {
-          details: "Câmeras",
-          category: "Equipamento de segurança",
-          price: "199.00$",
-          qtd: "70",
-          status: "Fora de stock"
-        }
-      ]
-    };
+// 1) onde vamos guardar a seleção de filtros
+const appliedFilters = ref({});
+
+// 2) gera as opções para o modal de filtros
+//    ajusta ‘categoria’ e ‘estado’ aos campos reais do teu data model
+const filterOptions = computed(() => {
+  const campos = ['categoria'];
+  const opts = {};
+  campos.forEach(key => {
+    // ‘materiais’ é o teu ref com todos os registos
+    let vals = materiais.value.map(m => m[key] ?? '');
+    opts[key] = Array.from(new Set(vals))
+      .filter(v => v !== '');
+  });
+  return opts;
+});
+
+// 3) função chamada quando clicas em “Aplicar” no modal
+function handleFilterApplied(filters) {
+  appliedFilters.value = filters;
+}
+
+// 4) computed que junta pesquisa, filtros e ordenação
+const filteredMateriais = computed(() => {
+  let arr = materiais.value;
+
+  // 4.1 pesquisa por texto
+  if (searchQuery.value) {
+    const q = searchQuery.value.toLowerCase();
+    arr = arr.filter(m =>
+      (m.nome ?? '').toString().toLowerCase().includes(q)
+    );
   }
-};
+
+  // 4.2 filtros por checkbox
+  Object.entries(appliedFilters.value).forEach(([key, vals]) => {
+    if (!vals.length) return;
+    arr = arr.filter(m => vals.includes(m[key]));
+  });
+
+  // 4.3 ordenação
+  if (sortKey.value) {
+    arr = [...arr].sort((a, b) => {
+      const A = a[sortKey.value], B = b[sortKey.value];
+      if (typeof A === 'string') {
+        return sortOrder.value === 'asc'
+          ? A.localeCompare(B)
+          : B.localeCompare(A);
+      }
+      return sortOrder.value === 'asc' ? A - B : B - A;
+    });
+  }
+
+  return arr;
+});
+
+
+// métodos
+async function fetchMateriais() {
+  loading.value = true
+  erro.value = null
+  try {
+    const snap = await getDocs(collection(db, 'materiais'))
+    materiais.value = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+  } catch (e) {
+    erro.value = 'Não foi possível carregar os materiais.'
+    console.error(e)
+  } finally {
+    loading.value = false
+  }
+}
+
+
+function openAddMaterialModal() {
+  materialParaEditar.value = null
+  showAddModal.value = true
+}
+
+function openEditModal(item) {
+  materialParaEditar.value = item
+  showAddModal.value = true
+}
+
+function openAddQuantidadeModal(item) {
+  materialParaAdicionarQtd.value = item
+  quantidadeParaAdicionar.value = 1
+  showAddQuantidadeModal.value = true
+}
+
+async function confirmarAdicionarQuantidade() {
+  const novaQtd = materialParaAdicionarQtd.value.quantidade + quantidadeParaAdicionar.value
+  await atualizarQuantidade(materialParaAdicionarQtd.value.id, novaQtd)
+  showAddQuantidadeModal.value = false
+  fetchMateriais()
+}
+
+async function handleMaterialSaved() {
+  showAddModal.value = false
+  fetchMateriais()
+}
+
+async function atualizarQuantidade(id, novaQtd) {
+  try {
+    const refDoc = doc(db, 'materiais', id)
+    await updateDoc(refDoc, { quantidade: novaQtd })
+    const item = materiais.value.find(m => m.id === id)
+    if (item) item.quantidade = novaQtd
+  } catch (e) {
+    console.error('Erro ao atualizar quantidade:', e)
+  }
+}
+
+// life-cycle
+onMounted(fetchMateriais)
 </script>
 
-  
-    
-    <style scoped>
-    .dashboard-container {
-      background: linear-gradient(
-          0deg,
-          var(--color-grey-98, #fafafb) 0%,
-          var(--color-grey-98, #fafafb) 100%
-        ),
-        var(--color-white-solid, #fff);
-      padding-right: 18px;
-      padding-bottom: 135px;
-    }
-    
-    .dashboard-layout {
-      display: flex;
-      gap: 20px;
-    }
-    
-    .sidebar-column {
-      width: 19%;
-    }
-    
-    .sidebar-nav {
-      box-shadow: 1px 0px 0px 0px #f0f0f0;
-      background-color: #fff;
-      padding-bottom: 772px;
-      overflow: hidden;
-      width: 100%;
-    }
-    
-    .sidebar-background {
-      padding-bottom: 395px;
-      background-color: #fff;
-    }
-    
-    .logo {
-      aspect-ratio: 6.17;
-      object-fit: contain;
-      width: 260px;
-      box-shadow: 0px 4px 4px rgba(254, 247, 247, 1);
-    }
-    
-    .notification-icons {
-      z-index: 10;
-      margin-top: 160px;
-      margin-left: 25px;
-      width: 16px;
-    }
-    
-    .notification-icon,
-    .alert-icon {
-      aspect-ratio: 1;
-      object-fit: contain;
-      width: 100%;
-    }
-    
-    .alert-icon {
-      margin-top: 27px;
-    }
-    
-    .main-content {
-      width: 81%;
-      margin-left: 20px;
-    }
-    
-    .content-wrapper {
-      display: flex;
-      margin-top: 59px;
-      width: 100%;
-      flex-direction: column;
-    }
-    
-    .navigation-tabs {
-      display: flex;
-      align-items: center;
-      gap: 30px;
-      font-family:
-        Public Sans,
-        -apple-system,
-        Roboto,
-        Helvetica,
-        sans-serif;
-      font-size: 13px;
-      color: #212529;
-      flex-wrap: wrap;
-    }
-    
-    .tab-link {
-      text-decoration: none;
-      color: inherit;
-      line-height: 19.5px;
-    }
-    
-    .tab-link.active {
-      color: #1890ff;
-    }
-    
-    .map-visualization {
-      aspect-ratio: 0.95;
-      object-fit: contain;
-      width: 100%;
-    }
-    
-    @media (max-width: 991px) {
-      .dashboard-container {
-        padding-bottom: 100px;
-        
-      }
-    
-      .dashboard-layout {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0;
-      }
-    
-      .sidebar-column {
-        width: 100%;
-      }
-    
-      .sidebar-nav {
-        margin-top: 24px;
-        padding-bottom: 100px;
-      }
-    
-      .sidebar-background {
-        padding-bottom: 100px;
-      }
-    
-      .notification-icons {
-        margin-left: 10px;
-        margin-top: 40px;
-      }
-    
-      .main-content {
-        width: 100%;
-      }
-    
-      .content-wrapper {
-        max-width: 100%;
-        margin-top: 40px;
-      }
-    
-      .map-visualization {
-        max-width: 100%;
-      }
-    }
 
-    .user-profile {
-    display: flex;
-    align-items: center;
-    margin-bottom: 20px;
-  }
-  
-  .user-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    margin-right: 10px;
-  }
-  
-  .user-name {
-    font-size: 16px;
-    font-weight: bold;
-  }
+<style scoped>
+.dashboard-layout {
+  display: flex;
+  gap: 20px;
+  height: 100%;
+}
+
+.sidebar-column {
+  width: 20%;
+}
+
+.main-content {
+  flex: 1;
+  margin-right: 10px;
+  overflow-y: auto;
+}
+
+.content-wrapper {
+  margin-top: 40px;
+  min-height: 100%;
+}
+
+.tab-link {
+  text-decoration: none;
+  color: #6c757d;
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 10px 16px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  position: relative;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+
+.tab-link:hover {
+  background-color: #f8f9fa;
+  color: #495057;
+}
+
+.tab-link.active {
+  color: #1890ff;
+  background-color: rgba(24, 144, 255, 0.08);
+  font-weight: 600;
+}
+
+.tab-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: -9px;
+  left: 16px;
+  right: 16px;
+  height: 2px;
+  background-color: #1890ff;
+  border-radius: 2px 2px 0 0;
+}
+
+.tab-link::after {
+  content: '';
+  position: absolute;
+  bottom: -9px;
+  left: 50%;
+  right: 50%;
+  height: 2px;
+  background-color: #1890ff;
+  transition: all 0.3s ease;
+  border-radius: 2px 2px 0 0;
+}
 
 .filters-container {
   display: flex;
@@ -276,6 +276,122 @@ filterOptions: [
   max-width: fit-content;
 }
 
+.page-header h2 {
+  font-size: 1.75rem;
+  margin-bottom: 1rem;
+}
 
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.search-input {
+  flex: 1;
+  padding: 0.5rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+}
+
+.sort-select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+}
+
+.sort-button {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 0.375rem;
+  background: white;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.sort-button:hover {
+  background: #f0f0f0;
+}
+
+.quant-input {
+  width: 4rem;
+  padding: 0.25rem;
+  border: 1px solid #ccc;
+  border-radius: 0.25rem;
+  text-align: right;
+}
+
+.btn-add-material {
+  background-color: #1890ff;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-add-material:hover {
+  background-color: #167ac6;
+}
+
+.btn-primary {
+  background: #1890ff;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background: #167ac6;
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 1px solid #ccc;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background: #f5f5f5;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 300px;
+}
+
+.modal-content h3 {
+  margin-top: 0;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 15px;
+}
 </style>
-    

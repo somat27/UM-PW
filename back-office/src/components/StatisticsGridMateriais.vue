@@ -1,45 +1,32 @@
 <template>
-    <section class="statistics-grid" :space="62">
-      <div class="statistics-layout">
-        <StatisticsCard title="Total de materiais dispensados" value="23" />
-        <StatisticsCard title="Total de materiais disponíveis" value="27" />
+  <section class="statistics-grid">
+    <div class="statistics-layout">
+      <StatisticsCard v-for="(card, idx) in cards" :key="idx" :title="card.title" :value="card.value" />
+    </div>
+  </section>
+</template>
 
-      </div>
-    </section>
-  </template>
-  
-  <script>
-  import StatisticsCard from "./StatisticsCard.vue";
-  
-  export default {
-    name: "StatisticsGrid",
-    components: {
-      StatisticsCard,
-    },
-  };
-  </script>
-  
-  <style scoped>
-  .statistics-grid {
-    margin-top: 80px;
-    width: 100%;
-    max-width: 1036px;
+<script>
+import StatisticsCard from './StatisticsCard.vue';
+
+export default {
+  name: 'StatisticsGridMateriais',
+  components: { StatisticsCard },
+  props: {
+    cards: { type: Array, required: true }
   }
-  
-  .statistics-layout {
-    display: flex;
-    gap: 20px;
-  }
-  
-  @media (max-width: 991px) {
-    .statistics-grid {
-      max-width: 100%;
-      margin-top: 40px;
-    }
-  
-    .statistics-layout {
-      flex-direction: column;
-    }
-  }
-  </style>
-  
+};
+</script>
+
+<style scoped>
+.statistics-grid {
+  margin-top: 16px;
+  width: 100%;
+}
+
+.statistics-layout {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+</style>

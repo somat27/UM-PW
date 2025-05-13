@@ -2,8 +2,8 @@
     <header class="flex-linha item-ponta" id="cabecalho">
         <h1>{{ titulo }}</h1>
 
-        <div id="perfil">
-            <button class="transparente" id="icon" @click="perfil = !perfil">
+        <div class="pop-up">
+            <button class="transparente icon" id="icon-perfil" @click="perfil = !perfil">
                 <i class="bi bi-person"></i>
             </button>
 
@@ -49,17 +49,11 @@
         z-index: 100;
     }
 
-    #perfil {
-        position: relative; 
-        display: inline-block;
-    }
-
-    #icon {
+    #icon-perfil {
         font-size: 20px;
 
         border-radius: 50%;
 
-        color: #086cfc;
         background-color: #dbebff;
     }
 </style>
