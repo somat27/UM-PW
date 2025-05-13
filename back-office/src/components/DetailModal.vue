@@ -53,11 +53,108 @@
                 class="media-item"
                 @click="abrirMidiaEmNovaJanela(media)"
               >
-                <img
-                  :src="media"
-                  :alt="'Mídia ' + (index + 1)"
-                  class="media-thumbnail"
-                />
+                <template v-if="isVideoUrl(media)">
+                  <!-- Exibindo um vídeo -->
+                  <div class="play-container">
+                    <img
+                      src="../assets/play-icon.png"
+                      alt="Play"
+                      class="play-icon"
+                    />
+                  </div>
+                </template>
+                <template v-else>
+                  <!-- Exibindo uma imagem -->
+                  <img
+                    :src="media"
+                    :alt="'Mídia ' + (index + 1)"
+                    class="media-thumbnail"
+                  />
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions-footer">
+        <button class="action-button secondary" @click="$emit('fechar')">
+          Fechar
+        </button>
+      </div>
+    </div>
+
+    <!-- Informações para Ocorrências Rejeitadas -->
+    <div
+      v-if="ocorrencia && ocorrencia.status === 'Rejeitado'"
+      class="status-pendente"
+    >
+      <div class="status-badge rejeitado">
+        <span class="status-icon">❌</span>
+        <span class="status-text">Rejeitado</span>
+      </div>
+
+      <div class="info-section">
+        <div class="info-row">
+          <div class="info-label">Data de Submissão:</div>
+          <div class="info-value">
+            {{ formatarData(ocorrencia.dataSubmissao) }}
+          </div>
+        </div>
+
+        <div class="info-row">
+          <div class="info-label">Tipo:</div>
+          <div class="info-value">
+            {{ mapearTipo(ocorrencia.tipoOcorrencia) }}
+          </div>
+        </div>
+
+        <div class="info-row">
+          <div class="info-label">Endereço:</div>
+          <div class="info-value">
+            {{ ocorrencia.endereco || "Endereço não especificado" }}
+          </div>
+        </div>
+
+        <div class="info-row description">
+          <div class="info-label">Descrição:</div>
+          <div class="info-value">
+            {{ ocorrencia.descricao || "Sem descrição disponível" }}
+          </div>
+        </div>
+
+        <!-- Galeria de Imagens/Vídeos -->
+        <div
+          v-if="ocorrencia.imagemVideo && ocorrencia.imagemVideo.length > 0"
+          class="info-row"
+        >
+          <div class="info-label">Imagens/Vídeos:</div>
+          <div class="info-value">
+            <div class="media-gallery">
+              <div
+                v-for="(media, index) in ocorrencia.imagemVideo"
+                :key="index"
+                class="media-item"
+                @click="abrirMidiaEmNovaJanela(media)"
+              >
+                <template v-if="isVideoUrl(media)">
+                  <!-- Exibindo um vídeo -->
+                  <div class="play-container">
+                    <img
+                      src="../assets/play-icon.png"
+                      alt="Play"
+                      class="play-icon"
+                    />
+                  </div>
+                </template>
+                <template v-else>
+                  <!-- Exibindo uma imagem -->
+                  <img
+                    :src="media"
+                    :alt="'Mídia ' + (index + 1)"
+                    class="media-thumbnail"
+                  />
+                </template>
               </div>
             </div>
           </div>
@@ -179,13 +276,26 @@
                 v-for="(media, index) in auditoria.imagemVideo"
                 :key="index"
                 class="media-item"
-                @click="abrirMidiaEmNovaJanela(media)"
+                @click="abrirMidiaEmNovaJanela(media.url)"
               >
-                <img
-                  :src="media"
-                  :alt="'Mídia ' + (index + 1)"
-                  class="media-thumbnail"
-                />
+                <template v-if="isVideoUrl(media.url)">
+                  <!-- Exibindo um vídeo -->
+                  <div class="play-container">
+                    <img
+                      src="../assets/play-icon.png"
+                      alt="Play"
+                      class="play-icon"
+                    />
+                  </div>
+                </template>
+                <template v-else>
+                  <!-- Exibindo uma imagem -->
+                  <img
+                    :src="media.url"
+                    :alt="'Mídia ' + (index + 1)"
+                    class="media-thumbnail"
+                  />
+                </template>
               </div>
             </div>
           </div>
@@ -330,13 +440,26 @@
                 v-for="(media, index) in auditoria.imagemVideo"
                 :key="index"
                 class="media-item"
-                @click="abrirMidiaEmNovaJanela(media)"
+                @click="abrirMidiaEmNovaJanela(media.url)"
               >
-                <img
-                  :src="media"
-                  :alt="'Mídia ' + (index + 1)"
-                  class="media-thumbnail"
-                />
+                <template v-if="isVideoUrl(media.url)">
+                  <!-- Exibindo um vídeo -->
+                  <div class="play-container">
+                    <img
+                      src="../assets/play-icon.png"
+                      alt="Play"
+                      class="play-icon"
+                    />
+                  </div>
+                </template>
+                <template v-else>
+                  <!-- Exibindo uma imagem -->
+                  <img
+                    :src="media.url"
+                    :alt="'Mídia ' + (index + 1)"
+                    class="media-thumbnail"
+                  />
+                </template>
               </div>
             </div>
           </div>
@@ -539,6 +662,11 @@ export default {
       }
     }
 
+    function isVideoUrl(url) {
+      const videoPattern = /\.(mp4|webm|avi|mov|mkv|flv|wmv|mpg|mpeg)$/i;
+      return videoPattern.test(url);
+    }
+
     return {
       formatarData,
       calcularDuracao,
@@ -546,7 +674,8 @@ export default {
       abrirMidiaEmNovaJanela,
       nomePerito,
       peritoCarregando,
-      mapearTipo, // Expondo a função de mapeamento para o template
+      mapearTipo,
+      isVideoUrl,
     };
   },
 };
@@ -573,8 +702,8 @@ export default {
 }
 
 .status-badge.pendente {
-  background-color: rgba(255, 77, 79, 0.1);
-  color: #ff4d4f;
+  background-color: rgba(85, 138, 253, 0.1);
+  color: #1e90ff;
 }
 
 .status-badge.analise {
@@ -585,6 +714,11 @@ export default {
 .status-badge.resolvido {
   background-color: rgba(82, 196, 26, 0.1);
   color: #52c41a;
+}
+
+.status-badge.rejeitado {
+  background-color: rgba(255, 77, 79, 0.1);
+  color: #ff4d4f;
 }
 
 .info-section {
@@ -767,5 +901,13 @@ export default {
   .media-gallery {
     grid-template-columns: repeat(3, 1fr);
   }
+}
+
+.play-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  scale: 0.2;
 }
 </style>

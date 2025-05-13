@@ -12,6 +12,14 @@
         <div class="content-wrapper">
           <nav class="navigation-tabs">
             <router-link
+              to="/dashboards/auditorias"
+              class="tab-link"
+              :class="{ active: activeTab === 'auditorias' }"
+              @click="activeTab = 'auditorias'"
+            >
+              Auditorias por região
+            </router-link>
+            <router-link
               to="/dashboards/ocorrencias"
               class="tab-link"
               :class="{ active: activeTab === 'ocorrencias' }"
@@ -61,6 +69,10 @@
                   <span class="legend-marker resolvido-marker"></span>
                   <span>Auditorias finalizadas</span>
                 </div>
+                <div class="legend-item">
+                  <span class="legend-marker rejeitado-marker"></span>
+                  <span>Ocorrências Rejeitadas</span>
+                </div>
               </div>
               <div class="map-filters">
                 <label class="filter-checkbox">
@@ -95,6 +107,17 @@
                     "
                   />
                   <span>Resolvidas</span>
+                </label>
+                <label class="filter-checkbox">
+                  <input
+                    type="checkbox"
+                    v-model="filtros.mostrarRejeitados"
+                    @change="
+                      limparMarcadores();
+                      adicionarMarcadores();
+                    "
+                  />
+                  <span>Rejeitadas</span>
                 </label>
               </div>
             </div>
@@ -137,6 +160,7 @@ const filtros = ref({
   mostrarPendentes: true,
   mostrarAnalise: true,
   mostrarResolvidos: true,
+  mostrarRejeitados: true,
 });
 
 // Estado para controle da modal
@@ -147,9 +171,10 @@ const auditoriaSelecionada = ref(null); // Nova ref para auditoria selecionada
 
 // Ícones para os diferentes status
 const STATUS_ICONS = {
-  Pendente: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
+  Pendente: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
   Analise: "https://maps.google.com/mapfiles/ms/icons/yellow-dot.png",
   Resolvido: "https://maps.google.com/mapfiles/ms/icons/green-dot.png",
+  Rejeitado: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
 };
 
 // Função para buscar todas as ocorrências e auditorias
@@ -263,9 +288,10 @@ function determinarCategoria(ocorrencia) {
     return "Analise";
   } else if (ocorrencia.status === "Resolvido") {
     return "Resolvido";
+  } else if (ocorrencia.status === "Rejeitado") {
+    return "Rejeitado";
   }
 
-  // Caso não se encaixe em nenhuma categoria, assume Pendente como padrão
   return "Pendente";
 }
 
@@ -325,7 +351,8 @@ function adicionarMarcadores() {
     if (
       (categoria === "Pendente" && filtros.value.mostrarPendentes) ||
       (categoria === "Analise" && filtros.value.mostrarAnalise) ||
-      (categoria === "Resolvido" && filtros.value.mostrarResolvidos)
+      (categoria === "Resolvido" && filtros.value.mostrarResolvidos) ||
+      (categoria === "Rejeitado" && filtros.value.mostrarRejeitados)
     ) {
       // Verifica se tem coordenadas válidas
       if (
@@ -703,7 +730,7 @@ watch(
 }
 
 .pendente-marker {
-  background-color: #ff4d4f; /* Vermelho */
+  background-color: #1e90ff; /* Azul*/
 }
 
 .analise-marker {
@@ -712,6 +739,10 @@ watch(
 
 .resolvido-marker {
   background-color: #52c41a; /* Verde */
+}
+
+.rejeitado-marker {
+  background-color: #ff4d4f; /* Vermelho */
 }
 
 .map-filters {
