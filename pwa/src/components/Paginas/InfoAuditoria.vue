@@ -22,7 +22,7 @@
         </div>
 
 
-        <button class="flex-linha transparente" @click="guardarProfissionais">
+        <button class="flex-linha transparente margem-cima" @click="guardarProfissionais">
             <h2><i class='bi bi-people'></i> Profissionais</h2>
             <PopUpPresente v-if="popUpProfissionais && auditoria.profissionais.length > 0" :dados="this.auditoria.profissionais" :texto="`<i class='bi bi-people'></i> Profissionais`"/>
         </button>

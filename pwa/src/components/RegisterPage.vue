@@ -1,5 +1,5 @@
 <template>
-  <main class="register-page">
+  <main class="register-page painel">
     <form class="auth-form" @submit.prevent="handleRegister" novalidate>
       <h2>Registar Conta</h2>
       <div class="form-group">
@@ -20,7 +20,7 @@
       </button>
       <p>
         Já tens conta?
-        <router-link to="/">Entrar</router-link>
+        <router-link class="p-1" to="/">Entrar</router-link>
       </p>
     </form>
   </main>
@@ -68,7 +68,7 @@ const handleRegister = async () => {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #e3f2fd 0%, #90caf9 100%);
+  background: linear-gradient(135deg, #F5F5F5 0%, #e3f2fd 100%);
 }
 
 .auth-form {
@@ -82,11 +82,13 @@ const handleRegister = async () => {
 }
 
 .auth-form h2 {
+  text-align: center;
   margin-bottom: 1.5rem;
-  color: #1976d2;
+  color: #204C6D;
 }
 
 .form-group {
+  width: 100%;
   margin-bottom: 1rem;
   margin-right: 1.6rem;
   text-align: left;
@@ -95,7 +97,7 @@ const handleRegister = async () => {
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #1565c0;
+  color: #204C6D;
 }
 
 .form-group input {
@@ -109,7 +111,7 @@ const handleRegister = async () => {
 button {
   width: 100%;
   padding: 0.75rem;
-  background: #1976d2;
+  background: #204C6D;
   color: white;
   border: none;
   border-radius: 8px;
@@ -120,5 +122,13 @@ button {
 
 button:hover {
   background: #1565c0;
+}
+
+.p-1 {
+  color: #204C6D;
+}
+
+.p-1:hover {
+  color: #1565c0;
 }
 </style>

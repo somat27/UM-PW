@@ -54,6 +54,6 @@
 
         border-radius: 50%;
 
-        background-color: #dbebff;
+        background-color: #F1F5F9;
     }
 </style>
