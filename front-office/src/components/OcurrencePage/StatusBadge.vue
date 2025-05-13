@@ -10,7 +10,7 @@ export default {
       type: String,
       required: true,
       validator: (value) =>
-        ["pending", "analyzing", "resolved"].includes(value),
+        ["pending", "analyzing", "resolved", "rejected"].includes(value),
     },
   },
   computed: {
@@ -20,6 +20,7 @@ export default {
         "status-pending": this.status === "pending",
         "status-analyzing": this.status === "analyzing",
         "status-resolved": this.status === "resolved",
+        "status-rejected": this.status === "rejected",
       };
     },
     statusText() {
@@ -27,6 +28,7 @@ export default {
         pending: "Pendente",
         analyzing: "Em Análise",
         resolved: "Resolvido",
+        rejected: "Rejeitado",
       };
       return statusMap[this.status];
     },
@@ -52,5 +54,9 @@ export default {
 
 .status-resolved {
   background-color: #008000;
+}
+
+.status-rejected {
+  background-color: #800080;
 }
 </style>

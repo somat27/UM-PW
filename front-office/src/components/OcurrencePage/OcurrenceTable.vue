@@ -15,6 +15,7 @@
             <option value="Pendente">Pendente</option>
             <option value="Analise">Em Análise</option>
             <option value="Resolvido">Resolvido</option>
+            <option value="Rejeitado">Rejeitado</option>
           </select>
         </div>
 
@@ -119,15 +120,29 @@
                         class="images-grid"
                       >
                         <div
-                          v-for="(imagem, index) in ocorrencia.imagemVideo"
+                          v-for="(media, index) in ocorrencia.imagemVideo"
                           :key="index"
                           class="image-item"
                         >
-                          <img
-                            :src="imagem"
-                            alt="Imagem da ocorrência"
-                            @click="ampliarImagem(imagem)"
-                          />
+                          <template v-if="isVideo(media)">
+                            <!-- Exibe o vídeo -->
+                            <div class="play-container">
+                              <img
+                                src="../../assets/play-icon.png"
+                                alt="Play"
+                                class="play-icon"
+                                @click="ampliarImagem(media)"
+                              />
+                            </div>
+                          </template>
+                          <template v-else>
+                            <!-- Exibe a imagem -->
+                            <img
+                              :src="media"
+                              alt="Imagem da ocorrência"
+                              @click="ampliarImagem(media)"
+                            />
+                          </template>
                         </div>
                       </transition-group>
                     </div>
@@ -196,6 +211,12 @@ export default {
     await this.carregarOcorrencias();
   },
   methods: {
+    isVideo(media) {
+      // Verifica a extensão do arquivo para identificar se é um vídeo
+      const videoExtensions = ["mp4", "webm", "ogg"];
+      const extension = media.split(".").pop().toLowerCase();
+      return videoExtensions.includes(extension);
+    },
     async carregarOcorrencias() {
       try {
         this.loading = true;
@@ -245,6 +266,7 @@ export default {
         Pendente: "pending",
         Analise: "analyzing",
         Resolvido: "resolved",
+        Rejeitado: "rejected",
       };
 
       return mapeamentoStatus[status];
@@ -735,5 +757,13 @@ export default {
   .filter-select {
     font-size: 16px;
   }
+}
+
+.play-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  scale: 0.2;
 }
 </style>
