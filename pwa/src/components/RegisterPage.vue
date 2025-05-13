@@ -20,7 +20,7 @@
       </button>
       <p>
         Já tens conta?
-        <router-link to="/">Entrar</router-link>
+        <router-link class="p-1" to="/">Entrar</router-link>
       </p>
     </form>
   </main>
@@ -82,8 +82,9 @@ const handleRegister = async () => {
 }
 
 .auth-form h2 {
+  text-align: center;
   margin-bottom: 1.5rem;
-  color: #1976d2;
+  color: #204C6D;
 }
 
 .form-group {
@@ -96,7 +97,7 @@ const handleRegister = async () => {
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #1565c0;
+  color: #204C6D;
 }
 
 .form-group input {
@@ -110,7 +111,7 @@ const handleRegister = async () => {
 button {
   width: 100%;
   padding: 0.75rem;
-  background: #1976d2;
+  background: #204C6D;
   color: white;
   border: none;
   border-radius: 8px;
@@ -121,5 +122,13 @@ button {
 
 button:hover {
   background: #1565c0;
+}
+
+.p-1 {
+  color: #204C6D;
+}
+
+.p-1:hover {
+  color: #1565c0;
 }
 </style>
