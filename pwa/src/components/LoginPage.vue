@@ -20,7 +20,7 @@
       </button>
       <p>
         Não tem conta?
-        <router-link to="/register">Registar</router-link>
+        <router-link class="p-1" to="/register">Registar</router-link>
       </p>
     </form>
   </main>
@@ -129,8 +129,9 @@ const handleGoogleLogin = async () => {
 }
 
 .auth-form h2 {
+  text-align: center;
   margin-bottom: 1.5rem;
-  color: #1976d2;
+  color: #204C6D;
 }
 
 .form-group {
@@ -143,7 +144,7 @@ const handleGoogleLogin = async () => {
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #1565c0;
+  color: #204C6D;
 }
 
 .form-group input {
@@ -157,7 +158,7 @@ const handleGoogleLogin = async () => {
 button {
   width: 100%;
   padding: 0.75rem;
-  background: #1976d2;
+  background: #204C6D;
   color: white;
   border: none;
   border-radius: 8px;
@@ -172,5 +173,13 @@ button:hover {
 
 .google {
   margin-right: 10px;
+}
+
+.p-1 {
+  color: #204C6D;
+}
+
+.p-1:hover {
+  color: #1565c0;
 }
 </style>

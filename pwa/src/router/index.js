@@ -9,59 +9,59 @@ import RegisterPage from "@/components/RegisterPage.vue";
 import PendingValidation from "@/components/PendingValidation.vue";
 
 import { onAuthStateChanged } from 'firebase/auth'
-import { doc, getDoc, collection, query, where } from 'firebase/firestore'
+import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore'
 
 const routes = [
-    {
-      path: "/ListaAuditorias",
-      name: "ListaAuditorias",
-      component: ListaAuditorias,
-      meta: { requiresAuth: true, requiresPerito: true },
-    },
+  {
+    path: "/ListaAuditorias",
+    name: "ListaAuditorias",
+    component: ListaAuditorias,
+    meta: { requiresAuth: true, requiresPerito: true },
+  },
 
-    {
-      path: "/InfoAuditoria/:id",
-      name: "InfoAuditoria",
-      component: InfoAuditoria,
-      meta: { requiresAuth: true, requiresPerito: true, requiresAcesso: true },
-    },
+  {
+    path: "/InfoAuditoria/:id",
+    name: "InfoAuditoria",
+    component: InfoAuditoria,
+    meta: { requiresAuth: true, requiresPerito: true, requiresAcesso: true },
+  },
 
-    {
-      path: "/RegistoAuditoria/:id",
-      name: "RegistoAuditoria",
-      component: RegistoAuditoria,
-      meta: { requiresAuth: true, requiresPerito: true, requiresAcesso: true, porCompletar: true },
-    },
+  {
+    path: "/RegistoAuditoria/:id",
+    name: "RegistoAuditoria",
+    component: RegistoAuditoria,
+    meta: { requiresAuth: true, requiresPerito: true, requiresAcesso: true, porCompletar: true },
+  },
 
-    {
-      path: "/Perfil",
-      name: "UserPerfil",
-      component: UserPerfil,
-      meta: { requiresAuth: true, requiresPerito: true },
-    },
+  {
+    path: "/Perfil",
+    name: "UserPerfil",
+    component: UserPerfil,
+    meta: { requiresAuth: true, requiresPerito: true },
+  },
 
-    {
-      path: "/",
-      name: "LoginPage",
-      component: LoginPage,
-    },
+  {
+    path: "/",
+    name: "LoginPage",
+    component: LoginPage,
+  },
 
-    {
-      path: "/register",
-      name: "RegisterPage",
-      component: RegisterPage,
-    },
+  {
+    path: "/register",
+    name: "RegisterPage",
+    component: RegisterPage,
+  },
 
-    {
-      path: "/PendingValidation",
-      name: "PendingValidation",
-      component: PendingValidation,
-    },
+  {
+    path: "/PendingValidation",
+    name: "PendingValidation",
+    component: PendingValidation,
+  },
 ];
 
 const router = createRouter({
-    history: createWebHistory(),
-    routes,
+  history: createWebHistory(),
+  routes,
 });
 
 
@@ -100,33 +100,35 @@ router.beforeEach(async (to, from, next) => {
   const snap = await getDoc(doc(db, 'users', user.uid));
   const role = snap.exists() ? snap.data().role : null;
 
-  // Verificação de acesso à auditoria (precisa acontecer antes do next())
-  if (to.meta.requiresAcesso) {
-    const auditoriaId = to.params.id;
-    const auditoriaRef = doc(db, 'auditorias', auditoriaId);
-    const auditoriaSnap = await getDoc(auditoriaRef);
+  const peritosQuery = query(
+    collection(db, 'peritos'),
+    where('uid', '==', user.uid)
+  )
+  const peritosSnap = await getDocs(peritosQuery)
+  const isPeritoNaColecao = !peritosSnap.empty
 
-    if (!auditoriaSnap.exists()) {
-      return next({ name: 'ListaAuditorias' });
-    }
-
-    const auditoria = auditoriaSnap.data();
-
-    if (auditoria.perito !== user.uid || !query(collection(db, "peritos"), where("uid", "==", user.uid))) {
+  if (to.meta.requiresPerito) {
+    if (role !== 'perito' || !isPeritoNaColecao) {
       return next({ name: 'PendingValidation' });
-    }
-
-    if (to.meta.porCompletar) {
-      if (auditoria.status === "Concluido") {
-        return next({ name: "InfoAuditoria", params: { id: auditoriaId }, });
-      }
     }
   }
 
-  // Verificação do papel de perito
-  if (to.meta.requiresPerito) {
-    if (role !== 'perito') {
-      return next({ name: 'PendingValidation' });
+  if (to.meta.requiresAcesso && to.params.id) {
+    const auditoriaId = to.params.id
+    const auditoriaRef = doc(db, 'auditorias', auditoriaId)
+    const auditoriaSnap = await getDoc(auditoriaRef)
+
+    if (!auditoriaSnap.exists()) {
+      return next({ name: 'ListaAuditorias' })
+    }
+
+    const auditoria = auditoriaSnap.data()
+    if (auditoria.perito !== user.uid) {
+      return next({ name: 'PendingValidation' })
+    }
+
+    if (to.meta.porCompletar && auditoria.status === 'Concluido') {
+      return next({ name: 'InfoAuditoria', params: { id: auditoriaId } })
     }
   }
 
