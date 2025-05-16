@@ -16,17 +16,34 @@
                     <button class="transparente" @click="adicionaQuantidade(elemento)"><h1>+</h1></button>
                 </div>
             </div>
+            <div class="pop-up">
+                <div class="flex-linha item-ponta">
+                    <div></div>
+                    <button class="flex-linha centro" id="filtro" @click="adicionaEstado = !adicionaEstado">
+                        <h2>Adicionar</h2>
+                    </button>
+                </div>
+                
+
+                <PopUpAdicionar v-if="adicionaEstado" :itemsDisponiveis="getItensDisponiveis()" @fechaFiltro="fechaFiltro"/>
+            </div>
         </div>
     </div>
 </template>
 
 
 <script>
+    import PopUpAdicionar from './PopUpAdicionar.vue'
     export default {
         name: "PopUpInfo",
+        components: {
+            PopUpAdicionar
+        },
         data() {
             return {
+                adicionaEstado: false,
                 listaAlteracao: [],
+                item: {}
             }
         },
         props: {
@@ -59,6 +76,19 @@
                     item.quantidade++
                     this.$emit('alteracoes', {elemento ,"quantidade": 1})
                 }
+            },
+            fechaFiltro(novoItem) {
+                this.item = {
+                    nome: novoItem.nome,
+                    presente: false,
+                    quantidade: 1
+                }
+                this.$emit('novoItem', this.item)
+                this.adicionaEstado = false;
+            },
+            getItensDisponiveis() {
+                const nomesSelecionados = this.dados.map(item => item.nome);
+                return this.lista.filter(item => !nomesSelecionados.includes(item.nome));
             },
         },
     }
