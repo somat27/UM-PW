@@ -171,8 +171,8 @@ const auditoriaSelecionada = ref(null); // Nova ref para auditoria selecionada
 
 // Ícones para os diferentes status
 const STATUS_ICONS = {
-  Pendente: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-  Analise: "https://maps.google.com/mapfiles/ms/icons/yellow-dot.png",
+  Pendente: "https://maps.google.com/mapfiles/ms/icons/yellow-dot.png",
+  Analise: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
   Resolvido: "https://maps.google.com/mapfiles/ms/icons/green-dot.png",
   Rejeitado: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
 };
@@ -634,7 +634,7 @@ watch(
 
 .tab-link {
   text-decoration: none;
-  color: #6c757d;
+  color: #204c6d;
   font-size: 14px;
   line-height: 1.5;
   padding: 10px 16px;
@@ -648,11 +648,11 @@ watch(
 
 .tab-link:hover {
   background-color: #f8f9fa;
-  color: #495057;
+  color: #204c6d;
 }
 
 .tab-link.active {
-  color: #1890ff;
+  color: #204c6d;
   background-color: rgba(24, 144, 255, 0.08);
   font-weight: 600;
 }
@@ -664,7 +664,7 @@ watch(
   left: 16px;
   right: 16px;
   height: 2px;
-  background-color: #1890ff;
+  background-color: #204c6d;
   border-radius: 2px 2px 0 0;
 }
 
@@ -675,7 +675,7 @@ watch(
   left: 50%;
   right: 50%;
   height: 2px;
-  background-color: #1890ff;
+  background-color: #204c6d;
   transition: all 0.3s ease;
   border-radius: 2px 2px 0 0;
 }
@@ -730,11 +730,11 @@ watch(
 }
 
 .pendente-marker {
-  background-color: #1e90ff; /* Azul*/
+  background-color: #faad14; /* Amarelo */
 }
 
 .analise-marker {
-  background-color: #faad14; /* Amarelo */
+  background-color: #1e90ff; /* Azul*/
 }
 
 .resolvido-marker {

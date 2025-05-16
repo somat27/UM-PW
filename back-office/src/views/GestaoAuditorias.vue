@@ -15,39 +15,72 @@
             <h2>Gestão de Auditorias</h2>
           </div>
 
-          <FiltroTabela v-model:modelSearch="searchQuery" v-model:modelSort="sortKey" v-model:modelOrder="sortOrder"
-            :sortColumns="columns" :showAdd="false" :filterOptions="filterOptions" @filter-applied="handleFilterApplied"
-            search-placeholder="Procurar Auditorias..." sort-placeholder="Ordenar por…" />
+          <FiltroTabela
+            v-model:modelSearch="searchQuery"
+            v-model:modelSort="sortKey"
+            v-model:modelOrder="sortOrder"
+            :sortColumns="columns"
+            :showAdd="false"
+            :filterOptions="filterOptions"
+            @filter-applied="handleFilterApplied"
+            search-placeholder="Procurar Auditorias..."
+            sort-placeholder="Ordenar por…"
+          />
 
-
-          <GenericTable :columns="[...columns, editColumn]" :data="filteredData" class="table-scroll">
+          <GenericTable
+            :columns="[...columns, editColumn]"
+            :data="filteredData"
+            class="table-scroll"
+          >
             <template #cell-acoes="{ row }">
-              <button @click="viewAuditoria(row)" class="icon-btn" title="Ver detalhes">
-                <img src="@/assets/icons8-eye-forma-light/icons8-eye-24.png" alt="Ver detalhes" />
+              <button
+                @click="viewAuditoria(row)"
+                class="icon-btn"
+                title="Ver detalhes"
+              >
+                <img
+                  src="@/assets/icons8-eye-forma-light/icons8-eye-24.png"
+                  alt="Ver detalhes"
+                />
               </button>
             </template>
           </GenericTable>
 
           <!-- Modal de detalhes -->
           <transition name="modal">
-            <div v-if="selectedAuditoria" class="modal-overlay" @click.self="closeModal">
+            <div
+              v-if="selectedAuditoria"
+              class="modal-overlay"
+              @click.self="closeModal"
+            >
               <div class="modal-container" role="dialog" aria-modal="true">
                 <!-- Header -->
                 <header class="modal-header">
                   <h3>Auditoria: {{ selectedAuditoria.id }}</h3>
-                  <button class="modal-close" @click="closeModal" aria-label="Fechar">×</button>
+                  <button
+                    class="modal-close"
+                    @click="closeModal"
+                    aria-label="Fechar"
+                  >
+                    ×
+                  </button>
                 </header>
 
                 <!-- Body (scroll se exceder altura) -->
                 <div class="modal-body">
                   <!-- Mapa -->
                   <div v-if="selectedAuditoria.coordenadas" class="map-wrapper">
-                    <iframe :src="`
+                    <iframe
+                      :src="`
                 https://www.google.com/maps?q=
                 ${selectedAuditoria.coordenadas.latitude},
                 ${selectedAuditoria.coordenadas.longitude}
                 &hl=pt&z=15&output=embed
-              `" class="map-iframe" allowfullscreen loading="lazy"></iframe>
+              `"
+                      class="map-iframe"
+                      allowfullscreen
+                      loading="lazy"
+                    ></iframe>
                   </div>
 
                   <!-- Dados principais em grid -->
@@ -71,19 +104,36 @@
                   <!-- Descrição -->
                   <div v-if="selectedAuditoria.descricao" class="section">
                     <p class="section-title">Descrição:</p>
-                    <p class="description-text">{{ selectedAuditoria.descricao }}</p>
+                    <p class="description-text">
+                      {{ selectedAuditoria.descricao }}
+                    </p>
                   </div>
 
                   <!-- Mostra imagens/vídeos -->
-                  <div v-if="selectedAuditoria.imagemVideo?.length" class="imagem-video-container">
+                  <div
+                    v-if="selectedAuditoria.imagemVideo?.length"
+                    class="imagem-video-container"
+                  >
                     <p class="section-title">Imagens/Videos:</p>
-                    <div v-for="(item, idx) in selectedAuditoria.imagemVideo" :key="idx" class="imagem-video-item">
+                    <div
+                      v-for="(item, idx) in selectedAuditoria.imagemVideo"
+                      :key="idx"
+                      class="imagem-video-item"
+                    >
                       <!-- se for imagem -->
-                      <img v-if="item.tipo.startsWith('image')" :src="item.url" alt="imagem da auditoria"
-                        class="max-w-full rounded shadow" />
+                      <img
+                        v-if="item.tipo.startsWith('image')"
+                        :src="item.url"
+                        alt="imagem da auditoria"
+                        class="max-w-full rounded shadow"
+                      />
                       <!-- se for vídeo -->
-                      <video v-else-if="item.tipo.startsWith('video')" :src="item.url" controls
-                        class="max-w-full rounded shadow" />
+                      <video
+                        v-else-if="item.tipo.startsWith('video')"
+                        :src="item.url"
+                        controls
+                        class="max-w-full rounded shadow"
+                      />
                       <!-- caso tenhas outros tipos -->
                       <p v-else class="text-sm text-gray-600">
                         Tipo desconhecido: {{ item.tipo }}
@@ -96,9 +146,15 @@
                     <div class="section-header">
                       <p class="section-title">Materiais</p>
                       <div v-if="isEditable">
-                        <button class="add-button" @click="openMaterialsModal">+ Novo</button>
-                        <button class="save-button" :disabled="saving" @click="saveAll">
-                          {{ saving ? 'A guardar…' : 'Salvar' }}
+                        <button class="add-button" @click="openMaterialsModal">
+                          + Novo
+                        </button>
+                        <button
+                          class="save-button"
+                          :disabled="saving"
+                          @click="saveAll"
+                        >
+                          {{ saving ? "A guardar…" : "Salvar" }}
                         </button>
                       </div>
                     </div>
@@ -111,18 +167,32 @@
                         </tr>
                       </thead>
                       <tbody>
-                        <tr v-for="m in selectedAuditoria.materiais" :key="m.id">
+                        <tr
+                          v-for="m in selectedAuditoria.materiais"
+                          :key="m.id"
+                        >
                           <td>{{ m.nome }}</td>
                           <td class="text-center">
-                            <input type="number" min="0" v-model.number="m.quantidade" :disabled="!isEditable"
-                              class="qty-input" />
+                            <input
+                              type="number"
+                              min="0"
+                              v-model.number="m.quantidade"
+                              :disabled="!isEditable"
+                              class="qty-input"
+                            />
                           </td>
                         </tr>
                       </tbody>
                     </table>
 
                     <!-- Erros de stock por material -->
-                    <p v-for="(err, mid) in materialErrors" :key="mid" class="error-text">{{ err }}</p>
+                    <p
+                      v-for="(err, mid) in materialErrors"
+                      :key="mid"
+                      class="error-text"
+                    >
+                      {{ err }}
+                    </p>
                   </div>
 
                   <!-- === TABELA DE PROFISSIONAIS === -->
@@ -130,9 +200,15 @@
                     <div class="section-header">
                       <p class="section-title">Profissionais</p>
                       <div v-if="isEditable">
-                        <button class="add-button" @click="openProfsModal">+ Novo</button>
-                        <button class="save-button" :disabled="saving" @click="saveAll">
-                          {{ saving ? 'A guardar…' : 'Salvar' }}
+                        <button class="add-button" @click="openProfsModal">
+                          + Novo
+                        </button>
+                        <button
+                          class="save-button"
+                          :disabled="saving"
+                          @click="saveAll"
+                        >
+                          {{ saving ? "A guardar…" : "Salvar" }}
                         </button>
                       </div>
                     </div>
@@ -145,18 +221,29 @@
                         </tr>
                       </thead>
                       <tbody>
-                        <tr v-for="p in selectedAuditoria.profissionais" :key="p.id">
+                        <tr
+                          v-for="p in selectedAuditoria.profissionais"
+                          :key="p.id"
+                        >
                           <td>{{ p.nome }}</td>
                           <td class="text-center">
-                            <input type="number" min="0" v-model.number="p.quantidade" :disabled="!isEditable"
-                              class="qty-input" />
+                            <input
+                              type="number"
+                              min="0"
+                              v-model.number="p.quantidade"
+                              :disabled="!isEditable"
+                              class="qty-input"
+                            />
                           </td>
                         </tr>
                       </tbody>
                     </table>
                   </div>
                 </div>
-                <Modal v-if="showMaterialsModal" @close="showMaterialsModal = false">
+                <Modal
+                  v-if="showMaterialsModal"
+                  @close="showMaterialsModal = false"
+                >
                   <h3>Seleciona Materiais</h3>
                   <table class="w-full table-auto">
                     <thead>
@@ -167,24 +254,45 @@
                       </tr>
                     </thead>
                     <tbody>
-                      <tr v-for="mat in filteredMaterials" :key="mat.id" class="border-t">
+                      <tr
+                        v-for="mat in filteredMaterials"
+                        :key="mat.id"
+                        class="border-t"
+                      >
                         <td class="p-2">
                           <label class="inline-flex items-center">
-                            <input type="checkbox" :value="mat.id" v-model="selectedItemsMap.material" class="mr-2" />
+                            <input
+                              type="checkbox"
+                              :value="mat.id"
+                              v-model="selectedItemsMap.material"
+                              class="mr-2"
+                            />
                             {{ mat.nome }}
                           </label>
                         </td>
                         <td class="p-2">{{ mat.quantidade }}</td>
                         <td class="p-2">
-                          <input type="number" v-model.number="selectedItemsQuantities[mat.id]" :min="1"
-                            :max="mat.quantidade" :disabled="!selectedItemsMap.material.includes(mat.id)"
-                            class="w-20 border rounded p-1" />
+                          <input
+                            type="number"
+                            v-model.number="selectedItemsQuantities[mat.id]"
+                            :min="1"
+                            :max="mat.quantidade"
+                            :disabled="
+                              !selectedItemsMap.material.includes(mat.id)
+                            "
+                            class="w-20 border rounded p-1"
+                          />
                         </td>
                       </tr>
                     </tbody>
                   </table>
                   <div class="mt-4 text-right">
-                    <button @click="showMaterialsModal = false" class="px-4 py-2 rounded bg-gray-200">Fechar</button>
+                    <button
+                      @click="showMaterialsModal = false"
+                      class="px-4 py-2 rounded bg-gray-200"
+                    >
+                      Fechar
+                    </button>
                   </div>
                 </Modal>
 
@@ -199,25 +307,45 @@
                       </tr>
                     </thead>
                     <tbody>
-                      <tr v-for="prof in filteredProfs" :key="prof.id" class="border-t">
+                      <tr
+                        v-for="prof in filteredProfs"
+                        :key="prof.id"
+                        class="border-t"
+                      >
                         <td class="p-2">
                           <label class="inline-flex items-center">
-                            <input type="checkbox" :value="prof.id" v-model="selectedItemsMap.profissional"
-                              class="mr-2" />
+                            <input
+                              type="checkbox"
+                              :value="prof.id"
+                              v-model="selectedItemsMap.profissional"
+                              class="mr-2"
+                            />
                             {{ prof.nome }}
                           </label>
                         </td>
                         <td class="p-2">{{ prof.quantidade }}</td>
                         <td class="p-2">
-                          <input type="number" v-model.number="selectedItemsQuantities[prof.id]" :min="1"
-                            :max="prof.quantidade" :disabled="!selectedItemsMap.profissional.includes(prof.id)"
-                            class="w-20 border rounded p-1" />
+                          <input
+                            type="number"
+                            v-model.number="selectedItemsQuantities[prof.id]"
+                            :min="1"
+                            :max="prof.quantidade"
+                            :disabled="
+                              !selectedItemsMap.profissional.includes(prof.id)
+                            "
+                            class="w-20 border rounded p-1"
+                          />
                         </td>
                       </tr>
                     </tbody>
                   </table>
                   <div class="mt-4 text-right">
-                    <button @click="showProfsModal = false" class="px-4 py-2 rounded bg-gray-200">Fechar</button>
+                    <button
+                      @click="showProfsModal = false"
+                      class="px-4 py-2 rounded bg-gray-200"
+                    >
+                      Fechar
+                    </button>
                   </div>
                 </Modal>
               </div>
@@ -230,60 +358,60 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import NavigationList from '@/components/NavigationList.vue';
-import GenericTable from '@/components/GenericTable.vue';
-import { collection, getDocs } from 'firebase/firestore';
-import { doc, updateDoc, getDoc } from 'firebase/firestore'
-import { db } from '@/firebase';
-import FiltroTabela from '@/components/FiltroTabela.vue';
+import { ref, computed, onMounted } from "vue";
+import NavigationList from "@/components/NavigationList.vue";
+import GenericTable from "@/components/GenericTable.vue";
+import { collection, getDocs } from "firebase/firestore";
+import { doc, updateDoc, getDoc } from "firebase/firestore";
+import { db } from "@/firebase";
+import FiltroTabela from "@/components/FiltroTabela.vue";
 
 // mapeamento de tipo → label
 const tipoLabels = {
-  sinals: 'Sinalização em Falta',
-  roads: 'Vias e Passeios',
-  lights: 'Iluminação Pública'
+  sinals: "Sinalização em Falta",
+  roads: "Vias e Passeios",
+  lights: "Iluminação Pública",
 };
 
 const tableData = ref([]);
-const searchQuery = ref('');
-const sortKey = ref('');      // coluna por onde ordenar
-const sortOrder = ref('asc');   // 'asc' ou 'desc'
+const searchQuery = ref("");
+const sortKey = ref(""); // coluna por onde ordenar
+const sortOrder = ref("asc"); // 'asc' ou 'desc'
 const selectedAuditoria = ref(null);
 
-const showMaterialsModal = ref(false)
-const showProfsModal = ref(false)
+const showMaterialsModal = ref(false);
+const showProfsModal = ref(false);
 
-const allMaterials = ref([])  // vai trazer todos os docs de “materiais”
-const allProfissionais = ref([])  // idem para “profissionais”
+const allMaterials = ref([]); // vai trazer todos os docs de “materiais”
+const allProfissionais = ref([]); // idem para “profissionais”
 
-const isEditable = computed(() =>
-  selectedAuditoria.value.status.toLowerCase() === 'pendente'
-)
+const isEditable = computed(
+  () => selectedAuditoria.value.status.toLowerCase() === "pendente"
+);
 
 const filteredMaterials = computed(() => {
-  const usados = selectedAuditoria.value.materiais.map(i => i.id)
-  return allMaterials.value.filter(mat =>
-    !usados.includes(mat.id) && mat.quantidade > 0
-  )
-})
+  const usados = selectedAuditoria.value.materiais.map((i) => i.id);
+  return allMaterials.value.filter(
+    (mat) => !usados.includes(mat.id) && mat.quantidade > 0
+  );
+});
 
 const filteredProfs = computed(() => {
-  const usados = selectedAuditoria.value.profissionais.map(i => i.id)
-  return allProfissionais.value.filter(prof =>
-    !usados.includes(prof.id) && prof.quantidade > 0
-  )
-})
+  const usados = selectedAuditoria.value.profissionais.map((i) => i.id);
+  return allProfissionais.value.filter(
+    (prof) => !usados.includes(prof.id) && prof.quantidade > 0
+  );
+});
 
 const appliedFilters = ref({});
 const filterOptions = computed(() => {
   // para cada campo que queiras filtrar
-  const campos = ['status', 'tipo'];
+  const campos = ["status", "tipo"];
   const opts = {};
-  campos.forEach(key => {
+  campos.forEach((key) => {
     opts[key] = [
-      ...new Set(tableData.value.map(item => item[key] ?? ''))  // retira undefined
-    ].filter(v => v !== '');  // opcional: tira valores vazios
+      ...new Set(tableData.value.map((item) => item[key] ?? "")), // retira undefined
+    ].filter((v) => v !== ""); // opcional: tira valores vazios
   });
   return opts;
 });
@@ -300,12 +428,10 @@ const filteredData = computed(() => {
   // pesquisa por texto
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase();
-    data = data.filter(item => {
-      const valores = [
-        item.id
-      ];
-      return valores.some(v =>
-        (v ?? '').toString().toLowerCase().includes(q)
+    data = data.filter((item) => {
+      const valores = [item.id];
+      return valores.some((v) =>
+        (v ?? "").toString().toLowerCase().includes(q)
       );
     });
   }
@@ -313,7 +439,7 @@ const filteredData = computed(() => {
   // filtros por checkbox
   Object.entries(appliedFilters.value).forEach(([key, vals]) => {
     if (vals.length) {
-      data = data.filter(item => vals.includes(item[key]));
+      data = data.filter((item) => vals.includes(item[key]));
     }
   });
 
@@ -322,8 +448,8 @@ const filteredData = computed(() => {
     data = [...data].sort((a, b) => {
       const A = a[sortKey.value];
       const B = b[sortKey.value];
-      if (A < B) return sortOrder.value === 'asc' ? -1 : 1;
-      if (A > B) return sortOrder.value === 'asc' ? 1 : -1;
+      if (A < B) return sortOrder.value === "asc" ? -1 : 1;
+      if (A > B) return sortOrder.value === "asc" ? 1 : -1;
       return 0;
     });
   }
@@ -331,36 +457,35 @@ const filteredData = computed(() => {
   return data;
 });
 
-
 // colunas: só ID, Tipo, Estado + ações
 const columns = [
-  { key: 'id', label: 'ID', sortable: true, headerClass: 'col-id' },
-  { key: 'tipo', label: 'Tipo', sortable: true },
-  { key: 'status', label: 'Estado', sortable: true }
+  { key: "id", label: "ID", sortable: true, headerClass: "col-id" },
+  { key: "tipo", label: "Tipo", sortable: true },
+  { key: "status", label: "Estado", sortable: true },
 ];
-const editColumn = { key: 'acoes', label: 'Ações' }
+const editColumn = { key: "acoes", label: "Ações" };
 
 // carrega auditorias da Firestore
 async function loadAuditorias() {
-  const snap = await getDocs(collection(db, 'auditorias'))
-  tableData.value = snap.docs.map(doc => {
-    const d = doc.data()
+  const snap = await getDocs(collection(db, "auditorias"));
+  tableData.value = snap.docs.map((doc) => {
+    const d = doc.data();
     return {
       id: doc.id,
       tipo: tipoLabels[d.tipo] || d.tipo,
-      status: d.status || '',
+      status: d.status || "",
       coordenadas: d.coordenadas || { latitude: 0, longitude: 0 },
       dataInicio: d.dataInicio || null,
       dataFim: d.dataFim || null,
-      descricao: d.descricao || '',
-      endereco: d.endereco || '',
+      descricao: d.descricao || "",
+      endereco: d.endereco || "",
       imagemVideo: Array.isArray(d.imagemVideo) ? d.imagemVideo : [],
       materiais: Array.isArray(d.materiais) ? d.materiais : [],
       profissionais: Array.isArray(d.profissionais) ? d.profissionais : [],
-      perito: d.perito || '',
-      tempoEstimado: d.tempoEstimado || 0
-    }
-  })
+      perito: d.perito || "",
+      tempoEstimado: d.tempoEstimado || 0,
+    };
+  });
 }
 
 onMounted(loadAuditorias);
@@ -378,168 +503,176 @@ function closeModal() {
 // formata timestamp Firestore para string PT-PT
 function formatDate(ts) {
   const date = ts.toDate ? ts.toDate() : ts;
-  return new Intl.DateTimeFormat('pt-PT', {
-    dateStyle: 'long',
-    timeStyle: 'medium'
-  }).format(date) + ` UTC${date.toString().match(/GMT([+-]\d+)/)[1]}`;
+  return (
+    new Intl.DateTimeFormat("pt-PT", {
+      dateStyle: "long",
+      timeStyle: "medium",
+    }).format(date) + ` UTC${date.toString().match(/GMT([+-]\d+)/)[1]}`
+  );
 }
 
 // para facilitar o v-model de checkboxes + quantidades
 const selectedItemsMap = ref({
   material: [],
-  profissional: []
-})
-const selectedItemsQuantities = ref({})
+  profissional: [],
+});
+const selectedItemsQuantities = ref({});
 
 async function fetchAll() {
   // materiais
-  const matsSnap = await getDocs(collection(db, 'materiais'))
-  allMaterials.value = matsSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+  const matsSnap = await getDocs(collection(db, "materiais"));
+  allMaterials.value = matsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
   // profissionais
-  const profsSnap = await getDocs(collection(db, 'profissionais'))
-  allProfissionais.value = profsSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+  const profsSnap = await getDocs(collection(db, "profissionais"));
+  allProfissionais.value = profsSnap.docs.map((d) => ({
+    id: d.id,
+    ...d.data(),
+  }));
 }
 
-onMounted(fetchAll)
+onMounted(fetchAll);
 
 function openMaterialsModal() {
-  showMaterialsModal.value = true
+  showMaterialsModal.value = true;
 }
 
 function openProfsModal() {
-  showProfsModal.value = true
+  showProfsModal.value = true;
 }
 
-const saving = ref(false)
+const saving = ref(false);
 
 async function saveAll() {
   if (!selectedAuditoria.value?.id) {
-    alert('Nenhuma auditoria seleccionada')
-    return
+    alert("Nenhuma auditoria seleccionada");
+    return;
   }
 
-  saving.value = true
-  const auditRef = doc(db, 'auditorias', selectedAuditoria.value.id)
+  saving.value = true;
+  const auditRef = doc(db, "auditorias", selectedAuditoria.value.id);
 
   try {
     // 1) Buscar auditoria original
-    const auditSnap = await getDoc(auditRef)
-    const origData = auditSnap.data() || {}
-    const origMats = origData.materiais || []
-    const origProfs = origData.profissionais || []
+    const auditSnap = await getDoc(auditRef);
+    const origData = auditSnap.data() || {};
+    const origMats = origData.materiais || [];
+    const origProfs = origData.profissionais || [];
 
     // 2) Construir arrays actualizados
-    const updatedMats = origMats.map(item => ({
+    const updatedMats = origMats.map((item) => ({
       id: item.id,
       nome: item.nome,
-      quantidade: selectedAuditoria.value.materiais.find(i => i.id === item.id)?.quantidade
-        ?? item.quantidade
-    }))
+      quantidade:
+        selectedAuditoria.value.materiais.find((i) => i.id === item.id)
+          ?.quantidade ?? item.quantidade,
+    }));
     for (const matId of selectedItemsMap.value.material) {
-      const qtd = selectedItemsQuantities.value[matId] || 0
+      const qtd = selectedItemsQuantities.value[matId] || 0;
       if (qtd > 0) {
-        const mat = allMaterials.value.find(m => m.id === matId)
-        updatedMats.push({ id: matId, nome: mat.nome, quantidade: qtd })
+        const mat = allMaterials.value.find((m) => m.id === matId);
+        updatedMats.push({ id: matId, nome: mat.nome, quantidade: qtd });
       }
     }
 
-    const updatedProfs = origProfs.map(item => ({
+    const updatedProfs = origProfs.map((item) => ({
       id: item.id,
       nome: item.nome,
-      quantidade: selectedAuditoria.value.profissionais.find(i => i.id === item.id)?.quantidade
-        ?? item.quantidade
-    }))
+      quantidade:
+        selectedAuditoria.value.profissionais.find((i) => i.id === item.id)
+          ?.quantidade ?? item.quantidade,
+    }));
     for (const profId of selectedItemsMap.value.profissional) {
-      const qtd = selectedItemsQuantities.value[profId] || 0
+      const qtd = selectedItemsQuantities.value[profId] || 0;
       if (qtd > 0) {
-        const prof = allProfissionais.value.find(p => p.id === profId)
-        updatedProfs.push({ id: profId, nome: prof.nome, quantidade: qtd })
+        const prof = allProfissionais.value.find((p) => p.id === profId);
+        updatedProfs.push({ id: profId, nome: prof.nome, quantidade: qtd });
       }
     }
 
     // 3) Validação de stock — não permitir diffs maiores que o disponível
     for (const item of updatedMats) {
-      const orig = origMats.find(o => o.id === item.id)
-      const origQ = orig?.quantidade || 0
-      const diff = item.quantidade - origQ
+      const orig = origMats.find((o) => o.id === item.id);
+      const origQ = orig?.quantidade || 0;
+      const diff = item.quantidade - origQ;
       if (diff > 0) {
         // fetch stock actual
-        const mSnap = await getDoc(doc(db, 'materiais', item.id))
-        const stock = mSnap.data().quantidade
+        const mSnap = await getDoc(doc(db, "materiais", item.id));
+        const stock = mSnap.data().quantidade;
         if (diff > stock) {
-          alert(`Não podes adicionar mais do que ${stock} unidades do material "${item.nome}".`)
-          saving.value = false
-          return
+          alert(
+            `Não podes adicionar mais do que ${stock} unidades do material "${item.nome}".`
+          );
+          saving.value = false;
+          return;
         }
       }
     }
     for (const item of updatedProfs) {
-      const orig = origProfs.find(o => o.id === item.id)
-      const origQ = orig?.quantidade || 0
-      const diff = item.quantidade - origQ
+      const orig = origProfs.find((o) => o.id === item.id);
+      const origQ = orig?.quantidade || 0;
+      const diff = item.quantidade - origQ;
       if (diff > 0) {
-        const pSnap = await getDoc(doc(db, 'profissionais', item.id))
-        const stock = pSnap.data().quantidade
+        const pSnap = await getDoc(doc(db, "profissionais", item.id));
+        const stock = pSnap.data().quantidade;
         if (diff > stock) {
-          alert(`Não podes adicionar mais do que ${stock} unidades do profissional "${item.nome}".`)
-          saving.value = false
-          return
+          alert(
+            `Não podes adicionar mais do que ${stock} unidades do profissional "${item.nome}".`
+          );
+          saving.value = false;
+          return;
         }
       }
     }
 
     // 4) Ajustar stocks na Firebase
     for (const item of updatedMats) {
-      const orig = origMats.find(o => o.id === item.id)
-      const origQ = orig?.quantidade || 0
-      const diff = item.quantidade - origQ
+      const orig = origMats.find((o) => o.id === item.id);
+      const origQ = orig?.quantidade || 0;
+      const diff = item.quantidade - origQ;
       if (diff !== 0) {
-        const mRef = doc(db, 'materiais', item.id)
-        const mSnap = await getDoc(mRef)
-        const atual = mSnap.data().quantidade
-        await updateDoc(mRef, { quantidade: atual - diff })
+        const mRef = doc(db, "materiais", item.id);
+        const mSnap = await getDoc(mRef);
+        const atual = mSnap.data().quantidade;
+        await updateDoc(mRef, { quantidade: atual - diff });
       }
     }
     for (const item of updatedProfs) {
-      const orig = origProfs.find(o => o.id === item.id)
-      const origQ = orig?.quantidade || 0
-      const diff = item.quantidade - origQ
+      const orig = origProfs.find((o) => o.id === item.id);
+      const origQ = orig?.quantidade || 0;
+      const diff = item.quantidade - origQ;
       if (diff !== 0) {
-        const pRef = doc(db, 'profissionais', item.id)
-        const pSnap = await getDoc(pRef)
-        const atual = pSnap.data().quantidade
-        await updateDoc(pRef, { quantidade: atual - diff })
+        const pRef = doc(db, "profissionais", item.id);
+        const pSnap = await getDoc(pRef);
+        const atual = pSnap.data().quantidade;
+        await updateDoc(pRef, { quantidade: atual - diff });
       }
     }
 
     // 5) Gravar auditoria actualizada
     await updateDoc(auditRef, {
       materiais: updatedMats,
-      profissionais: updatedProfs
-    })
+      profissionais: updatedProfs,
+    });
 
     // 6) Actualizar estado local
-    selectedAuditoria.value.materiais = updatedMats
-    selectedAuditoria.value.profissionais = updatedProfs
+    selectedAuditoria.value.materiais = updatedMats;
+    selectedAuditoria.value.profissionais = updatedProfs;
 
     // 7) Limpar selecções e fechar modais
-    selectedItemsMap.value.material = []
-    selectedItemsMap.value.profissional = []
-    selectedItemsQuantities.value = {}
-    showMaterialsModal.value = false
-    showProfsModal.value = false
+    selectedItemsMap.value.material = [];
+    selectedItemsMap.value.profissional = [];
+    selectedItemsQuantities.value = {};
+    showMaterialsModal.value = false;
+    showProfsModal.value = false;
 
-    console.log('saveAll concluído com sucesso')
-  }
-  catch (erro) {
-    console.error('Erro ao guardar auditoria:', erro)
-    alert('Ocorreu um erro ao gravar. Vê o console para mais detalhes.')
-  }
-  finally {
-    saving.value = false
+    console.log("saveAll concluído com sucesso");
+  } catch (erro) {
+    console.error("Erro ao guardar auditoria:", erro);
+    alert("Ocorreu um erro ao gravar. Vê o console para mais detalhes.");
+  } finally {
+    saving.value = false;
   }
 }
-
 </script>
 
 <style scoped>
@@ -653,7 +786,7 @@ async function saveAll() {
   margin-top: 1.5em;
   padding: 0.6em 1.2em;
   font-size: 1em;
-  background: #007bff;
+  background: #204c6d;
   color: #fff;
   border: none;
   border-radius: 4px;
@@ -776,7 +909,7 @@ async function saveAll() {
 }
 
 .primary-button {
-  background: #0069d9;
+  background: #204c6d;
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -844,7 +977,6 @@ async function saveAll() {
 }
 
 @media (max-width: 480px) {
-
   .materials-table th,
   .materials-table td,
   .professionals-table th,
@@ -873,7 +1005,7 @@ async function saveAll() {
   background: transparent;
   border: none;
   font-size: 1rem;
-  color: #0069d9;
+  color: #204c6d;
   cursor: pointer;
   transition: color 0.2s;
 }

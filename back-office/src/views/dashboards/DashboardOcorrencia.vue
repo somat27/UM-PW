@@ -10,32 +10,51 @@
       </aside>
       <main class="main-content">
         <div class="content-wrapper">
-
           <nav class="navigation-tabs">
-            <router-link to="/dashboards/auditorias" class="tab-link" :class="{ active: activeTab === 'auditorias' }"
-              @click="activeTab = 'auditorias'">
+            <router-link
+              to="/dashboards/auditorias"
+              class="tab-link"
+              :class="{ active: activeTab === 'auditorias' }"
+              @click="activeTab = 'auditorias'"
+            >
               Auditorias por região
             </router-link>
-            <router-link to="/dashboards/ocorrencias" class="tab-link" :class="{ active: activeTab === 'ocorrencias' }"
-              @click="activeTab = 'ocorrencias'">
+            <router-link
+              to="/dashboards/ocorrencias"
+              class="tab-link"
+              :class="{ active: activeTab === 'ocorrencias' }"
+              @click="activeTab = 'ocorrencias'"
+            >
               Ocorrências por região
             </router-link>
-            <router-link to="/dashboards/peritos" class="tab-link" :class="{ active: activeTab === 'peritos' }"
-              @click="activeTab = 'peritos'">
+            <router-link
+              to="/dashboards/peritos"
+              class="tab-link"
+              :class="{ active: activeTab === 'peritos' }"
+              @click="activeTab = 'peritos'"
+            >
               Peritos Ativos e em Espera
             </router-link>
-            <router-link to="/dashboards/materiais" class="tab-link" :class="{ active: activeTab === 'materiais' }"
-              @click="activeTab = 'materiais'">
+            <router-link
+              to="/dashboards/materiais"
+              class="tab-link"
+              :class="{ active: activeTab === 'materiais' }"
+              @click="activeTab = 'materiais'"
+            >
               Materiais Usados & Por Usar
             </router-link>
-            <router-link to="/dashboards/mapa" class="tab-link" :class="{ active: activeTab === 'mapa' }"
-              @click="activeTab = 'mapa'">
+            <router-link
+              to="/dashboards/mapa"
+              class="tab-link"
+              :class="{ active: activeTab === 'mapa' }"
+              @click="activeTab = 'mapa'"
+            >
               Auditorias e Ocorrências no Terreno
             </router-link>
           </nav>
 
           <div class="filters-row">
-            <select v-model="selectedRegion">
+            <select v-model="selectedRegion" class="filter-select">
               <option v-for="loc in localities" :key="loc" :value="loc">
                 {{ loc }}
               </option>
@@ -44,14 +63,30 @@
             <div class="filter-week-wrapper">
               <input type="week" v-model="selectedWeek" class="filter-week" />
             </div>
+
+            <div class="spacer"></div>
+
+            <div class="dashboard-info" v-if="ultimaAtualizacao">
+              <span class="info-text"
+                >Dados atualizados em:
+                {{ ultimaAtualizacao.toLocaleString() }}</span
+              >
+              <button class="refresh-button" @click="forcarAtualizacao">
+                Atualizar dados
+              </button>
+            </div>
           </div>
 
           <StatisticsGridOcorrencia :cards="weeklyCards" />
 
           <div id="chart">
-            <apexchart type="area" height="350" :options="chartOptions" :series="series" />
+            <apexchart
+              type="area"
+              height="350"
+              :options="chartOptions"
+              :series="series"
+            />
           </div>
-
         </div>
       </main>
     </div>
@@ -59,80 +94,90 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import NavigationList from '@/components/NavigationList.vue'
-import StatisticsGridOcorrencia from '@/components/StatisticsGridOcorrencia.vue'
-import { collection, getDocs } from 'firebase/firestore'
-import { db } from '@/firebase'
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
+import NavigationList from "@/components/NavigationList.vue";
+import StatisticsGridOcorrencia from "@/components/StatisticsGridOcorrencia.vue";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/firebase";
 
-const rawData = ref([])
+// Ref para dados e estado
+const rawData = ref([]);
+const dataCarregado = ref(false);
+const ultimaAtualizacao = ref(null);
+
+// Configuração do localStorage
+const STORAGE_KEY = "dashboard-ocorrencias-data";
+const TIMESTAMP_KEY = "dashboard-ocorrencias-timestamp";
+const UPDATE_INTERVAL = 5 * 60 * 1000; // 5 minutos em milissegundos
+
+// Regiões e seleção
 const regions = [
-  { name: 'Norte', bounds: { latMin: 41.5, latMax: 42.3, lngMin: -8.7, lngMax: -6.2 } },
-  { name: 'Centro', bounds: { latMin: 39.9, latMax: 41.5, lngMin: -8.5, lngMax: -6.0 } },
-  { name: 'Lisboa e Vale do Tejo', bounds: { latMin: 38.4, latMax: 40.2, lngMin: -9.5, lngMax: -7.0 } },
-  { name: 'Alentejo', bounds: { latMin: 37.6, latMax: 39.3, lngMin: -8.2, lngMax: -6.0 } },
-  { name: 'Algarve', bounds: { latMin: 37.0, latMax: 37.6, lngMin: -9.7, lngMax: -7.7 } },
-]
-const localities = ['Portugal', ...regions.map(r => r.name)]
-const selectedRegion = ref(localities[0])
-const selectedWeek = ref(getCurrentISOWeek())
+  {
+    name: "Norte",
+    bounds: { latMin: 41.5, latMax: 42.3, lngMin: -8.7, lngMax: -6.2 },
+  },
+  {
+    name: "Centro",
+    bounds: { latMin: 39.9, latMax: 41.5, lngMin: -8.5, lngMax: -6.0 },
+  },
+  {
+    name: "Lisboa e Vale do Tejo",
+    bounds: { latMin: 38.4, latMax: 40.2, lngMin: -9.5, lngMax: -7.0 },
+  },
+  {
+    name: "Alentejo",
+    bounds: { latMin: 37.6, latMax: 39.3, lngMin: -8.2, lngMax: -6.0 },
+  },
+  {
+    name: "Algarve",
+    bounds: { latMin: 37.0, latMax: 37.6, lngMin: -9.7, lngMax: -7.7 },
+  },
+];
+const localities = ["Portugal", ...regions.map((r) => r.name)];
+const selectedRegion = ref(localities[0]);
+const selectedWeek = ref(getCurrentISOWeek());
 
-const weekDates = computed(() =>
-  selectedWeek.value ? isoWeekDates(selectedWeek.value) : []
-)
+const activeTab = ref("ocorrencias");
 
-const weeklyData = computed(() =>
-  rawData.value.filter(item =>
-    weekDates.value.includes(item.date) &&
-    (selectedRegion.value === 'Portugal'
-      ? true
-      : item.region === selectedRegion.value)
-  )
-)
-
-const weeklyCards = computed(() => {
-  if (!weeklyData.value.length) {
-    return [
-      { title: 'Total Confirmadas', value: 0 },
-      { title: 'Total Resolvidas', value: 0 },
-      { title: 'Maior taxa (dia)', value: '–' },
-      { title: 'Menor taxa (dia)', value: '–' }
-    ]
-  }
-  const total = weeklyData.value.reduce((s, d) => s + d.total, 0)
-  const resolved = weeklyData.value.reduce((s, d) => s + d.resolved, 0)
-  const rates = weeklyData.value.map(d => ({
-    date: d.date,
-    pct: Math.round(d.resolved / d.total * 100)
-  }))
-  const max = rates.reduce((a, b) => b.pct > a.pct ? b : a)
-  const min = rates.reduce((a, b) => b.pct < a.pct ? b : a)
-  return [
-    { title: 'Total de Ocorrências Confirmadas', value: total },
-    { title: 'Total de Ocorrências por região', value: resolved },
-    { title: 'Dia com a maior taxa de resolução', value: `${max.date} (${max.pct}%)` },
-    { title: 'Dia com a menor taxa de resolução', value: `${min.date} (${min.pct}%)` }
-  ]
-})
-
+// Mapeamento de distritos para regiões
 const distritoRegiaoMap = {
-  Porto: 'Norte', 'Viana do Castelo': 'Norte', Braga: 'Norte', 'Vila Real': 'Norte', Bragança: 'Norte',
-  Aveiro: 'Centro', Coimbra: 'Centro', Leiria: 'Centro', 'Castelo Branco': 'Centro', Guarda: 'Centro', Viseu: 'Centro',
-  Santarém: 'Lisboa e Vale do Tejo', Lisboa: 'Lisboa e Vale do Tejo', Setúbal: 'Lisboa e Vale do Tejo',
-  Évora: 'Alentejo', Beja: 'Alentejo', Portalegre: 'Alentejo', Faro: 'Algarve'
-}
+  Porto: "Norte",
+  "Viana do Castelo": "Norte",
+  Braga: "Norte",
+  "Vila Real": "Norte",
+  Bragança: "Norte",
+  Aveiro: "Centro",
+  Coimbra: "Centro",
+  Leiria: "Centro",
+  "Castelo Branco": "Centro",
+  Guarda: "Centro",
+  Viseu: "Centro",
+  Santarém: "Lisboa e Vale do Tejo",
+  Lisboa: "Lisboa e Vale do Tejo",
+  Setúbal: "Lisboa e Vale do Tejo",
+  Évora: "Alentejo",
+  Beja: "Alentejo",
+  Portalegre: "Alentejo",
+  Faro: "Algarve",
+};
 
+// Cache para geocodificação de regiões
 const cacheRegiao = {};
 async function buscarRegiao(lat, lon) {
   const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&addressdetails=1&accept-language=pt`;
-  const res = await fetch(url, {
-    headers: { 'User-Agent': 'MeuAppUniversidade/1.0 (email@exemplo.com)' }
-  });
-  if (!res.ok) throw new Error(`Erro HTTP ${res.status}`);
-  const data = await res.json();
-  const addr = data.address || {};
-  const district = addr.state || addr.county || addr.region || '';
-  return distritoRegiaoMap[district] || 'Desconhecida';
+  try {
+    const res = await fetch(url, {
+      headers: { "User-Agent": "MeuAppUniversidade/1.0 (email@exemplo.com)" },
+    });
+    if (!res.ok) throw new Error(`Erro HTTP ${res.status}`);
+    const data = await res.json();
+    const addr = data.address || {};
+    const district = addr.state || addr.county || addr.region || "";
+    return distritoRegiaoMap[district] || "Desconhecida";
+  } catch (err) {
+    console.error("Erro ao buscar região:", err);
+    return "Desconhecida";
+  }
 }
 
 async function buscarRegiaoComCache(lat, lon) {
@@ -143,108 +188,352 @@ async function buscarRegiaoComCache(lat, lon) {
     cacheRegiao[key] = regiao;
     return regiao;
   } catch (err) {
-    console.error('Erro geocodificação região', err);
-    return 'Desconhecida';
+    console.error("Erro geocodificação região", err);
+    return "Desconhecida";
   }
 }
 
-function aggregate(items) {
-  const mapa = {}
-  items.forEach(item => {
-    const key = item.region + '|' + item.date
-    if (!mapa[key]) {
-      mapa[key] = { date: item.date, region: item.region, total: 0, resolved: 0 }
-    }
-    mapa[key].total += item.total
-    mapa[key].resolved += item.resolved
-  })
-  return Object.values(mapa)
+// Funções de datas
+const weekDates = computed(() =>
+  selectedWeek.value ? isoWeekDates(selectedWeek.value) : []
+);
+
+function isoWeekDates(weekString) {
+  const [year, wk] = weekString.split("-W").map(Number);
+  const jan4 = new Date(Date.UTC(year, 0, 4));
+  const dayOfWeek = jan4.getUTCDay() || 7;
+  const week1Start = new Date(Date.UTC(year, 0, 4 - (dayOfWeek - 1)));
+  const start = new Date(week1Start);
+  start.setUTCDate(start.getUTCDate() + (wk - 1) * 7);
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(start);
+    d.setUTCDate(d.getUTCDate() + i);
+    return d.toISOString().slice(0, 10);
+  });
 }
 
-onMounted(async () => {
-  const snap = await getDocs(collection(db, 'ocorrencias'))
-  console.log(snap.docs)
-  const items = []
+function getCurrentISOWeek() {
+  const now = new Date();
+  const date = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  );
+  const dayNum = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil(((date - yearStart) / 86400000 + 1) / 7);
+  const weekStr = String(weekNo).padStart(2, "0");
+  return `${date.getUTCFullYear()}-W${weekStr}`;
+}
+
+// Agregação de dados
+function aggregate(items) {
+  const mapa = {};
+  items.forEach((item) => {
+    const key = item.region + "|" + item.date;
+    if (!mapa[key]) {
+      mapa[key] = {
+        date: item.date,
+        region: item.region,
+        total: 0,
+        resolved: 0,
+      };
+    }
+    mapa[key].total += item.total;
+    mapa[key].resolved += item.resolved;
+  });
+  return Object.values(mapa);
+}
+
+// Computed para filtragem de dados
+const weeklyData = computed(() =>
+  rawData.value.filter(
+    (item) =>
+      weekDates.value.includes(item.date) &&
+      (selectedRegion.value === "Portugal"
+        ? true
+        : item.region === selectedRegion.value)
+  )
+);
+
+// Dados para cartões de estatísticas
+const weeklyCards = computed(() => {
+  if (!weeklyData.value.length) {
+    return [
+      { title: "Total Confirmadas", value: 0 },
+      { title: "Total Resolvidas", value: 0 },
+      { title: "Maior taxa (dia)", value: "–" },
+      { title: "Menor taxa (dia)", value: "–" },
+    ];
+  }
+  const total = weeklyData.value.reduce((s, d) => s + d.total, 0);
+  const resolved = weeklyData.value.reduce((s, d) => s + d.resolved, 0);
+  const rates = weeklyData.value.map((d) => ({
+    date: d.date,
+    pct: d.total > 0 ? Math.round((d.resolved / d.total) * 100) : 0,
+  }));
+  const max = rates.reduce((a, b) => (b.pct > a.pct ? b : a), {
+    pct: 0,
+    date: "–",
+  });
+  const min = rates.reduce((a, b) => (b.pct < a.pct ? b : a), {
+    pct: 100,
+    date: "–",
+  });
+  return [
+    { title: "Total de Ocorrências Confirmadas", value: total },
+    { title: "Total de Ocorrências Resolvidas", value: resolved },
+    {
+      title: "Dia com a maior taxa de resolução",
+      value: `${max.date} (${max.pct}%)`,
+    },
+    {
+      title: "Dia com a menor taxa de resolução",
+      value: `${min.date} (${min.pct}%)`,
+    },
+  ];
+});
+
+// Dados para o gráfico
+const series = computed(() => [
+  {
+    name: "Total",
+    data: weekDates.value.map((d) => {
+      const rec = weeklyData.value.find((x) => x.date === d);
+      return rec ? rec.total : 0;
+    }),
+  },
+  {
+    name: "Resolvidas",
+    data: weekDates.value.map((d) => {
+      const rec = weeklyData.value.find((x) => x.date === d);
+      return rec ? rec.resolved : 0;
+    }),
+  },
+]);
+
+const chartOptions = computed(() => ({
+  chart: {
+    type: "area",
+    height: 350,
+    toolbar: {
+      show: true,
+      tools: {
+        download: true,
+        selection: true,
+        zoom: true,
+        zoomin: true,
+        zoomout: true,
+        pan: true,
+      },
+    },
+  },
+  stroke: { curve: "smooth" },
+  xaxis: {
+    categories: weekDates.value,
+    labels: {
+      formatter: function (value) {
+        // Formatação para exibir data como DD/MM
+        const date = new Date(value);
+        const day = date.getDate().toString().padStart(2, "0");
+        const month = (date.getMonth() + 1).toString().padStart(2, "0");
+        return `${day}/${month}`;
+      },
+    },
+  },
+  dataLabels: { enabled: false },
+  legend: { position: "top" },
+  tooltip: {
+    x: { format: "dd/MM" },
+    y: {
+      formatter: function (value) {
+        return value || "0";
+      },
+    },
+  },
+  colors: ["#33b2df", "#546E7A"],
+  fill: {
+    type: "gradient",
+    gradient: {
+      shade: "light",
+      type: "vertical",
+      shadeIntensity: 0.25,
+      gradientToColors: undefined,
+      inverseColors: true,
+      opacityFrom: 0.85,
+      opacityTo: 0.55,
+    },
+  },
+  subtitle: {
+    text: ultimaAtualizacao.value
+      ? `Última atualização: ${ultimaAtualizacao.value.toLocaleString()}`
+      : "Carregando dados...",
+    align: "right",
+    margin: 10,
+    offsetY: 5,
+    style: {
+      fontSize: "12px",
+      color: "#9e9e9e",
+    },
+  },
+}));
+
+// Funções auxiliares para localStorage
+function salvarDadosLocal() {
+  try {
+    // Estrutura de dados para salvar
+    const dadosParaSalvar = {
+      rawData: rawData.value,
+      cacheRegiao: cacheRegiao,
+      timestamp: Date.now(),
+    };
+
+    // Salvar no localStorage
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(dadosParaSalvar));
+    localStorage.setItem(TIMESTAMP_KEY, Date.now().toString());
+
+    console.log("Dados de ocorrências salvos no localStorage com sucesso");
+    ultimaAtualizacao.value = new Date();
+  } catch (error) {
+    console.error(
+      "Erro ao salvar dados de ocorrências no localStorage:",
+      error
+    );
+  }
+}
+
+function carregarDadosLocal() {
+  try {
+    // Verificar se temos dados no localStorage
+    const dadosSalvos = localStorage.getItem(STORAGE_KEY);
+    const timestampSalvo = localStorage.getItem(TIMESTAMP_KEY);
+
+    if (!dadosSalvos || !timestampSalvo) {
+      console.log("Nenhum dado de ocorrências encontrado no localStorage");
+      return false;
+    }
+
+    // Verificar se os dados estão vencidos
+    const agora = Date.now();
+    const dataUltimaAtualizacao = parseInt(timestampSalvo);
+
+    if (agora - dataUltimaAtualizacao > UPDATE_INTERVAL) {
+      console.log(
+        "Dados de ocorrências do localStorage estão vencidos, buscando novos dados"
+      );
+      return false;
+    }
+
+    // Carregar dados do localStorage
+    const dados = JSON.parse(dadosSalvos);
+    rawData.value = dados.rawData;
+
+    // Restaurar o cache de geocodificação
+    Object.assign(cacheRegiao, dados.cacheRegiao);
+
+    ultimaAtualizacao.value = new Date(dataUltimaAtualizacao);
+    dataCarregado.value = true;
+
+    console.log("Dados de ocorrências carregados do localStorage com sucesso");
+    return true;
+  } catch (error) {
+    console.error(
+      "Erro ao carregar dados de ocorrências do localStorage:",
+      error
+    );
+    return false;
+  }
+}
+
+// Função para forçar a atualização dos dados
+async function forcarAtualizacao() {
+  console.log("Forçando atualização dos dados de ocorrências...");
+
+  try {
+    // Limpar os dados atuais
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(TIMESTAMP_KEY);
+
+    // Buscar novos dados do Firestore
+    await carregarDadosFirestore();
+
+    // Salvar os novos dados no localStorage
+    salvarDadosLocal();
+
+    console.log("Dados de ocorrências atualizados com sucesso!");
+  } catch (error) {
+    console.error(
+      "Erro ao forçar atualização dos dados de ocorrências:",
+      error
+    );
+  }
+}
+
+// Função para carregar dados do Firestore
+async function carregarDadosFirestore() {
+  const snap = await getDocs(collection(db, "ocorrencias"));
+  console.log(`Carregadas ${snap.docs.length} ocorrências do Firestore`);
+  const items = [];
 
   for (const doc of snap.docs) {
-    const d = doc.data()
-    const stamp = d.dataSubmissao ?? doc.createTime
-    const tsDate = stamp.toDate()
-    const dateStr = tsDate.toISOString().slice(0, 10)
-    const lat = d.coordenadas.latitude
-    const lon = d.coordenadas.longitude
-    const region = await buscarRegiaoComCache(lat, lon)
+    const d = doc.data();
+    const stamp = d.dataSubmissao ?? doc.createTime;
+    const tsDate = stamp.toDate();
+    const dateStr = tsDate.toISOString().slice(0, 10);
 
-    const resolved = d.status === 'Resolvido' ? 1 : 0
+    // Verificar se temos coordenadas
+    if (!d.coordenadas || !d.coordenadas.latitude || !d.coordenadas.longitude) {
+      console.warn(`Ocorrência ${doc.id} sem coordenadas válidas, ignorando.`);
+      continue;
+    }
+
+    const lat = d.coordenadas.latitude;
+    const lon = d.coordenadas.longitude;
+    const region = await buscarRegiaoComCache(lat, lon);
+
+    const resolved = d.status === "Resolvido" ? 1 : 0;
 
     items.push({
       date: dateStr,
       region,
       total: 1,
       resolved,
-    })
+    });
   }
 
-  rawData.value = aggregate(items)
-})
-
-
-function isoWeekDates(weekString) {
-  const [year, wk] = weekString.split('-W').map(Number)
-  const jan4 = new Date(Date.UTC(year, 0, 4))
-  const dayOfWeek = jan4.getUTCDay() || 7
-  const week1Start = new Date(Date.UTC(year, 0, 4 - (dayOfWeek - 1)))
-  const start = new Date(week1Start)
-  start.setUTCDate(start.getUTCDate() + (wk - 1) * 7)
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(start)
-    d.setUTCDate(d.getUTCDate() + i)
-    return d.toISOString().slice(0, 10)
-  })
+  rawData.value = aggregate(items);
+  dataCarregado.value = true;
 }
 
-function getCurrentISOWeek() {
-  const now = new Date()
-  const date = new Date(Date.UTC(
-    now.getUTCFullYear(),
-    now.getUTCMonth(),
-    now.getUTCDate()
-  ))
-  const dayNum = date.getUTCDay() || 7
-  date.setUTCDate(date.getUTCDate() + 4 - dayNum)
-  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1))
-  const weekNo = Math.ceil((((date - yearStart) / 86400000) + 1) / 7)
-  const weekStr = String(weekNo).padStart(2, '0')
-  return `${date.getUTCFullYear()}-W${weekStr}`
-}
-
-const activeTab = ref('ocorrencias')
-
-const series = computed(() => [
-  {
-    name: 'Total',
-    data: weekDates.value.map(d => {
-      const rec = weeklyData.value.find(x => x.date === d)
-      return rec ? rec.total : 0
-    })
+// Configurar observadores para mudanças em dados importantes
+watch(
+  rawData,
+  () => {
+    if (dataCarregado.value) {
+      salvarDadosLocal();
+    }
   },
-  {
-    name: 'Resolvidas',
-    data: weekDates.value.map(d => {
-      const rec = weeklyData.value.find(x => x.date === d)
-      return rec ? rec.resolved : 0
-    })
-  }
-])
+  { deep: true }
+);
 
-const chartOptions = computed(() => ({
-  chart: { type: 'area', height: 350 },
-  stroke: { curve: 'smooth' },
-  xaxis: { categories: weekDates.value },
-  dataLabels: { enabled: false },
-  legend: { position: 'top' },
-  tooltip: { x: { format: 'dd/MM' } }
-}))
+onMounted(async () => {
+  // Tentar carregar dados do localStorage primeiro
+  const dadosCarregados = carregarDadosLocal();
+
+  if (!dadosCarregados) {
+    // Se não houver dados no localStorage ou estiverem vencidos, buscar do Firestore
+    await carregarDadosFirestore();
+
+    // Salvar os novos dados no localStorage
+    salvarDadosLocal();
+  }
+});
+
+onUnmounted(() => {
+  // Salvar os dados atuais no localStorage antes de sair
+  if (dataCarregado.value) {
+    salvarDadosLocal();
+  }
+});
 </script>
 
 <style scoped>
@@ -269,13 +558,13 @@ const chartOptions = computed(() => ({
   min-height: 100%;
 }
 
-/* Mesmos estilos de DashboardOcorrencia.vue */
+/* Estilos para a navegação */
 .navigation-tabs {
   margin-top: -15px;
   display: flex;
   align-items: center;
   gap: 8px;
-  font-family: 'Public Sans', -apple-system, Roboto, Helvetica, sans-serif;
+  font-family: "Public Sans", -apple-system, Roboto, Helvetica, sans-serif;
   padding: 8px 0;
   margin-bottom: 24px;
   border-bottom: 1px solid #f0f0f0;
@@ -303,51 +592,35 @@ const chartOptions = computed(() => ({
 }
 
 .tab-link.active {
-  color: #1890ff;
+  color: #204c6d;
   background-color: rgba(24, 144, 255, 0.08);
   font-weight: 600;
 }
 
 .tab-link.active::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: -9px;
   left: 16px;
   right: 16px;
   height: 2px;
-  background-color: #1890ff;
+  background-color: #204c6d;
   border-radius: 2px 2px 0 0;
 }
 
 .tab-link::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: -9px;
   left: 50%;
   right: 50%;
   height: 2px;
-  background-color: #1890ff;
+  background-color: #204c6d;
   transition: all 0.3s ease;
   border-radius: 2px 2px 0 0;
 }
 
-.search-section {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 20px;
-}
-
-.search-input {
-  position: relative;
-}
-
-.search-container {
-  padding: 8px 12px;
-  border: 1px solid #13c2c2;
-  border-radius: 4px;
-  width: 200px;
-}
-
+/* Estilos para área de filtros */
 .filters-row {
   display: flex;
   gap: 16px;
@@ -355,7 +628,10 @@ const chartOptions = computed(() => ({
   align-items: center;
 }
 
-/* Dropdown da cidade */
+.spacer {
+  flex: 1;
+}
+
 .filter-select {
   padding: 8px 12px;
   border: 1px solid #13c2c2;
@@ -372,7 +648,6 @@ const chartOptions = computed(() => ({
   outline: none;
 }
 
-/* Wrapper e label para o week-picker */
 .filter-week-wrapper {
   display: flex;
   flex-direction: column;
@@ -384,7 +659,6 @@ const chartOptions = computed(() => ({
   margin-bottom: 4px;
 }
 
-/* Input type=week */
 .filter-week {
   padding: 8px 12px;
   border: 1px solid #13c2c2;
@@ -393,7 +667,6 @@ const chartOptions = computed(() => ({
   font-size: 14px;
   cursor: pointer;
   transition: border-color 0.2s;
-  /* forçar largura consistente */
   width: 160px;
 }
 
@@ -408,5 +681,56 @@ input[type="week"] {
   padding: 6px 12px;
   border: 1px solid #ccc;
   border-radius: 4px;
+}
+
+/* Estilos para o botão de atualização */
+.dashboard-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.info-text {
+  font-size: 13px;
+  color: #6c757d;
+}
+
+.refresh-button {
+  background-color: #204c6d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  letter-spacing: 0.3px;
+}
+
+.refresh-button:hover {
+  background-color: #2d6b99;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+.refresh-button:active {
+  background-color: #183a54;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transform: translateY(1px);
+}
+
+/* Estilo para o gráfico */
+#chart {
+  margin-top: 24px;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  background-color: #fff;
 }
 </style>

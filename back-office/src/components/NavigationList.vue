@@ -2,60 +2,86 @@
   <nav class="navigation-list">
     <img
       src="https://cdn.builder.io/api/v1/image/assets/TEMP/9cae2c5a44e739bfd2edc79e5215ab61eb4c5ee8?placeholderIfAbsent=true&apiKey=98100b9ac2c544efa71903dc3e1eda07"
-      alt="Logo" class="logo" />
+      alt="Logo"
+      class="logo"
+    />
     <div class="menu-header"></div>
-    <router-link to="/dashboards/auditorias" class="nav-item" :class="{ 'nav-item-active': isDashboardActive }">
+    <router-link
+      to="/dashboards/auditorias"
+      class="nav-item"
+      :class="{ 'nav-item-active': isDashboardActive }"
+    >
       <img
         src="https://cdn.builder.io/api/v1/image/assets/TEMP/bd9d82f1effb8381bb1929299adeb4fb409cd704?placeholderIfAbsent=true&apiKey=98100b9ac2c544efa71903dc3e1eda07"
-        alt="Dashboard" class="nav-icon" />
+        alt="Dashboard"
+        class="nav-icon"
+      />
       <span class="nav-text">DASHBOARDS</span>
     </router-link>
 
     <router-link to="/GestaoAuditorias" class="nav-item">
       <img
         src="https://cdn.builder.io/api/v1/image/assets/TEMP/b414ddc8a44a7865af46891e60f33ca4a0160885?placeholderIfAbsent=true&apiKey=98100b9ac2c544efa71903dc3e1eda07"
-        alt="Auditorias" class="nav-icon" />
+        alt="Auditorias"
+        class="nav-icon"
+      />
       <span class="nav-text">GESTÃO DE AUDITORIAS</span>
     </router-link>
 
-    <router-link to="/GestaoOcorrencias" class="nav-item" :class="{ 'nav-item-active': isGAActive }">
-
+    <router-link
+      to="/GestaoOcorrencias"
+      class="nav-item"
+      :class="{ 'nav-item-active': isGAActive }"
+    >
       <img
         src="https://cdn.builder.io/api/v1/image/assets/TEMP/32555fc51897e2a6d661a8bff00a21a07bb15d13?placeholderIfAbsent=true&apiKey=98100b9ac2c544efa71903dc3e1eda07"
-        alt="Notification" class="nav-icon" />
+        alt="Notification"
+        class="nav-icon"
+      />
       <span class="nav-text">GESTÃO DE OCORRÊNCIAS</span>
     </router-link>
 
     <router-link to="/GestaoPeritos" class="nav-item">
-
       <img
         src="https://cdn.builder.io/api/v1/image/assets/TEMP/08fd61f8d2974d973bc8956784b3929b25f9988a?placeholderIfAbsent=true&apiKey=98100b9ac2c544efa71903dc3e1eda07"
-        alt="Alert" class="nav-icon" />
+        alt="Alert"
+        class="nav-icon"
+      />
       <span class="nav-text">GESTÃO DE PERITOS</span>
     </router-link>
 
     <router-link to="/GestaoMateriais" class="nav-item">
       <img
         src="https://cdn.builder.io/api/v1/image/assets/TEMP/890255b1fe5b0074d3223ecb23bf8221887fb032?placeholderIfAbsent=true&apiKey=98100b9ac2c544efa71903dc3e1eda07"
-        alt="Materiais" class="nav-icon" />
+        alt="Materiais"
+        class="nav-icon"
+      />
       <span class="nav-text">GESTÃO DE MATERIAIS</span>
     </router-link>
 
     <router-link to="/GestaoProfissionais" class="nav-item">
       <img
         src="https://cdn.builder.io/api/v1/image/assets/TEMP/2130c19d7d5c87c243ec6c2559e349da836493a5?placeholderIfAbsent=true&apiKey=98100b9ac2c544efa71903dc3e1eda07"
-        alt="Profissionais" class="nav-icon" />
+        alt="Profissionais"
+        class="nav-icon"
+      />
       <span class="nav-text">GESTÃO DE PROFISSIONAIS</span>
     </router-link>
 
     <router-link to="/GestaoUtilizadores" class="nav-item" v-if="isAdmin">
       <img
         src="https://cdn.builder.io/api/v1/image/assets/TEMP/2130c19d7d5c87c243ec6c2559e349da836493a5?placeholderIfAbsent=true&apiKey=98100b9ac2c544efa71903dc3e1eda07"
-        alt="Profissionais" class="nav-icon" />
+        alt="Profissionais"
+        class="nav-icon"
+      />
       <span class="nav-text">GESTÃO DE UTILIZADORES</span>
     </router-link>
 
-    <router-link to="/profile" class="user-panel text-decoration-none" v-if="currentUser">
+    <router-link
+      to="/profile"
+      class="user-panel text-decoration-none"
+      v-if="currentUser"
+    >
       <img :src="currentUser.photoURL || defaultAvatar" class="avatar" />
       <span class="user-name">
         {{ currentUser.displayName || currentUser.email }}
@@ -70,47 +96,43 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { useCurrentUser } from '@/composables/useCurrentUser'
-import { auth, db, logout } from '@/firebase'
-import { onAuthStateChanged } from 'firebase/auth'
-import { doc, getDoc } from 'firebase/firestore'
+import { ref, computed, onMounted } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import { useCurrentUser } from "@/composables/useCurrentUser";
+import { auth, db, logout } from "@/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 
-const isAdmin = ref(false)
-const router = useRouter()
-const route = useRoute()
+const isAdmin = ref(false);
+const router = useRouter();
+const route = useRoute();
 
-const { currentUser } = useCurrentUser()
-const defaultAvatar = 'https://i.pravatar.cc/40?u=placeholder'
+const { currentUser } = useCurrentUser();
+const defaultAvatar = "https://i.pravatar.cc/40?u=placeholder";
 
 async function handleLogout() {
-  await logout()
-  localStorage.removeItem('userUID')
-  router.push('/')
+  await logout();
+  localStorage.removeItem("userUID");
+  router.push("/");
 }
 
-const isDashboardActive = computed(() =>
-  route.path.startsWith('/dashboards/')
-)
+const isDashboardActive = computed(() => route.path.startsWith("/dashboards/"));
 
-const isGAActive = computed(() =>
-  route.path.startsWith('/GestaoOcorrencias/')
-)
+const isGAActive = computed(() => route.path.startsWith("/GestaoOcorrencias/"));
 
 onMounted(() => {
-  onAuthStateChanged(auth, async user => {
-    if (!user) return
-    const snap = await getDoc(doc(db, 'users', user.uid))
-    isAdmin.value = snap.exists() && snap.data().role === 'admin'
-  })
-})
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) return;
+    const snap = await getDoc(doc(db, "users", user.uid));
+    isAdmin.value = snap.exists() && snap.data().role === "admin";
+  });
+});
 </script>
 
 <style scoped>
 .navigation-list {
   width: 100%;
-  font-family: 'Public Sans', -apple-system, Roboto, Helvetica, sans-serif;
+  font-family: "Public Sans", -apple-system, Roboto, Helvetica, sans-serif;
   font-size: 14px;
   color: #141414;
   background-color: #fff;
@@ -158,25 +180,23 @@ onMounted(() => {
   box-sizing: border-box;
   margin: 0;
   background-color: #fff;
-  transition:
-    background-color 0.3s ease,
-    transform 0.2s ease,
+  transition: background-color 0.3s ease, transform 0.2s ease,
     box-shadow 0.3s ease;
   transform-origin: left center;
 }
 
 .nav-item:hover {
-  color: #1890ff;
+  color: #204c6d;
   background-color: #f0f7ff;
 }
 
 .nav-item-active,
 .nav-item.router-link-active {
-  color: #1890ff;
+  color: #204c6d;
   background-color: #f0f7ff;
   font-weight: 500;
   position: relative;
-  border-left: 3px solid #1890ff;
+  border-left: 3px solid #204c6d;
 }
 
 .nav-item-active::after,
@@ -189,21 +209,17 @@ onMounted(() => {
   height: 22px;
   object-fit: contain;
   filter: grayscale(100%);
-  transition:
-    filter 0.3s ease,
-    transform 0.3s ease;
+  transition: filter 0.3s ease, transform 0.3s ease;
 }
-
 
 .nav-item:hover .nav-icon {
   filter: grayscale(0%);
   transform: scale(1.1) rotate(-5deg);
 }
-
 .nav-item-active .nav-icon,
 .nav-item.router-link-active .nav-icon {
-  filter: grayscale(0%);
-  filter: invert(42%) sepia(93%) saturate(1352%) hue-rotate(190deg) brightness(119%) contrast(119%);
+  filter: brightness(0) saturate(100%) invert(26%) sepia(51%) saturate(679%)
+    hue-rotate(161deg) brightness(95%) contrast(97%);
   transform: scale(1.15) rotate(0deg);
   animation: iconPulse 1.5s infinite alternate;
 }
@@ -213,9 +229,7 @@ onMounted(() => {
   font-size: 13px;
   letter-spacing: 0.5px;
   text-transform: uppercase;
-  transition:
-    letter-spacing 0.3s ease,
-    transform 0.3s ease;
+  transition: letter-spacing 0.3s ease, transform 0.3s ease;
 }
 
 .user-profile {
@@ -242,7 +256,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #1890ff;
+  background-color: #204c6d;
   color: white;
   border: none;
   border-radius: 50px;
@@ -265,7 +279,6 @@ onMounted(() => {
 }
 
 @media (max-width: 991px) {
-
   .nav-item,
   .app-title {
     padding-left: 16px;

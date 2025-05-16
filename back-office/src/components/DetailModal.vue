@@ -86,7 +86,7 @@
 
     <!-- Informações para Ocorrências Rejeitadas -->
     <div
-      v-if="ocorrencia && ocorrencia.status === 'Rejeitado'"
+      v-else-if="ocorrencia && ocorrencia.status === 'Rejeitado'"
       class="status-pendente"
     >
       <div class="status-badge rejeitado">

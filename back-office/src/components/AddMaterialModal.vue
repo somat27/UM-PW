@@ -1,7 +1,7 @@
 <template>
   <div class="modal-overlay" @click.self="closeModal">
     <div class="modal-container">
-      <h3>{{ materialProp ? 'Editar Material' : 'Adicionar Material' }}</h3>
+      <h3>{{ materialProp ? "Editar Material" : "Adicionar Material" }}</h3>
       <form @submit.prevent="saveMaterial">
         <div class="form-group">
           <label>Nome</label>
@@ -15,7 +15,12 @@
 
         <div class="form-group">
           <label>Preço/Unidade (€)</label>
-          <input v-model.number="form.preco" type="number" step="0.01" required />
+          <input
+            v-model.number="form.preco"
+            type="number"
+            step="0.01"
+            required
+          />
         </div>
 
         <div v-if="!materialProp" class="form-group">
@@ -28,7 +33,7 @@
             Cancelar
           </button>
           <button type="submit" class="btn-primary">
-            {{ materialProp ? 'Guardar Alterações' : 'Adicionar' }}
+            {{ materialProp ? "Guardar Alterações" : "Adicionar" }}
           </button>
         </div>
       </form>
@@ -40,54 +45,58 @@
 // eslint-env vue/setup-compiler-macros
 /* eslint-disable no-undef */
 const props = defineProps({
-  material: { type: Object, default: null }
+  material: { type: Object, default: null },
 });
-const emits = defineEmits(['close', 'saved']);
+const emits = defineEmits(["close", "saved"]);
 
-import { ref, watch, toRef } from 'vue';
-import { db } from '@/firebase.js';
-import { addDoc, collection, doc, updateDoc } from 'firebase/firestore';
+import { ref, watch, toRef } from "vue";
+import { db } from "@/firebase.js";
+import { addDoc, collection, doc, updateDoc } from "firebase/firestore";
 
 // alias para usar no template
-const materialProp = toRef(props, 'material');
+const materialProp = toRef(props, "material");
 
 // inicializa o form, ou com os valores existentes (edit), ou vazio (add)
 const form = ref({
-  nome: '',
-  categoria: '',
+  nome: "",
+  categoria: "",
   preco: 0,
-  quantidade: 0
+  quantidade: 0,
 });
 
 // se o prop mudar (reaberturas), sincroniza o form
-watch(materialProp, novo => {
-  if (novo) {
-    form.value = {
-      nome: novo.nome,
-      categoria: novo.categoria,
-      preco: novo.preco,
-      quantidade: novo.quantidade
-    };
-  } else {
-    form.value = { nome: '', categoria: '', preco: 0, quantidade: 0 };
-  }
-}, { immediate: true });
+watch(
+  materialProp,
+  (novo) => {
+    if (novo) {
+      form.value = {
+        nome: novo.nome,
+        categoria: novo.categoria,
+        preco: novo.preco,
+        quantidade: novo.quantidade,
+      };
+    } else {
+      form.value = { nome: "", categoria: "", preco: 0, quantidade: 0 };
+    }
+  },
+  { immediate: true }
+);
 
 function closeModal() {
-  emits('close');
+  emits("close");
 }
 
 async function saveMaterial() {
   try {
     if (materialProp.value) {
-      const refDoc = doc(db, 'materiais', materialProp.value.id);
+      const refDoc = doc(db, "materiais", materialProp.value.id);
       await updateDoc(refDoc, { ...form.value });
     } else {
-      await addDoc(collection(db, 'materiais'), { ...form.value });
+      await addDoc(collection(db, "materiais"), { ...form.value });
     }
-    emits('saved');
+    emits("saved");
   } catch (e) {
-    console.error('Erro ao guardar material:', e);
+    console.error("Erro ao guardar material:", e);
   }
 }
 </script>
@@ -145,7 +154,7 @@ async function saveMaterial() {
 }
 
 .btn-primary {
-  background: #1890ff;
+  background: #204c6d;
   color: #fff;
   border: none;
   padding: 0.5rem 1rem;
