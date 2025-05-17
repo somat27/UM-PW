@@ -36,7 +36,6 @@ export const db = getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
 export const logout = () => signOut(auth);
 
-// Registo com email/password (mantém role "usuario")
 export const registerWithEmail = async (email, password, displayName) => {
   const { user } = await createUserWithEmailAndPassword(auth, email, password);
   await setDoc(doc(db, "users", user.uid), {
@@ -49,11 +48,9 @@ export const registerWithEmail = async (email, password, displayName) => {
   return user;
 };
 
-// Login com email/password
 export const loginWithEmail = (email, password) =>
   signInWithEmailAndPassword(auth, email, password);
 
-// Login com Google (cria user em users se não existir)
 export const loginWithGoogle = async () => {
   const { user } = await signInWithPopup(auth, googleProvider);
   const ref = doc(db, "users", user.uid);
@@ -69,17 +66,15 @@ export const loginWithGoogle = async () => {
   return user;
 };
 
-// Atualiza só o role do utilizador (ex: de "perito" para "gestor")
 export const updateUserRole = async (uid, newRole) => {
   await updateDoc(doc(db, "users", uid), { role: newRole });
 };
 
-// Cria ou substitui perfil de perito na coleção "peritos"
 export const addPeritoProfile = async (uid, peritoData) => {
   try {
     await setDoc(doc(db, "peritos", uid), {
       uid,
-      ...peritoData // { name, email, birthDate, address, phone, specialty, status, localidades }
+      ...peritoData
     });
   } catch (error) {
     console.error("Erro ao adicionar perfil de perito:", error);
@@ -87,7 +82,6 @@ export const addPeritoProfile = async (uid, peritoData) => {
   }
 };
 
-// Busca só os peritos que têm perfil na coleção "peritos"
 export const getActivePeritos = async () => {
   try {
     const usersRef = collection(db, "users");
@@ -107,7 +101,6 @@ export const getActivePeritos = async () => {
   }
 };
 
-// Busca utilizadores com role "perito" em users mas sem perfil em peritos
 export const getPeritosWithoutProfile = async () => {
   try {
     const usersRef = collection(db, "users");
@@ -130,15 +123,12 @@ export const getPeritosWithoutProfile = async () => {
   }
 };
 
-// Alias para quem quiser usar por nome mais claro
 export const getPeritosWithProfile = getActivePeritos;
 
-// Atualiza campos do perfil de perito
 export const updatePeritoProfile = async (uid, updates) => {
   await updateDoc(doc(db, "peritos", uid), updates);
 };
 
-// Apaga perfil de perito (opcional)
 export const deletePeritoProfile = async (uid) => {
   await deleteDoc(doc(db, "peritos", uid));
 };
