@@ -363,18 +363,6 @@ const chartOptions = computed(() => ({
       opacityTo: 0.55,
     },
   },
-  subtitle: {
-    text: ultimaAtualizacao.value
-      ? `Última atualização: ${ultimaAtualizacao.value.toLocaleString()}`
-      : "Carregando dados...",
-    align: "right",
-    margin: 10,
-    offsetY: 5,
-    style: {
-      fontSize: "12px",
-      color: "#9e9e9e",
-    },
-  },
 }));
 
 // Funções auxiliares para localStorage

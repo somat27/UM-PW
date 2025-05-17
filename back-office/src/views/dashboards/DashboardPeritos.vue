@@ -189,7 +189,9 @@ async function buscarRegiaoComCache(lat, lon) {
 const mobilizadosUids = computed(() => {
   const set = new Set();
   auditorias.value.forEach((a) => {
-    if (a.perito) set.add(a.perito);
+    if (a.perito && a.status !== "Concluído") {
+      set.add(a.perito);
+    }
   });
   return set;
 });
@@ -488,18 +490,6 @@ const chartOptions = computed(() => ({
     bar: {
       borderRadius: 3,
       columnWidth: "50%",
-    },
-  },
-  subtitle: {
-    text: ultimaAtualizacao.value
-      ? `Última atualização: ${ultimaAtualizacao.value.toLocaleString()}`
-      : "Carregando dados...",
-    align: "right",
-    margin: 10,
-    offsetY: 5,
-    style: {
-      fontSize: "12px",
-      color: "#9e9e9e",
     },
   },
 }));

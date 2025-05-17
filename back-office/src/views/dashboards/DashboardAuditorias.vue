@@ -361,7 +361,7 @@ const chartOptions = computed(() => ({
       text: "Número de Auditorias",
     },
   },
-  colors: ["#13c2c2"],
+  colors: ["#204C6D"],
   dataLabels: {
     enabled: true,
     formatter: function (val) {
@@ -375,18 +375,6 @@ const chartOptions = computed(() => ({
     bar: {
       borderRadius: 3,
       columnWidth: "50%",
-    },
-  },
-  subtitle: {
-    text: ultimaAtualizacao.value
-      ? `Última atualização: ${ultimaAtualizacao.value.toLocaleString()}`
-      : "Carregando dados...",
-    align: "right",
-    margin: 10,
-    offsetY: 5,
-    style: {
-      fontSize: "12px",
-      color: "#9e9e9e",
     },
   },
 }));
@@ -488,7 +476,7 @@ const chartOptions = computed(() => ({
 
 .search-container {
   padding: 8px 40px 8px 12px;
-  border: 1px solid #13c2c2;
+  border: 1px solid #204c6d;
   border-radius: 4px;
   width: 200px;
 }
@@ -540,7 +528,7 @@ input {
 }
 
 .refresh-button {
-  background-color: #13c2c2;
+  background-color: #204c6d;
   color: white;
   border: none;
   border-radius: 4px;
