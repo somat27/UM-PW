@@ -10,26 +10,45 @@
       </aside>
       <main class="main-content">
         <div class="content-wrapper">
-
           <nav class="navigation-tabs">
-            <router-link to="/dashboards/auditorias" class="tab-link" :class="{ active: activeTab === 'auditorias' }"
-              @click="activeTab = 'auditorias'">
+            <router-link
+              to="/dashboards/auditorias"
+              class="tab-link"
+              :class="{ active: activeTab === 'auditorias' }"
+              @click="activeTab = 'auditorias'"
+            >
               Auditorias por região
             </router-link>
-            <router-link to="/dashboards/ocorrencias" class="tab-link" :class="{ active: activeTab === 'ocorrencias' }"
-              @click="activeTab = 'ocorrencias'">
+            <router-link
+              to="/dashboards/ocorrencias"
+              class="tab-link"
+              :class="{ active: activeTab === 'ocorrencias' }"
+              @click="activeTab = 'ocorrencias'"
+            >
               Ocorrências por região
             </router-link>
-            <router-link to="/dashboards/peritos" class="tab-link" :class="{ active: activeTab === 'peritos' }"
-              @click="activeTab = 'peritos'">
+            <router-link
+              to="/dashboards/peritos"
+              class="tab-link"
+              :class="{ active: activeTab === 'peritos' }"
+              @click="activeTab = 'peritos'"
+            >
               Peritos Ativos e em Espera
             </router-link>
-            <router-link to="/dashboards/materiais" class="tab-link" :class="{ active: activeTab === 'materiais' }"
-              @click="activeTab = 'materiais'">
+            <router-link
+              to="/dashboards/materiais"
+              class="tab-link"
+              :class="{ active: activeTab === 'materiais' }"
+              @click="activeTab = 'materiais'"
+            >
               Materiais Usados & Por Usar
             </router-link>
-            <router-link to="/dashboards/mapa" class="tab-link" :class="{ active: activeTab === 'mapa' }"
-              @click="activeTab = 'mapa'">
+            <router-link
+              to="/dashboards/mapa"
+              class="tab-link"
+              :class="{ active: activeTab === 'mapa' }"
+              @click="activeTab = 'mapa'"
+            >
               Auditorias e Ocorrências no Terreno
             </router-link>
           </nav>
@@ -37,7 +56,12 @@
           <StatisticsGridMateriais :cards="materialCards" />
 
           <div class="radial-chart">
-            <apexchart type="radialBar" :options="chartOptions" :series="chartSeries" height="350" />
+            <apexchart
+              type="radialBar"
+              :options="chartOptions"
+              :series="chartSeries"
+              height="350"
+            />
           </div>
         </div>
       </main>
@@ -46,85 +70,71 @@
 </template>
 
 <script setup>
-import { ref, onUnmounted, computed } from 'vue';
-import NavigationList from '@/components/NavigationList.vue';
-import StatisticsGridMateriais from '@/components/StatisticsGridMateriais.vue';
-import { collection, onSnapshot } from 'firebase/firestore'
-import { db } from '@/firebase.js'
+import { ref, onUnmounted, computed } from "vue";
+import NavigationList from "@/components/NavigationList.vue";
+import StatisticsGridMateriais from "@/components/StatisticsGridMateriais.vue";
+import { collection, onSnapshot } from "firebase/firestore";
+import { db } from "@/firebase.js";
 
-const activeTab = ref('materiais');
+const activeTab = ref("materiais");
 
-const totalUtilizado = ref({})
-const totalDisponivel = ref({})
+const totalUtilizado = ref({});
+const totalDisponivel = ref({});
 
-const unsubAud = onSnapshot(
-  collection(db, 'auditorias'),
-  snap => {
-    let soma = 0
-    snap.forEach(doc =>
-      doc.data().materiais.forEach(item =>
-        soma += item.quantidade
-      )
-    )
-    totalUtilizado.value = soma
-  }
-)
+const unsubAud = onSnapshot(collection(db, "auditorias"), (snap) => {
+  let soma = 0;
+  snap.forEach((doc) =>
+    doc.data().materiais.forEach((item) => (soma += item.quantidade))
+  );
+  totalUtilizado.value = soma;
+});
 
-const unsubMat = onSnapshot(
-  collection(db, 'materiais'),
-  snap => {
-    let soma = 0
-    snap.forEach(doc =>
-      soma += doc.data().quantidade
-    )
-    totalDisponivel.value = soma
-  }
-)
+const unsubMat = onSnapshot(collection(db, "materiais"), (snap) => {
+  let soma = 0;
+  snap.forEach((doc) => (soma += doc.data().quantidade));
+  totalDisponivel.value = soma;
+});
 
-onUnmounted(() => { unsubAud(); unsubMat() })
+onUnmounted(() => {
+  unsubAud();
+  unsubMat();
+});
 
 const materialCards = computed(() => [
-  { title: 'Materiais usados', value: totalUtilizado.value },
-  { title: 'Materiais por usar', value: totalDisponivel.value }
-])
+  { title: "Materiais usados", value: totalUtilizado.value },
+  { title: "Materiais por usar", value: totalDisponivel.value },
+]);
 
-const totalGeral = computed(() =>
-  totalUtilizado.value + totalDisponivel.value
-)
+const totalGeral = computed(() => totalUtilizado.value + totalDisponivel.value);
 
 const pctUsados = computed(() =>
   totalGeral.value
-    ? Math.round(totalUtilizado.value / totalGeral.value * 100)
+    ? Math.round((totalUtilizado.value / totalGeral.value) * 100)
     : 0
-)
+);
 
 const pctPorUsar = computed(() =>
-  totalGeral.value
-    ? 100 - pctUsados.value
-    : 0
-)
+  totalGeral.value ? 100 - pctUsados.value : 0
+);
 
 const chartOptions = computed(() => ({
-  chart: { id: 'materiais-grafico' },
-  labels: ['Por usar', 'Usados'],
-  title: { text: 'Materiais Usados & Por Usar' },
+  chart: { id: "materiais-grafico" },
+  labels: ["Por usar", "Usados"],
+  title: { text: "Materiais Usados & Por Usar" },
   plotOptions: {
     radialBar: {
       dataLabels: {
-        name: { fontSize: '16px' },
+        name: { fontSize: "16px" },
         value: {
-          fontSize: '14px',
-          formatter: val => `${val}%`
-        }
-      }
-    }
-  }
-}))
+          fontSize: "14px",
+          formatter: (val) => `${val}%`,
+        },
+      },
+    },
+  },
+}));
 
-const chartSeries = computed(() => [
-  pctPorUsar.value,
-  pctUsados.value,
-])
+const chartSeries = computed(() => [pctPorUsar.value, pctUsados.value]);
 </script>
 
 <style scoped>
@@ -158,7 +168,7 @@ const chartSeries = computed(() => [
   display: flex;
   align-items: center;
   gap: 8px;
-  font-family: 'Public Sans', -apple-system, Roboto, Helvetica, sans-serif;
+  font-family: "Public Sans", -apple-system, Roboto, Helvetica, sans-serif;
   padding: 8px 0;
   margin-bottom: 24px;
   border-bottom: 1px solid #f0f0f0;
@@ -186,30 +196,30 @@ const chartSeries = computed(() => [
 }
 
 .tab-link.active {
-  color: #1890ff;
+  color: #204c6d;
   background-color: rgba(24, 144, 255, 0.08);
   font-weight: 600;
 }
 
 .tab-link.active::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: -9px;
   left: 16px;
   right: 16px;
   height: 2px;
-  background-color: #1890ff;
+  background-color: #204c6d;
   border-radius: 2px 2px 0 0;
 }
 
 .tab-link::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: -9px;
   left: 50%;
   right: 50%;
   height: 2px;
-  background-color: #1890ff;
+  background-color: #204c6d;
   transition: all 0.3s ease;
   border-radius: 2px 2px 0 0;
 }

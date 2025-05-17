@@ -18,7 +18,10 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(item, rowIndex) in data" :key="item.id || item.uid || rowIndex">
+          <tr
+            v-for="(item, rowIndex) in data"
+            :key="item.id || item.uid || rowIndex"
+          >
             <td v-for="column in columns" :key="column.key">
               <!-- Scoped slot for custom cell -->
               <template v-if="$slots['cell-' + column.key]">
@@ -39,7 +42,10 @@
 
               <!-- Status badge -->
               <template v-else-if="column.key === 'status'">
-                <span class="status-badge" :data-status="item.status.toLowerCase()">
+                <span
+                  class="status-badge"
+                  :data-status="item.status.toLowerCase()"
+                >
                   {{ item.status }}
                 </span>
               </template>
@@ -48,7 +54,10 @@
               <template v-else-if="column.key === 'actions'">
                 <div class="action-btn-group">
                   <button class="icon-btn" @click="$emit('view', item)">
-                    <img src="@/assets/icons8-eye-forma-light/icons8-eye-24.png" alt="Ver" />
+                    <img
+                      src="@/assets/icons8-eye-forma-light/icons8-eye-24.png"
+                      alt="Ver"
+                    />
                   </button>
                 </div>
               </template>
@@ -56,7 +65,10 @@
               <template v-else-if="column.key === 'edit'">
                 <div class="action-btn-group">
                   <button class="icon-btn" @click="$emit('edit', item)">
-                    <img src="@/assets/icons8-pencil-pastel-glyph/icons8-pencil-24.png" alt="Editar" />
+                    <img
+                      src="@/assets/icons8-pencil-pastel-glyph/icons8-pencil-24.png"
+                      alt="Editar"
+                    />
                   </button>
                 </div>
               </template>
@@ -64,10 +76,16 @@
               <template v-else-if="column.key === 'edit-profissionais'">
                 <div class="action-btn-group">
                   <button class="icon-btn" @click="$emit('edit', item)">
-                    <img src="@/assets/icons8-pencil-pastel-glyph/icons8-pencil-24.png" alt="Editar" />
+                    <img
+                      src="@/assets/icons8-pencil-pastel-glyph/icons8-pencil-24.png"
+                      alt="Editar"
+                    />
                   </button>
                   <button class="icon-btn" @click="$emit('add', item)">
-                    <img src="@/assets/icons8-plus/icons8-plus.png" alt="Adicionar" />
+                    <img
+                      src="@/assets/icons8-plus/icons8-plus.png"
+                      alt="Adicionar"
+                    />
                   </button>
                 </div>
               </template>
@@ -75,10 +93,16 @@
               <template v-else-if="column.key === 'edit-materiais'">
                 <div class="action-btn-group">
                   <button class="icon-btn" @click="$emit('edit', item)">
-                    <img src="@/assets/icons8-pencil-pastel-glyph/icons8-pencil-24.png" alt="Editar" />
+                    <img
+                      src="@/assets/icons8-pencil-pastel-glyph/icons8-pencil-24.png"
+                      alt="Editar"
+                    />
                   </button>
                   <button class="icon-btn" @click="$emit('add', item)">
-                    <img src="@/assets/icons8-plus/icons8-plus.png" alt="Adicionar" />
+                    <img
+                      src="@/assets/icons8-plus/icons8-plus.png"
+                      alt="Adicionar"
+                    />
                   </button>
                 </div>
               </template>
@@ -87,7 +111,10 @@
               <template v-else-if="column.key === 'add'">
                 <div class="action-btn-group">
                   <button class="icon-btn" @click="$emit('add', item)">
-                    <img src="@/assets/icons8-plus/icons8-plus.png" alt="Adicionar" />
+                    <img
+                      src="@/assets/icons8-plus/icons8-plus.png"
+                      alt="Adicionar"
+                    />
                     <div class="registar-perito">Registar Perito</div>
                   </button>
                 </div>
@@ -96,7 +123,11 @@
               <!-- Lista de localidades como botões -->
               <template v-else-if="column.key === 'localidades'">
                 <div class="localidades-list">
-                  <button v-for="loc in item.localidades" :key="loc" class="localidade-btn">
+                  <button
+                    v-for="loc in item.localidades"
+                    :key="loc"
+                    class="localidade-btn"
+                  >
                     {{ loc }}
                   </button>
                 </div>
@@ -106,7 +137,6 @@
               <template v-else-if="column.key !== 'qtd'">
                 {{ item[column.key] }}
               </template>
-
             </td>
           </tr>
         </tbody>
@@ -117,35 +147,35 @@
 
 <script setup>
 /* eslint-disable no-undef */
-import { computed } from 'vue'
+import { computed } from "vue";
 
 const props = defineProps({
   title: String,
   subTitle: String,
   data: {
     type: Array,
-    required: true
+    required: true,
   },
   loading: {
     type: Boolean,
-    default: false
+    default: false,
   },
   columns: {
     type: Array,
-    required: true
+    required: true,
   },
   type: {
     type: String,
-    default: 'striped',
-    validator: val => ['striped', 'hover', 'plain'].includes(val)
-  }
-})
+    default: "striped",
+    validator: (val) => ["striped", "hover", "plain"].includes(val),
+  },
+});
 
 const tableClass = computed(() => ({
-  striped: props.type === 'striped',
-  hover: props.type === 'hover',
-  plain: props.type === 'plain'
-}))
+  striped: props.type === "striped",
+  hover: props.type === "hover",
+  plain: props.type === "plain",
+}));
 </script>
 
 <style scoped>
@@ -210,12 +240,12 @@ const tableClass = computed(() => ({
 }
 
 .status-badge[data-status="analise"] {
-  background: goldenrod;
+  background: #36bef4;
   color: white;
 }
 
 .status-badge[data-status="pendente"] {
-  background: #36bef4;
+  background: goldenrod;
   color: white;
 }
 
