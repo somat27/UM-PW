@@ -6,15 +6,20 @@
         <input v-model.trim="email" type="email" placeholder="Email" required />
       </div>
       <div class="form-group">
-        <input v-model="password" type="password" placeholder="Palavra‑passe" required />
+        <input
+          v-model="password"
+          type="password"
+          placeholder="Palavra‑passe"
+          required
+        />
       </div>
       <p v-if="errorMsg">{{ errorMsg }}</p>
       <button :disabled="!canSubmit || emailLoading" type="submit">
-        {{ emailLoading ? 'A aguardar...' : 'Login' }}
+        {{ emailLoading ? "A aguardar..." : "Login" }}
       </button>
       <hr />
       <button @click="handleGoogleLogin" :disabled="googleLoading">
-        <img class="google" src="@/assets/google.png" alt="google">
+        <img class="google" src="@/assets/google.png" alt="google" />
         <span v-if="googleLoading">Abrindo Google...</span>
         <span v-else>Entrar com Google</span>
       </button>
@@ -27,86 +32,86 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { loginWithEmail, loginWithGoogle, auth } from '@/firebase'
+import { ref, computed, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { loginWithEmail, loginWithGoogle, auth } from "@/firebase";
 
 // Estados
-const email = ref('')
-const password = ref('')
-const errorMsg = ref('')
-const emailLoading = ref(false)
-const googleLoading = ref(false)
-const router = useRouter()
+const email = ref("");
+const password = ref("");
+const errorMsg = ref("");
+const emailLoading = ref(false);
+const googleLoading = ref(false);
+const router = useRouter();
 
 // Redireciona se já existir sessão guardada
 onMounted(() => {
-  const savedUID = localStorage.getItem('userUID')
+  const savedUID = localStorage.getItem("userUID");
   if (savedUID) {
-    router.replace('/dashboards/auditorias')
+    router.replace("/dashboards/auditorias");
   }
-})
+});
 
 // Validação do formulário de email
-const canSubmit = computed(() => email.value && password.value.length)
+const canSubmit = computed(() => email.value && password.value.length);
 
 // Login por email
 const handleEmailLogin = async () => {
-  if (emailLoading.value) return
-  emailLoading.value = true
-  errorMsg.value = ''
+  if (emailLoading.value) return;
+  emailLoading.value = true;
+  errorMsg.value = "";
   if (!canSubmit.value) {
-    errorMsg.value = 'Preenche e‑mail e palavra‑passe.'
-    emailLoading.value = false
-    return
+    errorMsg.value = "Preenche e‑mail e palavra‑passe.";
+    emailLoading.value = false;
+    return;
   }
   try {
-    await loginWithEmail(email.value, password.value)
-    localStorage.setItem('userUID', auth.currentUser.uid)
-    router.push('/dashboards/auditorias')
+    await loginWithEmail(email.value, password.value);
+    localStorage.setItem("userUID", auth.currentUser.uid);
+    router.push("/dashboards/auditorias");
   } catch (err) {
     switch (err.code) {
-      case 'auth/missing-password':
-        errorMsg.value = 'Introduz a palavra‑passe.'
-        break
-      case 'auth/invalid-email':
-        errorMsg.value = 'E‑mail inválido.'
-        break
-      case 'auth/wrong-password':
-        errorMsg.value = 'Palavra‑passe incorrecta.'
-        break
-      case 'auth/user-not-found':
-        errorMsg.value = 'Utilizador não encontrado.'
-        break
+      case "auth/missing-password":
+        errorMsg.value = "Introduz a palavra‑passe.";
+        break;
+      case "auth/invalid-email":
+        errorMsg.value = "E‑mail inválido.";
+        break;
+      case "auth/wrong-password":
+        errorMsg.value = "Palavra‑passe incorrecta.";
+        break;
+      case "auth/user-not-found":
+        errorMsg.value = "Utilizador não encontrado.";
+        break;
       default:
-        errorMsg.value = 'Erro: ' + err.message
+        errorMsg.value = "Erro: " + err.message;
     }
   } finally {
-    emailLoading.value = false
+    emailLoading.value = false;
   }
-}
+};
 
 const handleGoogleLogin = async () => {
-  if (googleLoading.value) return
-  googleLoading.value = true
-  errorMsg.value = ''
+  if (googleLoading.value) return;
+  googleLoading.value = true;
+  errorMsg.value = "";
   try {
-    const user = await loginWithGoogle()
-    localStorage.setItem('userUID', user.uid)
-    router.push('/dashboards/auditorias')
+    const user = await loginWithGoogle();
+    localStorage.setItem("userUID", user.uid);
+    router.push("/dashboards/auditorias");
   } catch (err) {
     const ignoreCodes = [
-      'auth/cancelled-popup-request',
-      'auth/popup-closed-by-user',
-      'auth/popup-blocked'
-    ]
+      "auth/cancelled-popup-request",
+      "auth/popup-closed-by-user",
+      "auth/popup-blocked",
+    ];
     if (!ignoreCodes.includes(err.code)) {
-      errorMsg.value = 'Erro: ' + err.message
+      errorMsg.value = "Erro: " + err.message;
     }
   } finally {
-    googleLoading.value = false
+    googleLoading.value = false;
   }
-}
+};
 </script>
 
 <style scoped>
@@ -115,7 +120,7 @@ const handleGoogleLogin = async () => {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #e3f2fd 0%, #90caf9 100%);
+  background: linear-gradient(135deg, #f5f5f5 0%, #e3f2fd 100%);
 }
 
 .auth-form {
@@ -130,7 +135,7 @@ const handleGoogleLogin = async () => {
 
 .auth-form h2 {
   margin-bottom: 1.5rem;
-  color: #1976d2;
+  color: #204c6d;
 }
 
 .form-group {
@@ -142,7 +147,7 @@ const handleGoogleLogin = async () => {
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #1565c0;
+  color: #204c6d;
 }
 
 .form-group input {
@@ -156,7 +161,7 @@ const handleGoogleLogin = async () => {
 button {
   width: 100%;
   padding: 0.75rem;
-  background: #1976d2;
+  background: #204c6d;
   color: white;
   border: none;
   border-radius: 8px;
