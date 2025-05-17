@@ -81,10 +81,11 @@
                 this.item = {
                     nome: novoItem.nome,
                     presente: false,
-                    quantidade: 1
+                    quantidade: 0
                 }
                 this.$emit('novoItem', this.item)
                 this.adicionaEstado = false;
+                this.adicionaQuantidade(this.item)
             },
             getItensDisponiveis() {
                 const nomesSelecionados = this.dados.map(item => item.nome);
