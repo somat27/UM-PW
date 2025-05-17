@@ -45,11 +45,11 @@ export default {
 }
 
 .status-pending {
-  background-color: #ff0000;
+  background-color: #ffa500;
 }
 
 .status-analyzing {
-  background-color: #ffa500;
+  background-color: #00bfff;
 }
 
 .status-resolved {
@@ -57,6 +57,6 @@ export default {
 }
 
 .status-rejected {
-  background-color: #800080;
+  background-color: #ff0000;
 }
 </style>

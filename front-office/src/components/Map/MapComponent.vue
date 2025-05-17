@@ -189,11 +189,11 @@ export default {
       ocorrenciasCarregadas: false,
       mapsInitCallback: null,
 
-      statusMarkerColors: {
-        Pendente: "#FF0000",
-        Analise: "#FFCC00",
-        Resolvido: "#33CC33",
-        Rejeitado: "#800080",
+      statusMarkerIcons: {
+        Rejeitado: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
+        Pendente: "https://maps.google.com/mapfiles/ms/icons/yellow-dot.png",
+        Analise: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+        Resolvido: "https://maps.google.com/mapfiles/ms/icons/green-dot.png",
       },
     };
   },
@@ -414,17 +414,10 @@ export default {
 
         temCoordenadasValidas = true;
 
-        const markerColor =
-          this.statusMarkerColors[o.status] || this.statusMarkerColors.default;
-
-        const markerIcon = {
-          path: window.google.maps.SymbolPath.CIRCLE,
-          fillColor: markerColor,
-          fillOpacity: 1,
-          strokeWeight: 1,
-          strokeColor: "#FFFFFF",
-          scale: 10,
-        };
+        // Usar o ícone correspondente ao status ou um ícone padrão se não encontrado
+        const markerIcon =
+          this.statusMarkerIcons[o.status] ||
+          "https://maps.google.com/mapfiles/ms/icons/yellow-dot.png"; // Ícone padrão
 
         const marker = new window.google.maps.Marker({
           position: pos,
