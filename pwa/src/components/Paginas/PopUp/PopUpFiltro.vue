@@ -2,7 +2,7 @@
     <div id="popup">
         <div v-for="status in estado" :key="status">
             <label class="flex-linha" id="texto">
-                <input type="radio" :value="status" name="filtro" v-model="selecionado" @click="fechaPopUp(status)"> 
+                <input type="radio" :value="status" name="filtro" v-model="selecionado" @click="fechaPopUp(status)" style="accent-color: #204C6D"> 
                 <h2>{{ status }}</h2>
             </label>
         </div>

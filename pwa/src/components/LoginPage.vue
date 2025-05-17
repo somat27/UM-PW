@@ -1,5 +1,5 @@
 <template>
-  <main class="login-page">
+  <main class="login-page painel">
     <form class="auth-form" @submit.prevent="handleEmailLogin" novalidate>
       <h2>Iniciar Sessão</h2>
       <div class="form-group">
@@ -20,7 +20,7 @@
       </button>
       <p>
         Não tem conta?
-        <router-link to="/register">Registar</router-link>
+        <router-link class="p-1" to="/register">Registar</router-link>
       </p>
     </form>
   </main>
@@ -115,13 +115,13 @@ const handleGoogleLogin = async () => {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #e3f2fd 0%, #90caf9 100%);
+  background: linear-gradient(135deg, #F5F5F5 0%, #e3f2fd 100%);
 }
 
 .auth-form {
   background: white;
   padding: 2rem;
-  border-radius: 12px;
+  border-radius: 15px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   width: 100%;
   max-width: 360px;
@@ -129,11 +129,13 @@ const handleGoogleLogin = async () => {
 }
 
 .auth-form h2 {
+  text-align: center;
   margin-bottom: 1.5rem;
-  color: #1976d2;
+  color: #204C6D;
 }
 
 .form-group {
+  width: 100%;
   margin-bottom: 1rem;
   margin-right: 1.6rem;
   text-align: left;
@@ -142,7 +144,7 @@ const handleGoogleLogin = async () => {
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #1565c0;
+  color: #204C6D;
 }
 
 .form-group input {
@@ -156,7 +158,7 @@ const handleGoogleLogin = async () => {
 button {
   width: 100%;
   padding: 0.75rem;
-  background: #1976d2;
+  background: #204C6D;
   color: white;
   border: none;
   border-radius: 8px;
@@ -171,5 +173,13 @@ button:hover {
 
 .google {
   margin-right: 10px;
+}
+
+.p-1 {
+  color: #204C6D;
+}
+
+.p-1:hover {
+  color: #1565c0;
 }
 </style>

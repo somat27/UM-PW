@@ -2,9 +2,16 @@
 
     <AppHeader titulo="Registo"/>
 
-    <button class="flex-linha transparente margem" @click="goToPaginaIncial">
-        <h2><i class="bi bi-arrow-left"></i>   Voltar para menu</h2>
-    </button>
+    <div class="flex-linha item-ponta centro margem">
+        <button class="flex-linha transparente" @click="goToPaginaIncial">
+            <h2><i class="bi bi-arrow-left"></i>   Voltar para menu</h2>
+        </button>
+
+        <button class="transparente" @click="limparLocalStorage">
+            <h3>Limpar alterações</h3>
+        </button>
+        
+    </div>
 
     <div class="flex-coluna margem painel" v-if="auditoria.tipo">
         <h1>{{ nomeOcorrencia(auditoria.tipo) }}</h1>
@@ -66,13 +73,19 @@
                 :dados="this.auditoria.profissionais" 
                 :texto="`<i class='bi bi-people icon'></i> Profissionais`" 
                 :lista="listaProfissionais" 
-                @alteracoes="atualizarListaAlteracaoProfissionais"/>
+                @alteracoes="atualizarListaAlteracaoProfissionais"
+                @novoItem="adicionarProfissionalLista"/>
         </button>
 
 
         <button class="flex-linha transparente" @click="popUpMateriais = !popUpMateriais">
             <h2><i class='bi bi-file-earmark-text icon'></i> Materiais</h2>
-            <PopUpInfo v-if="popUpMateriais && auditoria.materiais.length > 0" :dados="this.auditoria.materiais" :texto="`<i class='bi bi-file-earmark-text icon'></i> Materiais`" :lista="listaMateriais" @alteracoes="atualizarListaAlteracaoMateriais"/>
+            <PopUpInfo 
+                v-if="popUpMateriais && auditoria.materiais.length > 0" 
+                :dados="this.auditoria.materiais" :texto="`<i class='bi bi-file-earmark-text icon'></i> Materiais`" 
+                :lista="listaMateriais" 
+                @alteracoes="atualizarListaAlteracaoMateriais"
+                @novoItem="adicionarMaterialLista"/>
         </button>
 
 
@@ -84,7 +97,7 @@
 
 
 <script>
-    import { doc, getDoc, setDoc, collection, getDocs, updateDoc } from 'firebase/firestore';
+    import { doc, getDoc, collection, getDocs, updateDoc } from 'firebase/firestore';
     import { db, uploadToCloudinary } from '@/firebase/firebase.js';
     import AppHeader from '../AppHeader.vue';
     import PainelImagens from './Extra/PainelImagens.vue';
@@ -247,8 +260,14 @@
                         // Agora, guarde a auditoria
                         this.auditoria.status = "Pendente";
                         const auditoriaId = this.$route.params.id;
-                        await setDoc(doc(db, "auditorias", auditoriaId), {
-                            ...this.auditoria
+                        await updateDoc(doc(db, "auditorias", auditoriaId), {
+                                audios: this.auditoria.audios,
+                                imagemVideo: this.auditoria.imagemVideo,
+                                materiais: this.auditoria.materiais,
+                                profissionais: this.auditoria.profissionais,
+                                descricao: this.auditoria.descricao,
+                                status: this.auditoria.status,
+                                dataFim: new Date()
                         });
                         console.log("Dados da auditoria salvos com sucesso!");
 
@@ -320,6 +339,14 @@
                 const elemento = dados.elemento;
                 const quantidade = dados.quantidade;
 
+                const itemAuditoria = this.auditoria.profissionais.find(item => item.nome === elemento.nome);
+                if (itemAuditoria) {
+                    itemAuditoria.presente = false
+                    if (itemAuditoria.quantidade === 0) {
+                        this.auditoria.profissionais = this.auditoria.profissionais.filter(i => i.nome !== elemento.nome);
+                    }
+                }
+
                 const item = this.listaAlteracaoProfissionais.find(item => item.nome === elemento.nome)
                 if(item) {
                     item.quantidade += quantidade
@@ -339,6 +366,13 @@
             atualizarListaAlteracaoMateriais(dados) {
                 const elemento = dados.elemento;
                 const quantidade = dados.quantidade;
+
+                const itemAuditoria = this.auditoria.materiais.find(item => item.nome === elemento.nome);
+                if (itemAuditoria) {
+                    itemAuditoria.presente = false
+                    if (itemAuditoria.quantidade === 0) {
+                        this.auditoria.materiais = this.auditoria.materiais.filter(i => i.nome !== elemento.nome);}
+                }
 
                 const item = this.listaAlteracaoMateriais.find(item => item.nome === elemento.nome)
                 if(item) {
@@ -386,6 +420,16 @@
                     case "sinals": return "Sinalização em Falta"
                     case "roads": return "Vias e Passeios"
                 }
+            },
+            limparLocalStorage() {
+                this.limparAlteracoesDeLocalStorage()
+                window.location.reload();
+            },
+            adicionarProfissionalLista(item) {
+                this.auditoria.profissionais.push(item)
+            },
+            adicionarMaterialLista(item) {
+                this.auditoria.materiais.push(item)
             }
         }
     }
