@@ -65,16 +65,6 @@
             </div>
 
             <div class="spacer"></div>
-
-            <div class="dashboard-info" v-if="ultimaAtualizacao">
-              <span class="info-text"
-                >Dados atualizados em:
-                {{ ultimaAtualizacao.toLocaleString() }}</span
-              >
-              <button class="refresh-button" @click="forcarAtualizacao">
-                Atualizar dados
-              </button>
-            </div>
           </div>
 
           <StatisticsGridOcorrencia :cards="weeklyCards" />
@@ -86,6 +76,15 @@
               :options="chartOptions"
               :series="series"
             />
+            <div class="dashboard-info">
+              <span class="info-text" v-if="ultimaAtualizacao">
+                Dados atualizados em:
+                {{ ultimaAtualizacao.toLocaleString() }}
+              </span>
+              <button class="refresh-button" @click="forcarAtualizacao">
+                Atualizar dados
+              </button>
+            </div>
           </div>
         </div>
       </main>
@@ -225,8 +224,9 @@ function getCurrentISOWeek() {
   return `${date.getUTCFullYear()}-W${weekStr}`;
 }
 
-// Agregação de dados
+// Agregação de dados - CORRIGIDA para evitar perda de ocorrências
 function aggregate(items) {
+  // Agrupar as ocorrências por data e região, somando os totais
   const mapa = {};
   items.forEach((item) => {
     const key = item.region + "|" + item.date;
@@ -238,22 +238,23 @@ function aggregate(items) {
         resolved: 0,
       };
     }
-    mapa[key].total += item.total;
-    mapa[key].resolved += item.resolved;
+    mapa[key].total += item.total || 1; // Garante que cada ocorrência conta como 1
+    mapa[key].resolved += item.resolved || 0;
   });
   return Object.values(mapa);
 }
 
 // Computed para filtragem de dados
-const weeklyData = computed(() =>
-  rawData.value.filter(
+const weeklyData = computed(() => {
+  // Filtrar os dados pela semana selecionada e região
+  return rawData.value.filter(
     (item) =>
       weekDates.value.includes(item.date) &&
       (selectedRegion.value === "Portugal"
         ? true
         : item.region === selectedRegion.value)
-  )
-);
+  );
+});
 
 // Dados para cartões de estatísticas
 const weeklyCards = computed(() => {
@@ -265,20 +266,36 @@ const weeklyCards = computed(() => {
       { title: "Menor taxa (dia)", value: "–" },
     ];
   }
+
+  // Calcular totais por dia para os cards
   const total = weeklyData.value.reduce((s, d) => s + d.total, 0);
   const resolved = weeklyData.value.reduce((s, d) => s + d.resolved, 0);
-  const rates = weeklyData.value.map((d) => ({
-    date: d.date,
-    pct: d.total > 0 ? Math.round((d.resolved / d.total) * 100) : 0,
+
+  // Calcular taxas de resolução por dia
+  const byDate = {};
+  weeklyData.value.forEach((d) => {
+    if (!byDate[d.date]) {
+      byDate[d.date] = { total: 0, resolved: 0 };
+    }
+    byDate[d.date].total += d.total;
+    byDate[d.date].resolved += d.resolved;
+  });
+
+  const rates = Object.entries(byDate).map(([date, data]) => ({
+    date,
+    pct: data.total > 0 ? Math.round((data.resolved / data.total) * 100) : 0,
   }));
-  const max = rates.reduce((a, b) => (b.pct > a.pct ? b : a), {
-    pct: 0,
-    date: "–",
-  });
-  const min = rates.reduce((a, b) => (b.pct < a.pct ? b : a), {
-    pct: 100,
-    date: "–",
-  });
+
+  const max =
+    rates.length > 0
+      ? rates.reduce((a, b) => (b.pct > a.pct ? b : a), { pct: 0, date: "–" })
+      : { pct: 0, date: "–" };
+
+  const min =
+    rates.length > 0
+      ? rates.reduce((a, b) => (b.pct < a.pct ? b : a), { pct: 100, date: "–" })
+      : { pct: 0, date: "–" };
+
   return [
     { title: "Total de Ocorrências Confirmadas", value: total },
     { title: "Total de Ocorrências Resolvidas", value: resolved },
@@ -293,23 +310,33 @@ const weeklyCards = computed(() => {
   ];
 });
 
-// Dados para o gráfico
-const series = computed(() => [
-  {
-    name: "Total",
-    data: weekDates.value.map((d) => {
-      const rec = weeklyData.value.find((x) => x.date === d);
-      return rec ? rec.total : 0;
-    }),
-  },
-  {
-    name: "Resolvidas",
-    data: weekDates.value.map((d) => {
-      const rec = weeklyData.value.find((x) => x.date === d);
-      return rec ? rec.resolved : 0;
-    }),
-  },
-]);
+// Dados para o gráfico - CORRIGIDO para mostrar totais corretos
+const series = computed(() => {
+  // Agrupar dados por data para o gráfico
+  const dailyTotals = {};
+  weekDates.value.forEach((date) => {
+    dailyTotals[date] = { total: 0, resolved: 0 };
+  });
+
+  // Somar todas as ocorrências por data
+  weeklyData.value.forEach((item) => {
+    if (dailyTotals[item.date]) {
+      dailyTotals[item.date].total += item.total;
+      dailyTotals[item.date].resolved += item.resolved;
+    }
+  });
+
+  return [
+    {
+      name: "Total",
+      data: weekDates.value.map((date) => dailyTotals[date].total),
+    },
+    {
+      name: "Resolvidas",
+      data: weekDates.value.map((date) => dailyTotals[date].resolved),
+    },
+  ];
+});
 
 const chartOptions = computed(() => ({
   chart: {
@@ -456,7 +483,7 @@ async function forcarAtualizacao() {
   }
 }
 
-// Função para carregar dados do Firestore
+// Função para carregar dados do Firestore - CORRIGIDA para garantir contagem precisa
 async function carregarDadosFirestore() {
   const snap = await getDocs(collection(db, "ocorrencias"));
   console.log(`Carregadas ${snap.docs.length} ocorrências do Firestore`);
@@ -483,11 +510,12 @@ async function carregarDadosFirestore() {
     items.push({
       date: dateStr,
       region,
-      total: 1,
+      total: 1, // Cada documento conta como 1 ocorrência
       resolved,
     });
   }
 
+  // Aplicar agregação por data e região
   rawData.value = aggregate(items);
   dataCarregado.value = true;
 }
@@ -671,11 +699,12 @@ input[type="week"] {
   border-radius: 4px;
 }
 
-/* Estilos para o botão de atualização */
+/* Estilos para o botão de atualização e info */
 .dashboard-info {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 16px;
+  padding-top: 12px;
 }
 
 .info-text {

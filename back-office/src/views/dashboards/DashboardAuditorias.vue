@@ -517,9 +517,7 @@ input {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 16px;
   padding-top: 12px;
-  border-top: 1px dashed #e0e0e0;
 }
 
 .info-text {
