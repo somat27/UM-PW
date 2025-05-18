@@ -571,74 +571,129 @@ async function pedirSugestao() {
 }
 
 async function submitAuditoria() {
-  const id = route.params.id;
+  try {
+    const id = route.params.id;
 
-  const ocRef = doc(db, "ocorrencias", id);
-  await updateDoc(ocRef, { status: "Analise" });
+    // Atualizar status da ocorrência
+    const ocRef = doc(db, "ocorrencias", id);
+    await updateDoc(ocRef, { status: "Analise" });
 
-  const auditoria = {
-    descricao: ocorrencia.value.descricao || "",
-    tipo: ocorrencia.value.tipoOcorrencia || "",
-    endereco: ocorrencia.value.endereco || "",
-    coordenadas: ocorrencia.value.coordenadas || { latitude: 0, longitude: 0 },
-    perito: selectedPerito.value || null,
-    dataInicio: new Date(),
-    tempoEstimado:
-      typeof estimatedTime.value === "number" ? estimatedTime.value : 0,
-    status: "Pendente",
-  };
+    // Preparar dados da auditoria
+    const auditoria = {
+      descricao: ocorrencia.value.descricao || "",
+      tipo: ocorrencia.value.tipoOcorrencia || "",
+      endereco: ocorrencia.value.endereco || "",
+      coordenadas: ocorrencia.value.coordenadas || {
+        latitude: 0,
+        longitude: 0,
+      },
+      perito: selectedPerito.value || null,
+      dataInicio: new Date(),
+      tempoEstimado:
+        typeof estimatedTime.value === "number" ? estimatedTime.value : 0,
+      status: "Pendente",
+    };
 
-  if (deadline.value) {
-    auditoria.dataFim = new Date(deadline.value);
+    if (deadline.value) {
+      auditoria.dataFim = new Date(deadline.value);
+    }
+
+    // Converter o array de links de imagens/vídeos para o formato desejado
+    if (
+      ocorrencia.value.imagemVideo &&
+      Array.isArray(ocorrencia.value.imagemVideo)
+    ) {
+      auditoria.imagemVideo = ocorrencia.value.imagemVideo.map((url) => {
+        // Determinar o tipo baseado na extensão do arquivo
+        let tipo = "image/jpeg"; // valor padrão
+        if (url.toLowerCase().endsWith(".png")) {
+          tipo = "image/png";
+        } else if (
+          url.toLowerCase().endsWith(".jpeg") ||
+          url.toLowerCase().endsWith(".jpg")
+        ) {
+          tipo = "image/jpeg";
+        } else if (url.toLowerCase().endsWith(".mp4")) {
+          tipo = "video/mp4";
+        } else if (url.toLowerCase().endsWith(".webm")) {
+          tipo = "video/webm";
+        } else if (url.toLowerCase().endsWith(".mov")) {
+          tipo = "video/quicktime";
+        }
+
+        return {
+          tipo: tipo,
+          url: url,
+        };
+      });
+    }
+
+    // NOVO: Processar materiais - desconto no estoque e adição à auditoria
+    const materiaisPromises = [];
+    const materiaisAuditoria = [];
+
+    for (const material of materiaisList.value.filter(
+      (m) => Number(m.qtd) > 0
+    )) {
+      const materialRef = doc(db, "materiais", material.id);
+
+      // Adicionar à lista de materiais da auditoria
+      materiaisAuditoria.push({
+        id: material.id,
+        nome: material.nome,
+        quantidade: Number(material.qtd),
+      });
+
+      // Descontar do estoque na base de dados
+      materiaisPromises.push(
+        updateDoc(materialRef, {
+          quantidade: material.quantidade - Number(material.qtd),
+        })
+      );
+    }
+
+    // NOVO: Processar profissionais - desconto na disponibilidade e adição à auditoria
+    const profissionaisPromises = [];
+    const profissionaisAuditoria = [];
+
+    for (const profissional of profissionaisList.value.filter(
+      (p) => Number(p.qtd) > 0
+    )) {
+      const profissionalRef = doc(db, "profissionais", profissional.id);
+
+      // Adicionar à lista de profissionais da auditoria
+      profissionaisAuditoria.push({
+        id: profissional.id,
+        nome: profissional.nome,
+        quantidade: Number(profissional.qtd),
+      });
+
+      // Descontar da disponibilidade na base de dados
+      profissionaisPromises.push(
+        updateDoc(profissionalRef, {
+          quantidade: profissional.quantidade - Number(profissional.qtd),
+        })
+      );
+    }
+
+    // Atribuir materiais e profissionais processados à auditoria
+    auditoria.materiais = materiaisAuditoria;
+    auditoria.profissionais = profissionaisAuditoria;
+
+    // Criar documento de auditoria
+    await setDoc(doc(db, "auditorias", id), auditoria);
+
+    // Esperar todas as promessas de atualização de estoque concluírem
+    await Promise.all([...materiaisPromises, ...profissionaisPromises]);
+
+    // Redirecionar para a página de gestão
+    router.push("/GestaoOcorrencias");
+  } catch (error) {
+    console.error("Erro ao submeter auditoria:", error);
+    alert(
+      "Ocorreu um erro ao aprovar a ocorrência. Por favor, tente novamente."
+    );
   }
-
-  // Converter o array de links de imagens/vídeos para o formato desejado
-  if (
-    ocorrencia.value.imagemVideo &&
-    Array.isArray(ocorrencia.value.imagemVideo)
-  ) {
-    auditoria.imagemVideo = ocorrencia.value.imagemVideo.map((url) => {
-      // Determinar o tipo baseado na extensão do arquivo
-      let tipo = "image/jpeg"; // valor padrão
-      if (url.toLowerCase().endsWith(".png")) {
-        tipo = "image/png";
-      } else if (
-        url.toLowerCase().endsWith(".jpeg") ||
-        url.toLowerCase().endsWith(".jpg")
-      ) {
-        tipo = "image/jpeg";
-      } else if (url.toLowerCase().endsWith(".mp4")) {
-        tipo = "video/mp4";
-      } else if (url.toLowerCase().endsWith(".webm")) {
-        tipo = "video/webm";
-      } else if (url.toLowerCase().endsWith(".mov")) {
-        tipo = "video/quicktime";
-      }
-
-      return {
-        tipo: tipo,
-        url: url,
-      };
-    });
-  }
-
-  auditoria.materiais = materiaisList.value
-    .filter((m) => Number(m.qtd) > 0)
-    .map((m) => ({
-      id: m.id,
-      nome: m.nome,
-      quantidade: Number(m.qtd),
-    }));
-  auditoria.profissionais = profissionaisList.value
-    .filter((p) => Number(p.qtd) > 0)
-    .map((p) => ({
-      id: p.id,
-      nome: p.nome,
-      quantidade: Number(p.qtd),
-    }));
-
-  await setDoc(doc(db, "auditorias", id), auditoria);
-  router.push("/GestaoOcorrencias");
 }
 
 onMounted(loadData);

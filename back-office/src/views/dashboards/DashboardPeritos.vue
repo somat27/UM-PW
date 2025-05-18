@@ -95,7 +95,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import NavigationList from "@/components/NavigationList.vue";
 import StatisticsGridPeritos from "@/components/StatisticsGridPeritos.vue";
 import StatisticsCard from "@/components/StatisticsCard.vue";
@@ -104,7 +104,7 @@ import { db } from "@/firebase";
 
 const activeTab = ref("peritos");
 
-// Refs para dados
+// Dados principais
 const peritos = ref([]);
 const auditorias = ref([]);
 const dataCarregado = ref(false);
@@ -115,7 +115,7 @@ const STORAGE_KEY = "dashboard-peritos-data";
 const TIMESTAMP_KEY = "dashboard-peritos-timestamp";
 const UPDATE_INTERVAL = 5 * 60 * 1000; // 5 minutos em milissegundos
 
-// Contadores por localidade (ativos assíncrono)
+// Regiões para categorização
 const regioes = [
   "Norte",
   "Centro",
@@ -123,122 +123,111 @@ const regioes = [
   "Alentejo",
   "Algarve",
 ];
-const ativosPorLocalidade = ref({
-  Norte: 0,
-  Centro: 0,
-  "Lisboa e Vale do Tejo": 0,
-  Alentejo: 0,
-  Algarve: 0,
-});
 
-// Mapeamento de distritos para regiões
-const distritoRegiaoMap = {
-  Porto: "Norte",
-  "Viana do Castelo": "Norte",
-  Braga: "Norte",
-  "Vila Real": "Norte",
-  Bragança: "Norte",
-  Aveiro: "Centro",
-  Coimbra: "Centro",
-  Leiria: "Centro",
-  "Castelo Branco": "Centro",
-  Guarda: "Centro",
-  Viseu: "Centro",
-  Santarém: "Lisboa e Vale do Tejo",
-  Lisboa: "Lisboa e Vale do Tejo",
-  Setúbal: "Lisboa e Vale do Tejo",
-  Évora: "Alentejo",
-  Beja: "Alentejo",
-  Portalegre: "Alentejo",
-  Faro: "Algarve",
-};
+// Determinar status dos peritos (ativo ou em espera)
+const peritosStatus = computed(() => {
+  const statusMap = {};
+  const auditoriasMap = {};
 
-// Cache para geocodificação de regiões
-const cacheRegiao = {};
-async function buscarRegiao(lat, lon) {
-  const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&addressdetails=1&accept-language=pt`;
-  try {
-    const res = await fetch(url, {
-      headers: { "User-Agent": "MeuAppUniversidade/1.0 (email@exemplo.com)" },
-    });
-    if (!res.ok) throw new Error(`Erro HTTP ${res.status}`);
-    const data = await res.json();
-    const addr = data.address || {};
-    const district = addr.state || addr.county || addr.region || "";
-    return distritoRegiaoMap[district] || "Desconhecida";
-  } catch (err) {
-    console.error("Erro ao buscar região:", err);
-    return "Desconhecida";
-  }
-}
-
-async function buscarRegiaoComCache(lat, lon) {
-  const key = `${lat},${lon}`;
-  if (cacheRegiao[key]) return cacheRegiao[key];
-  try {
-    const regiao = await buscarRegiao(lat, lon);
-    cacheRegiao[key] = regiao;
-    return regiao;
-  } catch (err) {
-    console.error("Erro geocodificação região", err);
-    return "Desconhecida";
-  }
-}
-
-// Obter peritos mobilizados (ativos em auditorias)
-const mobilizadosUids = computed(() => {
-  const set = new Set();
-  auditorias.value.forEach((a) => {
-    if (a.perito && a.status !== "Concluído") {
-      set.add(a.perito);
+  // Criar um mapa de auditorias por perito para otimizar a busca
+  auditorias.value.forEach((auditoria) => {
+    if (auditoria.perito) {
+      if (!auditoriasMap[auditoria.perito]) {
+        auditoriasMap[auditoria.perito] = [];
+      }
+      auditoriasMap[auditoria.perito].push(auditoria);
     }
   });
-  return set;
+
+  // Determinar o status de cada perito
+  peritos.value.forEach((perito) => {
+    const peritoAuditorias = auditoriasMap[perito.uid] || [];
+    const temAuditoriaAtiva = peritoAuditorias.some(
+      (a) => a.status !== "Concluído"
+    );
+    statusMap[perito.uid] = temAuditoriaAtiva ? "ativo" : "espera";
+  });
+
+  return statusMap;
 });
 
-// Separar peritos ativos e em espera
-const peritosMobilizados = computed(() =>
-  peritos.value.filter((p) => mobilizadosUids.value.has(p.uid))
-);
-const peritosAguardando = computed(() =>
-  peritos.value.filter((p) => !mobilizadosUids.value.has(p.uid))
+// Computar listas filtradas de peritos
+const peritosAtivos = computed(() =>
+  peritos.value.filter((p) => peritosStatus.value[p.uid] === "ativo")
 );
 
-// Contagem de peritos em espera por localidade
-const esperaPorLocalidade = computed(() => {
-  const counts = {
-    Norte: 0,
-    Centro: 0,
-    "Lisboa e Vale do Tejo": 0,
-    Alentejo: 0,
-    Algarve: 0,
+const peritosEspera = computed(() =>
+  peritos.value.filter((p) => peritosStatus.value[p.uid] === "espera")
+);
+
+// Distribuição de peritos por região
+// Cada perito deve aparecer em UMA ÚNICA região com base em sua localidade principal
+const peritosPorRegiao = computed(() => {
+  const distribuicao = {
+    Norte: [],
+    Centro: [],
+    "Lisboa e Vale do Tejo": [],
+    Alentejo: [],
+    Algarve: [],
   };
 
-  peritosAguardando.value.forEach((p) => {
-    if (Array.isArray(p.localidades)) {
-      p.localidades.forEach((loc) => {
-        if (counts[loc] !== undefined) counts[loc]++;
+  peritos.value.forEach((perito) => {
+    if (Array.isArray(perito.localidades) && perito.localidades.length > 0) {
+      perito.localidades.forEach((regiaoDoPerito) => {
+        if (distribuicao[regiaoDoPerito]) {
+          distribuicao[regiaoDoPerito].push(perito.uid);
+        }
       });
     }
+    // Caso contrário, não adiciona o perito em nenhuma região
   });
-  return counts;
+
+  return distribuicao;
 });
 
-// Subscrever coleções e atualizar ativosPorLocalidade
+// Contadores por região
+const ativosPorRegiao = computed(() => {
+  const result = {};
+
+  regioes.forEach((regiao) => {
+    const peritosUnicos = new Set(
+      peritosPorRegiao.value[regiao]?.filter(
+        (peritoId) => peritosStatus.value[peritoId] === "ativo"
+      )
+    );
+    result[regiao] = peritosUnicos.size;
+  });
+
+  return result;
+});
+
+const esperaPorRegiao = computed(() => {
+  const result = {};
+
+  regioes.forEach((regiao) => {
+    const peritosUnicos = new Set(
+      peritosPorRegiao.value[regiao]?.filter(
+        (peritoId) => peritosStatus.value[peritoId] === "espera"
+      )
+    );
+    result[regiao] = peritosUnicos.size;
+  });
+
+  return result;
+});
+
+// Subscrever coleções
 let unsubPeritos, unsubAud;
 
 // Funções auxiliares para localStorage
 function salvarDadosLocal() {
   try {
-    // Estrutura de dados para salvar
     const dadosParaSalvar = {
       peritos: peritos.value,
       auditorias: auditorias.value,
-      ativosPorLocalidade: ativosPorLocalidade.value,
       timestamp: Date.now(),
     };
 
-    // Salvar no localStorage
     localStorage.setItem(STORAGE_KEY, JSON.stringify(dadosParaSalvar));
     localStorage.setItem(TIMESTAMP_KEY, Date.now().toString());
 
@@ -251,7 +240,6 @@ function salvarDadosLocal() {
 
 function carregarDadosLocal() {
   try {
-    // Verificar se temos dados no localStorage
     const dadosSalvos = localStorage.getItem(STORAGE_KEY);
     const timestampSalvo = localStorage.getItem(TIMESTAMP_KEY);
 
@@ -260,7 +248,6 @@ function carregarDadosLocal() {
       return false;
     }
 
-    // Verificar se os dados estão vencidos
     const agora = Date.now();
     const dataUltimaAtualizacao = parseInt(timestampSalvo);
 
@@ -269,11 +256,9 @@ function carregarDadosLocal() {
       return false;
     }
 
-    // Carregar dados do localStorage
     const dados = JSON.parse(dadosSalvos);
     peritos.value = dados.peritos;
     auditorias.value = dados.auditorias;
-    ativosPorLocalidade.value = dados.ativosPorLocalidade;
 
     ultimaAtualizacao.value = new Date(dataUltimaAtualizacao);
     dataCarregado.value = true;
@@ -291,7 +276,7 @@ async function forcarAtualizacao() {
   console.log("Forçando atualização dos dados...");
 
   try {
-    // Limpar os dados atuais
+    // Limpar os dados do localStorage
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(TIMESTAMP_KEY);
 
@@ -308,35 +293,6 @@ async function forcarAtualizacao() {
       id: d.id,
     }));
 
-    // Recalcular ativos por localidade
-    const counts = {
-      Norte: 0,
-      Centro: 0,
-      "Lisboa e Vale do Tejo": 0,
-      Alentejo: 0,
-      Algarve: 0,
-    };
-
-    // Processar cada auditoria para distribuir peritos por região
-    for (const auditoria of auditorias.value) {
-      if (auditoria.perito && auditoria.coordenadas) {
-        const { latitude, longitude } = auditoria.coordenadas;
-
-        if (!latitude || !longitude) continue;
-
-        try {
-          const regiao = await buscarRegiaoComCache(latitude, longitude);
-          if (counts[regiao] !== undefined) {
-            counts[regiao]++;
-          }
-        } catch (error) {
-          console.error("Erro ao processar localização:", error);
-        }
-      }
-    }
-
-    ativosPorLocalidade.value = counts;
-
     // Salvar os novos dados no localStorage
     salvarDadosLocal();
 
@@ -346,83 +302,38 @@ async function forcarAtualizacao() {
   }
 }
 
-// Configurar observadores para mudanças em dados importantes
-watch(
-  [peritos, auditorias, ativosPorLocalidade],
-  () => {
-    if (dataCarregado.value) {
-      salvarDadosLocal();
-    }
-  },
-  { deep: true }
-);
-
 onMounted(async () => {
   // Tentar carregar dados do localStorage primeiro
   const dadosCarregados = carregarDadosLocal();
 
   if (!dadosCarregados) {
     // Se não houver dados no localStorage ou estiverem vencidos, buscar do Firestore
-    // Carregar peritos
     unsubPeritos = onSnapshot(
       collection(db, "peritos"),
       (snap) => {
-        // Simplificando a obtenção de peritos - sem filtros iniciais complexos
-        const peritosData = snap.docs.map((d) => ({
+        peritos.value = snap.docs.map((d) => ({
           ...d.data(),
           id: d.id,
         }));
-        peritos.value = peritosData;
-
         console.log(`Carregados ${peritos.value.length} peritos`);
         dataCarregado.value = true;
       },
       (err) => console.error("Erro ao carregar peritos:", err)
     );
 
-    // Carregar auditorias e calcular localização dos peritos ativos
     unsubAud = onSnapshot(
       collection(db, "auditorias"),
-      async (snap) => {
+      (snap) => {
         auditorias.value = snap.docs.map((d) => ({
           ...d.data(),
           id: d.id,
         }));
-
         console.log(`Carregadas ${auditorias.value.length} auditorias`);
 
-        // Recalcular ativos por localidade
-        const counts = {
-          Norte: 0,
-          Centro: 0,
-          "Lisboa e Vale do Tejo": 0,
-          Alentejo: 0,
-          Algarve: 0,
-        };
-
-        // Processar cada auditoria para distribuir peritos por região
-        for (const auditoria of auditorias.value) {
-          if (auditoria.perito && auditoria.coordenadas) {
-            const { latitude, longitude } = auditoria.coordenadas;
-
-            if (!latitude || !longitude) continue;
-
-            try {
-              const regiao = await buscarRegiaoComCache(latitude, longitude);
-              if (counts[regiao] !== undefined) {
-                counts[regiao]++;
-              }
-            } catch (error) {
-              console.error("Erro ao processar localização:", error);
-            }
-          }
+        // Salvar os dados no localStorage após carregar tudo
+        if (peritos.value.length > 0 && auditorias.value.length > 0) {
+          salvarDadosLocal();
         }
-
-        ativosPorLocalidade.value = counts;
-        console.log("Peritos ativos por localidade:", counts);
-
-        // Salvar os dados atualizados no localStorage
-        salvarDadosLocal();
       },
       (err) => console.error("Erro ao carregar auditorias:", err)
     );
@@ -430,11 +341,11 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-  // Desinscrever dos listeners do Firestore quando o componente for desmontado
+  // Desinscrever dos listeners do Firestore
   if (unsubPeritos) unsubPeritos();
   if (unsubAud) unsubAud();
 
-  // Salvar os dados atuais no localStorage antes de sair
+  // Salvar dados antes de sair
   if (dataCarregado.value) {
     salvarDadosLocal();
   }
@@ -442,10 +353,10 @@ onUnmounted(() => {
 
 // Métricas para cartões
 const totalPeritos = computed(() => peritos.value.length);
-const countAtivos = computed(() => peritosMobilizados.value.length);
-const countAguardando = computed(() => peritosAguardando.value.length);
+const countAtivos = computed(() => peritosAtivos.value.length);
+const countAguardando = computed(() => peritosEspera.value.length);
 
-// Configuração do gráfico com duas séries
+// Configuração do gráfico
 const chartOptions = computed(() => ({
   chart: {
     id: "peritos-chart",
@@ -497,11 +408,11 @@ const chartOptions = computed(() => ({
 const chartSeries = computed(() => [
   {
     name: "Peritos Ativos",
-    data: regioes.map((loc) => ativosPorLocalidade.value[loc] || 0),
+    data: regioes.map((regiao) => ativosPorRegiao.value[regiao] || 0),
   },
   {
     name: "Peritos em Espera",
-    data: regioes.map((loc) => esperaPorLocalidade.value[loc] || 0),
+    data: regioes.map((regiao) => esperaPorRegiao.value[regiao] || 0),
   },
 ]);
 </script>
@@ -589,6 +500,18 @@ const chartSeries = computed(() => [
   background-color: #204c6d;
   transition: all 0.3s ease;
   border-radius: 2px 2px 0 0;
+}
+
+.dashboard-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+}
+
+.info-text {
+  font-size: 13px;
+  color: #6c757d;
 }
 
 .refresh-button {

@@ -55,7 +55,7 @@
 
           <StatisticsGridMateriais :cards="materialCards" />
 
-          <div class="radial-chart">
+          <div class="single-chart">
             <apexchart
               type="radialBar"
               :options="chartOptions"
@@ -113,28 +113,88 @@ const pctUsados = computed(() =>
     : 0
 );
 
-const pctPorUsar = computed(() =>
-  totalGeral.value ? 100 - pctUsados.value : 0
-);
-
+// Configuração do gráfico com apenas uma série (materiais usados)
 const chartOptions = computed(() => ({
-  chart: { id: "materiais-grafico" },
-  labels: ["Por usar", "Usados"],
-  title: { text: "Materiais Usados & Por Usar" },
+  chart: {
+    id: "materiais-grafico",
+    foreColor: "#333",
+  },
+  labels: ["Materiais Usados"],
+  title: {
+    text: "Materiais Usados & Por Usar",
+    align: "center",
+    style: {
+      fontSize: "18px",
+      fontWeight: 600,
+    },
+  },
   plotOptions: {
     radialBar: {
-      dataLabels: {
-        name: { fontSize: "16px" },
-        value: {
-          fontSize: "14px",
-          formatter: (val) => `${val}%`,
+      startAngle: 0,
+      endAngle: 360,
+      hollow: {
+        size: "65%",
+      },
+      track: {
+        background: "#e7e7e7",
+        strokeWidth: "97%",
+        margin: 5,
+        dropShadow: {
+          enabled: false,
         },
+      },
+      dataLabels: {
+        name: {
+          fontSize: "16px",
+          color: "##204C6D",
+          offsetY: -10,
+        },
+        value: {
+          fontSize: "24px",
+          color: "#111",
+          formatter: function (val) {
+            return val + "%";
+          },
+        },
+        total: {
+          show: true,
+          label: "Por Usar",
+          color: "#204C6D",
+          formatter: function () {
+            return pctUsados.value > 0 ? 100 - pctUsados.value + "%" : "100%";
+          },
+        },
+      },
+    },
+  },
+  fill: {
+    type: "gradient",
+    gradient: {
+      shade: "dark",
+      type: "horizontal",
+      shadeIntensity: 0.5,
+      color: ["#204C6D"],
+      inverseColors: true,
+      opacityFrom: 1,
+      opacityTo: 1,
+      stops: [0, 100],
+    },
+  },
+  stroke: {
+    lineCap: "round",
+  },
+  tooltip: {
+    enabled: true,
+    y: {
+      formatter: function (val) {
+        return val + "% Usados / " + (100 - val) + "% Por Usar";
       },
     },
   },
 }));
 
-const chartSeries = computed(() => [pctPorUsar.value, pctUsados.value]);
+// Apenas uma série com a porcentagem de materiais usados
+const chartSeries = computed(() => [pctUsados.value]);
 </script>
 
 <style scoped>
@@ -228,7 +288,7 @@ const chartSeries = computed(() => [pctPorUsar.value, pctUsados.value]);
   margin-top: 16px;
 }
 
-.radial-chart {
+.single-chart {
   margin-top: 32px;
   display: flex;
   justify-content: center;
