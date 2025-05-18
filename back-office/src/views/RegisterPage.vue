@@ -3,21 +3,34 @@
     <form class="auth-form" @submit.prevent="handleRegister" novalidate>
       <h2>Registar Conta</h2>
       <div class="form-group">
-        <input v-model.trim="displayName" type="text" placeholder="Nome" required />
+        <input
+          v-model.trim="displayName"
+          type="text"
+          placeholder="Nome"
+          required
+        />
       </div>
       <div class="form-group">
         <input v-model.trim="email" type="email" placeholder="Email" required />
       </div>
       <div class="form-group">
-        <input v-model="password" type="password" placeholder="Palavra‑passe (min. 6)" required />
+        <input
+          v-model="password"
+          type="password"
+          placeholder="Palavra‑passe (min. 6)"
+          required
+        />
       </div>
       <div class="form-group">
-        <input v-model="confirm" type="password" placeholder="Confirmar palavra‑passe" required />
+        <input
+          v-model="confirm"
+          type="password"
+          placeholder="Confirmar palavra‑passe"
+          required
+        />
       </div>
       <p v-if="errorMsg">{{ errorMsg }}</p>
-      <button :disabled="!canSubmit" type="submit">
-        Registar
-      </button>
+      <button :disabled="!canSubmit" type="submit">Registar</button>
       <p>
         Já tens conta?
         <router-link to="/">Entrar</router-link>
@@ -27,36 +40,40 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
-import { registerWithEmail } from '@/firebase';
+import { ref, computed } from "vue";
+import { useRouter } from "vue-router";
+import { registerWithEmail } from "@/firebase";
 
-const displayName = ref('');
-const email = ref('');
-const password = ref('');
-const confirm = ref('');
-const errorMsg = ref('');
+const displayName = ref("");
+const email = ref("");
+const password = ref("");
+const confirm = ref("");
+const errorMsg = ref("");
 const router = useRouter();
 
-const canSubmit = computed(() =>
-  displayName.value && email.value && password.value.length >= 6 && password.value === confirm.value
+const canSubmit = computed(
+  () =>
+    displayName.value &&
+    email.value &&
+    password.value.length >= 6 &&
+    password.value === confirm.value
 );
 
 const handleRegister = async () => {
   if (!canSubmit.value) {
-    errorMsg.value = 'Preenche todos os campos correctamente.';
+    errorMsg.value = "Preenche todos os campos correctamente.";
     return;
   }
   try {
     await registerWithEmail(email.value, password.value, displayName.value);
-    router.push('/');
+    router.push("/");
   } catch (err) {
-    if (err.code === 'auth/email-already-in-use') {
-      errorMsg.value = 'Esse e‑mail já está registado.';
-    } else if (err.code === 'auth/weak-password') {
-      errorMsg.value = 'Palavra‑passe deve ter pelo menos 6 caracteres.';
+    if (err.code === "auth/email-already-in-use") {
+      errorMsg.value = "Esse e‑mail já está registado.";
+    } else if (err.code === "auth/weak-password") {
+      errorMsg.value = "Palavra‑passe deve ter pelo menos 6 caracteres.";
     } else {
-      errorMsg.value = 'Erro: ' + err.message;
+      errorMsg.value = "Erro: " + err.message;
     }
   }
 };
@@ -68,7 +85,7 @@ const handleRegister = async () => {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #e3f2fd 0%, #90caf9 100%);
+  background: linear-gradient(135deg, #f5f5f5 0%, #e3f2fd 100%);
 }
 
 .auth-form {
@@ -83,7 +100,7 @@ const handleRegister = async () => {
 
 .auth-form h2 {
   margin-bottom: 1.5rem;
-  color: #1976d2;
+  color: #204c6d;
 }
 
 .form-group {
@@ -95,7 +112,7 @@ const handleRegister = async () => {
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #1565c0;
+  color: #204c6d;
 }
 
 .form-group input {
@@ -109,7 +126,7 @@ const handleRegister = async () => {
 button {
   width: 100%;
   padding: 0.75rem;
-  background: #1976d2;
+  background: #204c6d;
   color: white;
   border: none;
   border-radius: 8px;
