@@ -124,6 +124,10 @@ export default {
                     return nomeMatch && statusMatch;
                 })
                 .sort((a, b) => {
+                    if (b.criticidade !== a.criticidade) {
+                        return b.criticidade - a.criticidade;
+                    }
+
                     return ordemStatus[a.status] - ordemStatus[b.status];
                 });
         }
