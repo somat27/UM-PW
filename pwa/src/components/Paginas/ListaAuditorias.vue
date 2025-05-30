@@ -111,11 +111,21 @@ export default {
     },
     computed: {
         auditoriasVisiveis() {
-            return this.listaAuditorias.filter(auditoria => {
-                const nomeMatch = this.nomeOcorrencia(auditoria.tipo).toLowerCase().includes(this.pesquisa.toLowerCase());
-                const statusMatch = this.filtroValor ? auditoria.status === this.filtroValor : true;
-                return nomeMatch && statusMatch;
-            });
+            const ordemStatus = {
+                'Incompleto': 0,
+                'Pendente': 1,
+                'Concluido': 2
+            };
+
+            return this.listaAuditorias
+                .filter(auditoria => {
+                    const nomeMatch = this.nomeOcorrencia(auditoria.tipo).toLowerCase().includes(this.pesquisa.toLowerCase());
+                    const statusMatch = this.filtroValor ? auditoria.status === this.filtroValor : true;
+                    return nomeMatch && statusMatch;
+                })
+                .sort((a, b) => {
+                    return ordemStatus[a.status] - ordemStatus[b.status];
+                });
         }
     },
 };
@@ -156,7 +166,10 @@ export default {
 }
 
 #estado {
-    padding: 1.5vh 1.5vh;
+    padding: 1.5vh 1.25vh;
+
+    width: 28.5vw;
+    text-align: center;
 
     color: #F8FAFC;
 
