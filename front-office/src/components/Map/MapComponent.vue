@@ -165,7 +165,6 @@ export default {
         lights: "Iluminação Pública",
         roads: "Vias e Estradas",
         sinals: "Sinalização",
-        other: "Outros",
       },
       isRetrying: false,
       retryCount: 0,
