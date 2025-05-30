@@ -314,6 +314,21 @@ async function loadData() {
   // 3. Filtramos só os peritos cujo UID está na lista dos users-perito
   peritosList.value = peritosData.filter((p) => userIds.includes(p.uid));
 
+  const auditoriasSnap = await getDocs(collection(db, "auditorias"));
+  const listaDePeritos = auditoriasSnap.docs.filter(doc => doc.data().status !== "Concluido").flatMap(doc => doc.data().perito)
+    //.map(doc => doc.data().filter(a => a.status !== 'Concluido').perito);
+
+  console.log(listaDePeritos)
+
+  const contagens = {};
+  listaDePeritos.forEach(uid => {
+      contagens[uid] = (contagens[uid] || 0) + 1;
+  });
+
+  peritosList.value = peritosList.value.filter(perito => {
+    return (contagens[perito.uid] || 0) < 3;
+  });
+
   // Materiais
   const matSnap = await getDocs(collection(db, "materiais"));
   materiaisList.value = matSnap.docs.map((d) => ({
@@ -591,7 +606,7 @@ async function submitAuditoria() {
       dataInicio: new Date(),
       tempoEstimado:
         typeof estimatedTime.value === "number" ? estimatedTime.value : 0,
-      status: "Pendente",
+      status: "Incompleto",
     };
 
     if (deadline.value) {
