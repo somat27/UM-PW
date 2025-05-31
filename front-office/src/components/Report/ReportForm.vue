@@ -20,7 +20,6 @@
           <option value="roads">Vias e Passeios</option>
           <option value="lights">Iluminação Pública</option>
           <option value="sinals">Sinalização em Falta</option>
-          <option value="other">Outros</option>
         </select>
       </div>
 
@@ -218,9 +217,17 @@ export default {
     onMapClick(e) {
       const lat = e.latLng.lat();
       const lng = e.latLng.lng();
-      this.updateMapMarker(lat, lng);
+
+
 
       this.reverseGeocode(lat, lng);
+    },
+
+    removeMapMarker() {
+      if (this.marker) {
+        this.marker.setMap(null);
+        this.marker = null;
+      }
     },
 
     async searchAddress() {
@@ -293,19 +300,44 @@ export default {
 
         this.geocoder.geocode({ location: latlng }, (results, status) => {
           if (status === "OK" && results && results.length > 0) {
-            this.address = results[0].formatted_address;
-            this.lastSearchSuccess = true;
+            const addressComponents = results[0].address_components;
+
+            const countryComponent = addressComponents.find(comp =>
+              comp.types.includes("country")
+            );
+
+            if (countryComponent && countryComponent.long_name === "Portugal") {
+              this.address = results[0].formatted_address;
+              this.lastSearchSuccess = true;
+
+              // ✅ Só atualiza o marcador se for em Portugal
+              this.updateMapMarker(lat, lng);
+            } else {
+              this.address = "";
+              this.lastSearchSuccess = false;
+
+              // ❌ Remove marcador se estiver fora de Portugal
+              this.removeMapMarker();
+            }
+
           } else {
             this.address = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+            this.lastSearchSuccess = false;
+            this.removeMapMarker();
           }
+
           this.isSearching = false;
         });
       } catch (error) {
         console.error("Erro na geocodificação reversa:", error);
         this.address = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
         this.isSearching = false;
+        this.lastSearchSuccess = false;
+        this.removeMapMarker();
       }
     },
+
+
 
     updateMapMarker(lat, lng) {
       if (!this.google || !this.map) return;

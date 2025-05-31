@@ -181,7 +181,6 @@ export default {
         lights: "Iluminação Pública",
         roads: "Vias e Estradas",
         sinals: "Sinalização",
-        other: "Outros",
       },
     };
   },
