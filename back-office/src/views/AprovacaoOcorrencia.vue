@@ -16,22 +16,13 @@
           <div class="audit-form">
             <div class="form-group">
               <label>Descrição</label>
-              <textarea
-                v-model="ocorrencia.descricao"
-                disabled
-                class="input"
-              ></textarea>
+              <textarea v-model="ocorrencia.descricao" disabled class="input"></textarea>
             </div>
             <div class="form-group">
               <label>Tipo de Ocorrência</label>
-              <input
-                :value="
-                  tipoLabels[ocorrencia.tipoOcorrencia] ||
-                  ocorrencia.tipoOcorrencia
-                "
-                disabled
-                class="input"
-              />
+              <input :value="tipoLabels[ocorrencia.tipoOcorrencia] ||
+                ocorrencia.tipoOcorrencia
+                " disabled class="input" />
             </div>
             <div class="form-group">
               <label>Endereço</label>
@@ -39,23 +30,12 @@
             </div>
 
             <div class="map-container">
-              <iframe
-                :src="mapUrl"
-                width="100%"
-                height="100%"
-                frameborder="0"
-                style="border: 0"
-                allowfullscreen
-                loading="lazy"
-              ></iframe>
+              <iframe :src="mapUrl" width="100%" height="100%" frameborder="0" style="border: 0" allowfullscreen
+                loading="lazy"></iframe>
             </div>
 
             <div class="suggestion-section">
-              <button
-                @click="pedirSugestao"
-                class="btn btn-primary suggestion-btn"
-                :disabled="sugestaoLoading"
-              >
+              <button @click="pedirSugestao" class="btn btn-primary suggestion-btn" :disabled="sugestaoLoading">
                 <span v-if="!sugestaoLoading"> Pedir Sugestão </span>
                 <span v-else class="loading-spinner">
                   <span class="spinner"></span>
@@ -86,20 +66,11 @@
             <div class="section-divider"></div>
 
             <h3 class="section-title">Seleção de Perito</h3>
-            <GenericTable
-              :columns="columnsPeritos"
-              :data="peritosList"
-              class="table-scroll"
-            >
+            <GenericTable :columns="columnsPeritos" :data="peritosList" class="table-scroll">
               <template #cell-select="{ row }">
                 <div class="radio-container">
-                  <input
-                    type="radio"
-                    name="perito"
-                    :value="row.uid"
-                    v-model="selectedPerito"
-                    id="perito-radio-{{ row.uid }}"
-                  />
+                  <input type="radio" name="perito" :value="row.uid" v-model="selectedPerito"
+                    id="perito-radio-{{ row.uid }}" />
                   <span class="radio-checkmark"></span>
                 </div>
               </template>
@@ -109,66 +80,34 @@
             <div class="form-group">
               <h3>Nível de Criticidade</h3>
               <div class="criticality-selector">
-                <div 
-                  v-for="level in criticalityLevels" 
-                  :key="level.value"
-                  class="criticality-option"
-                  :class="{ 
-                    'selected': selectedCriticality === level.value,
-                    [`level-${level.value}`]: true 
-                  }"
-                  @click="selectedCriticality = level.value"
-                >
+                <div v-for="level in criticalityLevels" :key="level.value" class="criticality-option" :class="{
+                  'selected': selectedCriticality === level.value,
+                  [`level-${level.value}`]: true
+                }" @click="selectedCriticality = level.value">
                   <div class="criticality-number">{{ level.value }}</div>
                   <div class="criticality-info">
                     <div class="criticality-label">{{ level.label }}</div>
                     <div class="criticality-description">{{ level.description }}</div>
                   </div>
                   <div class="criticality-indicator">
-                    <div 
-                      class="indicator-bar"
-                      :style="{ width: (level.value * 20) + '%' }"
-                      ></div>
+                    <div class="indicator-bar" :style="{ width: (level.value * 20) + '%' }"></div>
                   </div>
                 </div>
-              </div>
-              <div v-if="selectedCriticality" class="criticality-summary">
-                <span class="criticality-icon">⚠️</span>
-                <span>Criticidade selecionada: <strong>{{ getCriticalityLabel(selectedCriticality) }}</strong></span>
               </div>
             </div>
 
             <h3 class="section-title">Seleção de Materiais</h3>
-            <GenericTable
-              :columns="columnsMateriais"
-              :data="materiaisList"
-              class="table-scroll"
-            >
+            <GenericTable :columns="columnsMateriais" :data="materiaisList" class="table-scroll">
               <template #cell-qtd="{ row }">
                 <div class="quantity-input">
-                  <button
-                    class="qty-btn minus"
-                    @click="decrementQty(row)"
-                    :disabled="row.qtd <= 0"
-                  >
+                  <button class="qty-btn minus" @click="decrementQty(row)" :disabled="row.qtd <= 0">
                     −
                   </button>
-                  <input
-                    type="number"
-                    min="0"
-                    :max="row.quantidade"
-                    v-model.number="row.qtd"
-                    @input="
-                      row.qtd =
-                        row.qtd > row.quantidade ? row.quantidade : row.qtd
-                    "
-                    class="input qty-input"
-                  />
-                  <button
-                    class="qty-btn plus"
-                    @click="incrementQty(row)"
-                    :disabled="row.qtd >= row.quantidade"
-                  >
+                  <input type="number" min="0" :max="row.quantidade" v-model.number="row.qtd" @input="
+                    row.qtd =
+                    row.qtd > row.quantidade ? row.quantidade : row.qtd
+                    " class="input qty-input" />
+                  <button class="qty-btn plus" @click="incrementQty(row)" :disabled="row.qtd >= row.quantidade">
                     +
                   </button>
                 </div>
@@ -176,36 +115,17 @@
             </GenericTable>
 
             <h3 class="section-title">Seleção de Profissionais</h3>
-            <GenericTable
-              :columns="columnsProfissionais"
-              :data="profissionaisList"
-              class="table-scroll"
-            >
+            <GenericTable :columns="columnsProfissionais" :data="profissionaisList" class="table-scroll">
               <template #cell-qtd="{ row }">
                 <div class="quantity-input">
-                  <button
-                    class="qty-btn minus"
-                    @click="decrementQty(row)"
-                    :disabled="row.qtd <= 0"
-                  >
+                  <button class="qty-btn minus" @click="decrementQty(row)" :disabled="row.qtd <= 0">
                     −
                   </button>
-                  <input
-                    type="number"
-                    min="0"
-                    :max="row.quantidade"
-                    v-model.number="row.qtd"
-                    @input="
-                      row.qtd =
-                        row.qtd > row.quantidade ? row.quantidade : row.qtd
-                    "
-                    class="input qty-input"
-                  />
-                  <button
-                    class="qty-btn plus"
-                    @click="incrementQty(row)"
-                    :disabled="row.qtd >= row.quantidade"
-                  >
+                  <input type="number" min="0" :max="row.quantidade" v-model.number="row.qtd" @input="
+                    row.qtd =
+                    row.qtd > row.quantidade ? row.quantidade : row.qtd
+                    " class="input qty-input" />
+                  <button class="qty-btn plus" @click="incrementQty(row)" :disabled="row.qtd >= row.quantidade">
                     +
                   </button>
                 </div>
@@ -215,20 +135,12 @@
             <div class="schedule-section">
               <div class="form-group">
                 <label>Data de Fim de Obra</label>
-                <input
-                  type="date"
-                  v-model="deadline"
-                  class="input date-input"
-                />
+                <input type="date" v-model="deadline" class="input date-input" />
               </div>
               <div class="form-group">
                 <label>Tempo Estimado (horas)</label>
                 <div class="time-input">
-                  <input
-                    type="number"
-                    v-model.number="estimatedTime"
-                    class="input"
-                  />
+                  <input type="number" v-model.number="estimatedTime" class="input" />
                   <span class="time-unit">horas</span>
                 </div>
               </div>
@@ -340,11 +252,6 @@ const mapUrl = computed(() => {
   return `https://www.google.com/maps?q=${latitude},${longitude}&hl=pt&z=15&output=embed`;
 });
 
-function getCriticalityLabel(value) {
-  const level = criticalityLevels.find(l => l.value === value);
-  return level ? level.label : '';
-}
-
 function incrementQty(row) {
   if (row.qtd < row.quantidade) {
     row.qtd++;
@@ -390,13 +297,13 @@ async function loadData() {
 
   const auditoriasSnap = await getDocs(collection(db, "auditorias"));
   const listaDePeritos = auditoriasSnap.docs.filter(doc => doc.data().status !== "Concluido").flatMap(doc => doc.data().perito)
-    //.map(doc => doc.data().filter(a => a.status !== 'Concluido').perito);
+  //.map(doc => doc.data().filter(a => a.status !== 'Concluido').perito);
 
   console.log(listaDePeritos)
 
   const contagens = {};
   listaDePeritos.forEach(uid => {
-      contagens[uid] = (contagens[uid] || 0) + 1;
+    contagens[uid] = (contagens[uid] || 0) + 1;
   });
 
   peritosList.value = peritosList.value.filter(perito => {
@@ -535,8 +442,7 @@ async function pedirSugestao() {
           }
 
           console.log(
-            `Material ${materialSugerido.id}: ${
-              encontrado ? "Encontrado" : "Não encontrado"
+            `Material ${materialSugerido.id}: ${encontrado ? "Encontrado" : "Não encontrado"
             }`
           );
         });
@@ -598,8 +504,7 @@ async function pedirSugestao() {
           }
 
           console.log(
-            `Profissional ${profissionalSugerido.id}: ${
-              encontrado ? "Encontrado" : "Não encontrado"
+            `Profissional ${profissionalSugerido.id}: ${encontrado ? "Encontrado" : "Não encontrado"
             }`
           );
         });
@@ -613,6 +518,11 @@ async function pedirSugestao() {
       // Aplicar data fim sugerida
       if (respostaObj.dataFimSugerida) {
         deadline.value = respostaObj.dataFimSugerida;
+      }
+
+      // Aplicar nivel de criticidade
+      if (respostaObj.criticidadeSugerida) {
+        selectedCriticality.value = respostaObj.criticidadeSugerida;
       }
 
       // Encontrar nome do perito selecionado
@@ -633,17 +543,12 @@ async function pedirSugestao() {
 
       // Gerar texto resumo da sugestão
       sugestao.value = `Sugestão gerada com base na ocorrência:
-- Perito selecionado: ${nomePerito} (ID: ${
-        selectedPerito.value || "não selecionado"
-      })
-- Materiais aplicados: ${materiaisAplicados} de ${
-        respostaObj.materiais?.length || 0
-      } sugeridos
-- Profissionais aplicados: ${profissionaisAplicados} de ${
-        respostaObj.profissionais?.length || 0
-      } sugeridos
-- Tempo estimado: ${estimatedTime.value} horas
-- Data fim sugerida: ${deadline.value}`;
+      - Perito: ${nomePerito} (ID: ${selectedPerito.value || "não selecionado"})
+      - Criticidade: ${selectedCriticality.value}
+      - Materiais: ${materiaisAplicados} de ${materiaisList.value?.length || 0} sugeridos
+      - Profissionais aplicados: ${profissionaisAplicados} de ${profissionaisList.value?.length || 0} sugeridos
+      - Tempo estimado: ${estimatedTime.value} horas
+      - Data fim: ${deadline.value}`;
 
       // Mostrar mensagem de sucesso
       sucessoSugestao.value = true;
@@ -1205,7 +1110,7 @@ onMounted(loadData);
   }
 }
 
- .criticality-selector {
+.criticality-selector {
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -1281,11 +1186,25 @@ onMounted(loadData);
 }
 
 /* Níveis com cores distintas */
-.level-1 .indicator-bar { background: #38d9a9; }
-.level-2 .indicator-bar { background: #69db7c; }
-.level-3 .indicator-bar { background: #ffd43b; }
-.level-4 .indicator-bar { background: #ffa94d; }
-.level-5 .indicator-bar { background: #ff6b6b; }
+.level-1 .indicator-bar {
+  background: #38d9a9;
+}
+
+.level-2 .indicator-bar {
+  background: #69db7c;
+}
+
+.level-3 .indicator-bar {
+  background: #ffd43b;
+}
+
+.level-4 .indicator-bar {
+  background: #ffa94d;
+}
+
+.level-5 .indicator-bar {
+  background: #ff6b6b;
+}
 
 /* Resumo visual abaixo da seleção */
 .criticality-summary {

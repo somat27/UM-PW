@@ -32,6 +32,7 @@ export async function obterSugestaoAuditoria(dados) {
     - Type: ${ocorrencia.tipoLabel || ocorrencia.tipo}
     - Address: ${ocorrencia.endereco}
     - Coordinates: Latitude ${ocorrencia.coordenadas.latitude}, Longitude ${ocorrencia.coordenadas.longitude}
+    - Criticity: ${ocorrencia.criticidade}
 
     ## AVAILABLE EXPERTS:
     ${peritos
@@ -71,6 +72,7 @@ export async function obterSugestaoAuditoria(dados) {
       ],
       "tempoEstimado": <hours>,
       "dataFimSugerida": "<YYYY-MM-DD>"
+      "criticidadeSugerida": "<1-5>"
     }
 
     2. If no audit is required:
@@ -83,6 +85,12 @@ export async function obterSugestaoAuditoria(dados) {
     - dataFimSugerida must result from adding tempoEstimado (in hours) to the current date/time and then converting to ISO format YYYY-MM-DD.
     - Choose quantities for materiais and profissionais proportional to the needs of the occurrence, not exceeding the available quantities.
     - If a material or professional is not needed, omit it rather than specifying quantity 0.
+    - criticidadeSugerida must be an integer from 1 to 5, corresponding to the table above:
+      1 = Very Low
+      2 = Low
+      3 = Medium
+      4 = High
+      5 = Very High
     - Do not include any explanation outside the JSON.
     `;
 
