@@ -186,6 +186,7 @@ async function uploadPhoto() {
   display: flex;
   gap: 20px;
   height: 100%;
+  max-height: 100vh;
 }
 
 .sidebar-column {

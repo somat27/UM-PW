@@ -700,6 +700,7 @@ onMounted(loadData);
   display: flex;
   gap: 20px;
   height: 100%;
+  max-height: 100vh;
 }
 
 .sidebar-column {

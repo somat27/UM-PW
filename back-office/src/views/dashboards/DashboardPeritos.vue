@@ -425,6 +425,7 @@ const chartSeries = computed(() => [
 .dashboard-layout {
   display: flex;
   gap: 20px;
+  max-height: 100vh;
 }
 
 .sidebar-column {
