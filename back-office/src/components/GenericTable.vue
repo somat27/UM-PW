@@ -264,6 +264,11 @@ const tableClass = computed(() => ({
   color: white;
 }
 
+.status-badge[data-status="incompleto"] {
+  background: #f44336;
+  color: white;
+}
+
 .status-badge[data-status="ativo"] {
   background: #4caf50;
   color: white;
