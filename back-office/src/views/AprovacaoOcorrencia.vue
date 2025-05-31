@@ -37,6 +37,7 @@
               <label>Endereço</label>
               <input v-model="ocorrencia.endereco" disabled class="input" />
             </div>
+
             <div class="map-container">
               <iframe
                 :src="mapUrl"
@@ -103,6 +104,39 @@
                 </div>
               </template>
             </GenericTable>
+
+            <div class="section-divider"></div>
+            <div class="form-group">
+              <h3>Nível de Criticidade</h3>
+              <div class="criticality-selector">
+                <div 
+                  v-for="level in criticalityLevels" 
+                  :key="level.value"
+                  class="criticality-option"
+                  :class="{ 
+                    'selected': selectedCriticality === level.value,
+                    [`level-${level.value}`]: true 
+                  }"
+                  @click="selectedCriticality = level.value"
+                >
+                  <div class="criticality-number">{{ level.value }}</div>
+                  <div class="criticality-info">
+                    <div class="criticality-label">{{ level.label }}</div>
+                    <div class="criticality-description">{{ level.description }}</div>
+                  </div>
+                  <div class="criticality-indicator">
+                    <div 
+                      class="indicator-bar"
+                      :style="{ width: (level.value * 20) + '%' }"
+                      ></div>
+                  </div>
+                </div>
+              </div>
+              <div v-if="selectedCriticality" class="criticality-summary">
+                <span class="criticality-icon">⚠️</span>
+                <span>Criticidade selecionada: <strong>{{ getCriticalityLabel(selectedCriticality) }}</strong></span>
+              </div>
+            </div>
 
             <h3 class="section-title">Seleção de Materiais</h3>
             <GenericTable
@@ -246,6 +280,36 @@ const sugestao = ref("");
 const sugestaoLoading = ref(false);
 const sucessoSugestao = ref(false);
 
+const selectedCriticality = ref(null);
+
+const criticalityLevels = [
+  {
+    value: 1,
+    label: "Muito Baixa",
+    description: "Sem urgência, pode aguardar"
+  },
+  {
+    value: 2,
+    label: "Baixa",
+    description: "Resolução em alguns dias"
+  },
+  {
+    value: 3,
+    label: "Média",
+    description: "Atenção necessária em breve"
+  },
+  {
+    value: 4,
+    label: "Alta",
+    description: "Requer resposta rápida"
+  },
+  {
+    value: 5,
+    label: "Muito Alta",
+    description: "Resposta imediata necessária"
+  }
+];
+
 const tipoLabels = {
   sinals: "Sinalização em Falta",
   roads: "Vias e Passeios",
@@ -276,6 +340,11 @@ const mapUrl = computed(() => {
   return `https://www.google.com/maps?q=${latitude},${longitude}&hl=pt&z=15&output=embed`;
 });
 
+function getCriticalityLabel(value) {
+  const level = criticalityLevels.find(l => l.value === value);
+  return level ? level.label : '';
+}
+
 function incrementQty(row) {
   if (row.qtd < row.quantidade) {
     row.qtd++;
@@ -293,7 +362,12 @@ async function loadData() {
   // Ocorrência
   const ocRef = doc(db, "ocorrencias", id);
   const ocSnap = await getDoc(ocRef);
-  if (ocSnap.exists()) ocorrencia.value = ocSnap.data();
+  if (ocSnap.exists()) {
+    ocorrencia.value = ocSnap.data();
+    if (ocorrencia.value.criticidade) {
+      selectedCriticality.value = ocorrencia.value.criticidade;
+    }
+  }
 
   // Peritos
   const peritosQuery = query(
@@ -313,6 +387,21 @@ async function loadData() {
 
   // 3. Filtramos só os peritos cujo UID está na lista dos users-perito
   peritosList.value = peritosData.filter((p) => userIds.includes(p.uid));
+
+  const auditoriasSnap = await getDocs(collection(db, "auditorias"));
+  const listaDePeritos = auditoriasSnap.docs.filter(doc => doc.data().status !== "Concluido").flatMap(doc => doc.data().perito)
+    //.map(doc => doc.data().filter(a => a.status !== 'Concluido').perito);
+
+  console.log(listaDePeritos)
+
+  const contagens = {};
+  listaDePeritos.forEach(uid => {
+      contagens[uid] = (contagens[uid] || 0) + 1;
+  });
+
+  peritosList.value = peritosList.value.filter(perito => {
+    return (contagens[perito.uid] || 0) < 3;
+  });
 
   // Materiais
   const matSnap = await getDocs(collection(db, "materiais"));
@@ -345,6 +434,7 @@ async function pedirSugestao() {
         tipo: ocorrencia.value.tipoOcorrencia,
         endereco: ocorrencia.value.endereco,
         coordenadas: ocorrencia.value.coordenadas,
+        criticidade: selectedCriticality.value,
       },
       peritos: peritosList.value,
       materiais: materiaisList.value,
@@ -591,7 +681,8 @@ async function submitAuditoria() {
       dataInicio: new Date(),
       tempoEstimado:
         typeof estimatedTime.value === "number" ? estimatedTime.value : 0,
-      status: "Pendente",
+      status: "Incompleto",
+      criticidade: selectedCriticality.value || null,
     };
 
     if (deadline.value) {
@@ -1112,5 +1203,102 @@ onMounted(loadData);
     width: 100%;
     margin-bottom: 1em;
   }
+}
+
+ .criticality-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.criticality-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border: 2px solid #e9ecef;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.25s ease-in-out;
+  background-color: #ffffff;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.criticality-option:hover,
+.criticality-option:focus {
+  border-color: #4263eb;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(66, 99, 235, 0.2);
+  background-color: #f8f9fc;
+}
+
+.criticality-option.selected {
+  border-color: #4263eb;
+  background: linear-gradient(to right, #edf2ff, #dbe4ff);
+}
+
+.criticality-number {
+  font-size: 1.5rem;
+  font-weight: bold;
+  width: 40px;
+  text-align: center;
+  color: #4263eb;
+}
+
+.criticality-info {
+  flex: 1;
+  margin-left: 1rem;
+}
+
+.criticality-label {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #212529;
+}
+
+.criticality-description {
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+.criticality-indicator {
+  width: 100px;
+  height: 10px;
+  background-color: #e9ecef;
+  border-radius: 5px;
+  overflow: hidden;
+  margin-left: 1rem;
+}
+
+.indicator-bar {
+  height: 100%;
+  background: linear-gradient(to right, #ff6b6b, #ffa94d);
+  transition: width 0.3s ease-in-out;
+  border-radius: 5px;
+}
+
+/* Níveis com cores distintas */
+.level-1 .indicator-bar { background: #38d9a9; }
+.level-2 .indicator-bar { background: #69db7c; }
+.level-3 .indicator-bar { background: #ffd43b; }
+.level-4 .indicator-bar { background: #ffa94d; }
+.level-5 .indicator-bar { background: #ff6b6b; }
+
+/* Resumo visual abaixo da seleção */
+.criticality-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  font-weight: 500;
+  color: #495057;
+}
+
+.criticality-icon {
+  font-size: 1.25rem;
+  color: #fab005;
 }
 </style>
