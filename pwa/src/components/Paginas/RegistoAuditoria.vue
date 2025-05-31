@@ -267,7 +267,6 @@
                                 profissionais: this.auditoria.profissionais,
                                 descricao: this.auditoria.descricao,
                                 status: this.auditoria.status,
-                                dataFim: new Date()
                         });
                         console.log("Dados da auditoria salvos com sucesso!");
 
@@ -438,7 +437,7 @@
 
 <style>
     #caixa-texto {
-        height: 15vh;
+        height: 11.5vh;
 
         padding: 1vh;
         font-size: 14px;

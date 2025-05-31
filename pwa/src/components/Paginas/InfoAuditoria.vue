@@ -33,6 +33,31 @@
             <PopUpPresente v-if="popUpMateriais && auditoria.materiais.length > 0" :dados="this.auditoria.materiais" :texto="`<i class='bi bi-file-earmark-text'></i> Materiais`"/>
         </button>
 
+        <div v-if="mostrarAcaoCorretiva" class="flex-coluna">
+            <h2 class="margem-cima">Recomendação de ações corretivas</h2>
+            <textarea  
+                type="text" 
+                v-model="auditoria.acaoCorretiva"
+                placeholder="Adicione ações corretivas para evitar que ocorra novamente o problema" 
+                @change="guardarAcaoCorretiva"
+                class="painel fundo-cinza"
+                id="caixa-texto"
+                :disabled="auditoria.status === 'Concluido'"></textarea>
+        </div>
+        
+        <div v-if="mostrarImpacto" class="flex-coluna">
+            <h2 class="margem-cima">Impacto esperado das recomendações</h2>
+            <textarea  
+                type="text" 
+                v-model="auditoria.impacto"
+                placeholder="Adicione o impacto que das ações corretivas" 
+                @change="guardarImpacto"
+                class="painel fundo-cinza"
+                id="caixa-texto"
+                :disabled="auditoria.status === 'Concluido'"></textarea>
+        </div>
+        
+
 
         <div v-if="this.auditoria.status !== 'Concluido'" class="flex-linha margem-cima" style="gap: 5vw;">
             <button class="flex-linha transparente centro fundo-azul botao-acao flex" @click="goToPaginaRegisto">
@@ -78,6 +103,28 @@
                 this.auditoria = {};
             }
         },
+        computed: {
+            mostrarAcaoCorretiva() {
+                const status = (this.auditoria.status || "").toLowerCase();
+                const acao = (this.auditoria.acaoCorretiva || "").trim();
+
+                return (
+                    status === "incompleto" ||
+                    status === "pendente" ||
+                    (status === "concluido" && acao !== "")
+                );
+            },
+            mostrarImpacto() {
+                const status = (this.auditoria.status || "").toLowerCase();
+                const acao = (this.auditoria.acaoCorretiva || "").trim();
+                const impacto = (this.auditoria.impacto || "").trim();
+
+                return (
+                    (status === "incompleto" || status === "pendente") && acao !== "" ||
+                    (status === "concluido" && acao !== "" && impacto !== "")
+                );
+            }
+        },
         methods: {
             goToPaginaIncial() {
                 this.$router.push("/ListaAuditorias");
@@ -105,9 +152,24 @@
                     status: "Resolvido"
                 });
                 await updateDoc(doc(db, "auditorias", this.auditoria.id), {
-                    //dataFimAuditoria ---------------------------------------------------------------------------------------------------------------
+                    dataFim: new Date(),
                     status: "Concluido"
                 });
+                
+                for (const profissional of this.auditoria.profissionais) {
+                    const profissionalRef = doc(db, "profissionais", profissional.id);
+                    const profissionalSnap = await getDoc(profissionalRef);
+
+                    if (profissionalSnap.exists()) {
+                        const dadosAtuais = profissionalSnap.data();
+                        const quantidadeAtual = dadosAtuais.quantidade || 0;
+
+                        await updateDoc(profissionalRef, {
+                            quantidade: quantidadeAtual + profissional.quantidade
+                        });
+                    }
+                }
+
                 this.goToPaginaIncial();
             },
             async guardarProfissionais() {
@@ -126,13 +188,23 @@
                     });
                 }
             },
+            async guardarAcaoCorretiva() {
+                await updateDoc(doc(db, "auditorias", this.auditoria.id), {
+                    acaoCorretiva: this.auditoria.acaoCorretiva
+                });
+            },
+            async guardarImpacto() {
+                await updateDoc(doc(db, "auditorias", this.auditoria.id), {
+                    impacto: this.auditoria.impacto
+                });
+            },
             nomeOcorrencia(valor) {
                 switch(valor) {
                     case "lights": return "Iluminação Pública"
                     case "sinals": return "Sinalização em Falta"
                     case "roads": return "Vias e Passeios"
                 }
-            }
+            },
         }
     }
 </script>
